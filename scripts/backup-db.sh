@@ -24,17 +24,42 @@ if [ -z "${SUPABASE_DB_URL:-}" ]; then
   exit 1
 fi
 
-if ! command -v pg_dump >/dev/null 2>&1; then
-  echo "No hay pg_dump. En macOS: brew install libpq && brew link --force libpq" >&2
+# libpq no se agrega al PATH por si solo: buscarlo donde suele quedar.
+PG_DUMP="$(command -v pg_dump || true)"
+if [ -z "$PG_DUMP" ]; then
+  for candidate in \
+    /opt/homebrew/opt/libpq/bin/pg_dump \
+    /usr/local/opt/libpq/bin/pg_dump \
+    /opt/local/lib/postgresql*/bin/pg_dump \
+    /Applications/Postgres.app/Contents/Versions/*/bin/pg_dump; do
+    if [ -x "$candidate" ]; then PG_DUMP="$candidate"; break; fi
+  done
+fi
+
+if [ -z "$PG_DUMP" ]; then
+  echo "No hay pg_dump." >&2
+  echo "  macOS:  brew install libpq && brew link --force libpq" >&2
   exit 1
 fi
+
+# El host directo (db.<ref>.supabase.co) es solo IPv6 y no conecta desde muchas
+# redes. El pooler si resuelve por IPv4.
+DB_HOST="$(printf '%s' "$SUPABASE_DB_URL" | sed -E 's#^[^@]+@([^:/?]+).*#\1#')"
+case "$DB_HOST" in
+  db.*.supabase.co)
+    echo "Aviso: SUPABASE_DB_URL usa la conexión directa ($DB_HOST), que es IPv6." >&2
+    echo "Si falla con 'No route to host', usa el Session pooler:" >&2
+    echo "  Supabase → Project Settings → Database → Connection string → Session pooler" >&2
+    echo >&2
+    ;;
+esac
 
 OUT_DIR="${1:-backups}"
 mkdir -p "$OUT_DIR"
 FILE="$OUT_DIR/creativos-$(date +%Y-%m-%d).sql.gz"
 
 echo "Respaldando a $FILE…"
-pg_dump "$SUPABASE_DB_URL" \
+"$PG_DUMP" "$SUPABASE_DB_URL" \
   --no-owner \
   --no-privileges \
   --schema=public \
