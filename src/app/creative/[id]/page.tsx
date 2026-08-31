@@ -84,13 +84,16 @@ export default async function CreativeDetailPage({
         {stats && stats.launch_count > 0 ? (
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Acumulado de {stats.launch_count} lanzamiento{stats.launch_count === 1 ? "" : "s"}</CardTitle>
+              <CardTitle className="font-mono text-xs font-medium uppercase tracking-widest text-muted-foreground">
+                Acumulado · {stats.launch_count} lanzamiento
+                {stats.launch_count === 1 ? "" : "s"}
+              </CardTitle>
             </CardHeader>
-            <CardContent className="grid grid-cols-2 gap-4 text-sm sm:grid-cols-4">
+            <CardContent className="grid grid-cols-2 gap-x-8 gap-y-5 sm:grid-cols-4">
               <Metric label="Gasto" value={formatMoney(stats.total_spend)} />
+              <Metric label="CPA" value={formatMoney(stats.cpa)} />
               <Metric label="CTR" value={formatPercent(stats.ctr)} />
               <Metric label="CPC" value={formatMoney(stats.cpc)} />
-              <Metric label="CPA" value={formatMoney(stats.cpa)} />
             </CardContent>
           </Card>
         ) : null}
@@ -128,8 +131,10 @@ export default async function CreativeDetailPage({
 function Metric({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <p className="text-xs uppercase tracking-wide text-muted-foreground">{label}</p>
-      <p className="tabular-nums">{value}</p>
+      <p className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground">
+        {label}
+      </p>
+      <p className="mt-0.5 text-2xl font-semibold tabular-nums">{value}</p>
     </div>
   );
 }

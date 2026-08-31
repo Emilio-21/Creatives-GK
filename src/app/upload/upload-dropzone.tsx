@@ -32,6 +32,8 @@ type Item = {
   error: string | null;
   metadata: MediaMetadata | null;
   duplicate: boolean;
+  /** objectURL de la imagen o del poster, para la miniatura de la cola. */
+  thumbUrl: string | null;
 };
 
 type ClientOption = { id: string; name: string };
@@ -76,6 +78,7 @@ export function UploadDropzone({
           error: null,
           metadata: null,
           duplicate: false,
+          thumbUrl: null,
         });
       }
       if (accepted.length === 0) return;
@@ -85,7 +88,12 @@ export function UploadDropzone({
       for (const item of accepted) {
         try {
           const metadata = await extractMetadata(item.file);
-          update(item.key, { metadata, status: "listo" });
+          const thumbSource = metadata.poster ?? (metadata.mediaType === "image" ? item.file : null);
+          update(item.key, {
+            metadata,
+            status: "listo",
+            thumbUrl: thumbSource ? URL.createObjectURL(thumbSource) : null,
+          });
         } catch (error) {
           update(item.key, { status: "error", error: (error as Error).message });
         }
@@ -143,6 +151,23 @@ export function UploadDropzone({
     });
 
     update(item.key, { status: "hecho" });
+  }
+
+  /** Reintento de un solo archivo, sin tocar el resto de la cola. */
+  async function retryOne(item: Item) {
+    if (!clientId) {
+      toast.error("Elige un cliente antes de subir.");
+      return;
+    }
+    setRunning(true);
+    try {
+      await uploadOne(item);
+      router.refresh();
+    } catch (error) {
+      update(item.key, { status: "error", error: (error as Error).message });
+    } finally {
+      setRunning(false);
+    }
   }
 
   /** Solo sube lo pendiente: reintentar no vuelve a subir lo que ya paso (§6). */
@@ -269,7 +294,12 @@ export function UploadDropzone({
       {items.length > 0 ? (
         <div className="space-y-2">
           {items.map((item) => (
-            <FileRow key={item.key} item={item} />
+            <FileRow
+              key={item.key}
+              item={item}
+              disabled={running}
+              onRetry={() => void retryOne(item)}
+            />
           ))}
         </div>
       ) : null}
@@ -286,7 +316,16 @@ export function UploadDropzone({
           <Button
             variant="ghost"
             disabled={running}
-            onClick={() => setItems((prev) => prev.filter((item) => item.status !== "hecho"))}
+            onClick={() =>
+              setItems((prev) =>
+                prev.filter((item) => {
+                  if (item.status !== "hecho") return true;
+                  // Soltar el objectURL de la miniatura al sacarla de la cola.
+                  if (item.thumbUrl) URL.revokeObjectURL(item.thumbUrl);
+                  return false;
+                }),
+              )
+            }
           >
             Limpiar completados
           </Button>
@@ -296,7 +335,15 @@ export function UploadDropzone({
   );
 }
 
-function FileRow({ item }: { item: Item }) {
+function FileRow({
+  item,
+  disabled,
+  onRetry,
+}: {
+  item: Item;
+  disabled: boolean;
+  onRetry: () => void;
+}) {
   const size = `${(item.file.size / 1024 / 1024).toFixed(1)} MB`;
   const dimensions = item.metadata?.width
     ? `${item.metadata.width}×${item.metadata.height}`
@@ -306,30 +353,54 @@ function FileRow({ item }: { item: Item }) {
     : null;
 
   return (
-    <div className="rounded-md border p-3 text-sm">
-      <div className="flex items-start justify-between gap-4">
-        <div className="min-w-0">
-          <p className="truncate font-medium">{item.file.name}</p>
-          <p className="text-xs text-muted-foreground">
-            {[size, dimensions, duration].filter(Boolean).join(" · ")}
-          </p>
+    <div className="rounded-lg border p-3">
+      <div className="flex items-center gap-3">
+        <div className="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-md bg-muted">
+          {item.thumbUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={item.thumbUrl} alt="" className="size-full object-cover" />
+          ) : (
+            <span className="font-mono text-[9px] uppercase text-muted-foreground">
+              {extensionOf(item.file.name)}
+            </span>
+          )}
         </div>
-        <StatusLabel item={item} />
-      </div>
 
-      {item.status === "subiendo" ? (
-        <Progress value={item.progress} className="mt-2 h-1.5" />
-      ) : null}
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-medium">{item.file.name}</p>
+          {item.status === "error" ? (
+            <p className="truncate text-xs text-destructive">{item.error}</p>
+          ) : (
+            <p className="truncate text-xs text-muted-foreground">
+              {[size, dimensions, duration].filter(Boolean).join(" · ")}
+            </p>
+          )}
+          {item.status === "subiendo" ? (
+            <Progress value={item.progress} className="mt-1.5 h-1" />
+          ) : null}
+        </div>
+
+        {item.status === "error" ? (
+          <Button size="sm" variant="outline" disabled={disabled} onClick={onRetry}>
+            Reintentar
+          </Button>
+        ) : (
+          <StatusLabel item={item} />
+        )}
+      </div>
 
       {item.duplicate && item.status !== "hecho" ? (
         <p className="mt-2 text-xs text-amber-600 dark:text-amber-500">
           Ya existe un creativo con este nombre. ¿Es una versión nueva? Se sube igual.
         </p>
       ) : null}
-
-      {item.error ? <p className="mt-2 text-xs text-destructive">{item.error}</p> : null}
     </div>
   );
+}
+
+function extensionOf(filename: string): string {
+  const dot = filename.lastIndexOf(".");
+  return dot > 0 ? filename.slice(dot + 1, dot + 5) : "?";
 }
 
 function StatusLabel({ item }: { item: Item }) {
@@ -338,7 +409,7 @@ function StatusLabel({ item }: { item: Item }) {
     listo: "Listo",
     subiendo: `${item.progress}%`,
     guardando: "Guardando…",
-    hecho: "Subido",
+    hecho: "✓",
     error: "Error",
   };
   const tone =
