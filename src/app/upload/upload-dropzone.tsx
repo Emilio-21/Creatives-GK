@@ -34,11 +34,19 @@ type Item = {
   duplicate: boolean;
 };
 
-export function UploadDropzone({ knownClients }: { knownClients: string[] }) {
+type ClientOption = { id: string; name: string };
+
+export function UploadDropzone({
+  clients,
+  defaultClientId,
+}: {
+  clients: ClientOption[];
+  defaultClientId?: string;
+}) {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const [items, setItems] = useState<Item[]>([]);
-  const [client, setClient] = useState("");
+  const [clientId, setClientId] = useState(defaultClientId ?? "");
   const [format, setFormat] = useState<string>("");
   const [tagsText, setTagsText] = useState("");
   const [dragging, setDragging] = useState(false);
@@ -129,7 +137,7 @@ export function UploadDropzone({ knownClients }: { knownClients: string[] }) {
       width: metadata.width,
       height: metadata.height,
       durationSeconds: metadata.durationSeconds,
-      client,
+      clientId,
       format: format || null,
       tags: parseTags(tagsText),
     });
@@ -139,8 +147,8 @@ export function UploadDropzone({ knownClients }: { knownClients: string[] }) {
 
   /** Solo sube lo pendiente: reintentar no vuelve a subir lo que ya paso (§6). */
   async function runUpload() {
-    if (!client.trim()) {
-      toast.error("El cliente es obligatorio.");
+    if (!clientId) {
+      toast.error("Elige un cliente antes de subir.");
       return;
     }
     const pending = items.filter((item) => item.status === "listo" || item.status === "error");
@@ -176,19 +184,25 @@ export function UploadDropzone({ knownClients }: { knownClients: string[] }) {
           <Label htmlFor="client">
             Cliente <span className="text-destructive">*</span>
           </Label>
-          <Input
+          <select
             id="client"
-            list="known-clients"
-            value={client}
-            onChange={(event) => setClient(event.target.value)}
-            placeholder="PLG"
+            value={clientId}
+            onChange={(event) => setClientId(event.target.value)}
             disabled={running}
-          />
-          <datalist id="known-clients">
-            {knownClients.map((name) => (
-              <option key={name} value={name} />
+            className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:opacity-50"
+          >
+            <option value="">Elige un cliente…</option>
+            {clients.map((option) => (
+              <option key={option.id} value={option.id}>
+                {option.name}
+              </option>
             ))}
-          </datalist>
+          </select>
+          {clients.length === 0 ? (
+            <p className="text-xs text-muted-foreground">
+              Crea un cliente primero desde el panel izquierdo.
+            </p>
+          ) : null}
         </div>
 
         <div className="space-y-2">

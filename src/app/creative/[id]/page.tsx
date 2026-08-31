@@ -1,8 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { AppHeader } from "@/components/app-header";
+import { AppShell } from "@/components/app-shell";
 import { Badge } from "@/components/ui/badge";
-import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getPreviewUrl } from "@/lib/storage";
 import { createClient, type Profile } from "@/lib/supabase/server";
@@ -22,11 +21,11 @@ export default async function CreativeDetailPage({
 
   const [{ data: profile }, { data: row }] = await Promise.all([
     supabase.from("profiles").select("id, full_name, role, created_at").eq("id", user.id).single(),
-    supabase.from("creatives").select("*").eq("id", id).maybeSingle(),
+    supabase.from("creatives").select("*, clients(id, name)").eq("id", id).maybeSingle(),
   ]);
 
   if (!row) notFound();
-  const creative = row as CreativeRow;
+  const creative = row as CreativeRow & { clients: { id: string; name: string } | null };
 
   // Video: preview del archivo, con poster para no descargarlo hasta que le den play.
   const [mediaUrl, posterUrl] = await Promise.all([
@@ -35,11 +34,17 @@ export default async function CreativeDetailPage({
   ]);
 
   return (
-    <>
-      <AppHeader profile={(profile as Profile) ?? null} email={user.email ?? ""} />
-      <main className="mx-auto max-w-4xl space-y-6 p-6">
-        <Link href="/" className="text-sm text-muted-foreground hover:underline">
-          ← Biblioteca
+    <AppShell
+      profile={(profile as Profile) ?? null}
+      email={user.email ?? ""}
+      activeClientId={creative.clients?.id}
+    >
+      <div className="mx-auto max-w-3xl space-y-6">
+        <Link
+          href={creative.clients ? `/client/${creative.clients.id}` : "/"}
+          className="text-sm text-muted-foreground hover:underline"
+        >
+          ← {creative.clients?.name ?? "Biblioteca"}
         </Link>
 
         <div className="overflow-hidden rounded-lg border bg-muted">
@@ -67,7 +72,11 @@ export default async function CreativeDetailPage({
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex flex-wrap gap-1.5">
-              {creative.client ? <Badge variant="outline">{creative.client}</Badge> : null}
+              {creative.clients ? (
+                <Link href={`/client/${creative.clients.id}`}>
+                  <Badge variant="outline">{creative.clients.name}</Badge>
+                </Link>
+              ) : null}
               {creative.format ? <Badge variant="outline">{creative.format}</Badge> : null}
               {creative.tags.map((tag) => (
                 <Badge key={tag} variant="secondary">
@@ -105,11 +114,8 @@ export default async function CreativeDetailPage({
           </CardContent>
         </Card>
 
-        <Link href="/" className={buttonVariants({ variant: "outline", size: "sm" })}>
-          Volver
-        </Link>
-      </main>
-    </>
+      </div>
+    </AppShell>
   );
 }
 

@@ -63,7 +63,7 @@ export type ConfirmUploadInput = {
   width: number | null;
   height: number | null;
   durationSeconds: number | null;
-  client: string;
+  clientId: string;
   format: string | null;
   tags: string[];
 };
@@ -90,8 +90,7 @@ export async function confirmUpload(input: ConfirmUploadInput): Promise<{ id: st
     throw new Error(`Tipo no permitido: ${input.mimeType}`);
   }
 
-  const client = input.client.trim();
-  if (!client) throw new Error("El cliente es obligatorio.");
+  if (!input.clientId) throw new Error("El cliente es obligatorio.");
 
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -107,7 +106,7 @@ export async function confirmUpload(input: ConfirmUploadInput): Promise<{ id: st
       width: input.width,
       height: input.height,
       duration_seconds: input.durationSeconds,
-      client,
+      client_id: input.clientId,
       format: input.format,
       tags: input.tags,
       uploaded_by: user.id,
@@ -123,6 +122,7 @@ export async function confirmUpload(input: ConfirmUploadInput): Promise<{ id: st
   }
 
   revalidatePath("/");
+  revalidatePath(`/client/${input.clientId}`);
   return { id: data.id as string };
 }
 
@@ -140,15 +140,8 @@ export async function findDuplicateNames(filenames: string[]): Promise<string[]>
   return (data ?? []).map((row) => row.original_filename as string);
 }
 
-/** Clientes ya usados, para el combo del batch. */
-export async function listClients(): Promise<string[]> {
+export async function revalidateLibrary(clientId: string) {
   await requireUser();
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from("creatives")
-    .select("client")
-    .not("client", "is", null)
-    .order("client");
-
-  return [...new Set((data ?? []).map((row) => row.client as string))];
+  revalidatePath("/");
+  revalidatePath(`/client/${clientId}`);
 }

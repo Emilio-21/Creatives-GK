@@ -16,7 +16,7 @@ export type CreativeRow = {
   width: number | null;
   height: number | null;
   duration_seconds: number | null;
-  client: string | null;
+  client_id: string | null;
   concept: string | null;
   format: string | null;
   tags: string[];
@@ -45,12 +45,10 @@ export type CreativeCard = CreativeRow & {
 };
 
 export type LibraryFilters = {
+  /** null = todos los clientes. */
+  clientId?: string;
   q?: string;
-  client?: string;
-  format?: string;
-  tag?: string;
-  uploadedBy?: string;
-  status?: "sin-lanzar" | "lanzados";
+  onlyUnlaunched?: boolean;
   sort?: "recientes" | "antiguos" | "nombre";
   page?: number;
 };
@@ -64,11 +62,8 @@ export async function getLibrary(filters: LibraryFilters) {
     .select("*", { count: "exact" })
     .is("archived_at", null);
 
+  if (filters.clientId) query = query.eq("client_id", filters.clientId);
   if (filters.q) query = query.ilike("display_name", `%${filters.q}%`);
-  if (filters.client) query = query.eq("client", filters.client);
-  if (filters.format) query = query.eq("format", filters.format);
-  if (filters.tag) query = query.contains("tags", [filters.tag]);
-  if (filters.uploadedBy) query = query.eq("uploaded_by", filters.uploadedBy);
 
   query =
     filters.sort === "antiguos"
@@ -119,47 +114,14 @@ export async function getLibrary(filters: LibraryFilters) {
     }),
   );
 
-  const filtered =
-    filters.status === "sin-lanzar"
-      ? cards.filter((card) => !card.stats?.is_published)
-      : filters.status === "lanzados"
-        ? cards.filter((card) => card.stats?.is_published)
-        : cards;
+  const visible = filters.onlyUnlaunched
+    ? cards.filter((card) => !card.stats?.is_published)
+    : cards;
 
   return {
-    cards: filtered,
+    cards: visible,
     total: count ?? 0,
     page,
     pageCount: Math.max(1, Math.ceil((count ?? 0) / PAGE_SIZE)),
-  };
-}
-
-/** Valores existentes para poblar los filtros. */
-export async function getFilterOptions() {
-  const supabase = await createClient();
-
-  const [{ data: rows }, { data: profiles }] = await Promise.all([
-    supabase.from("creatives").select("client, format, tags").is("archived_at", null),
-    supabase.from("profiles").select("id, full_name"),
-  ]);
-
-  const clients = new Set<string>();
-  const formats = new Set<string>();
-  const tags = new Set<string>();
-
-  for (const row of rows ?? []) {
-    if (row.client) clients.add(row.client as string);
-    if (row.format) formats.add(row.format as string);
-    for (const tag of (row.tags as string[] | null) ?? []) tags.add(tag);
-  }
-
-  return {
-    clients: [...clients].sort(),
-    formats: [...formats].sort(),
-    tags: [...tags].sort(),
-    uploaders: (profiles ?? []).map((row) => ({
-      id: row.id as string,
-      name: (row.full_name as string | null) ?? "sin nombre",
-    })),
   };
 }

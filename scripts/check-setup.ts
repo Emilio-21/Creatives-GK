@@ -81,11 +81,23 @@ async function main() {
       process.env.SUPABASE_SERVICE_ROLE_KEY!,
       { auth: { persistSession: false } },
     );
-    for (const table of ["profiles", "creatives", "launches", "downloads", "creative_stats"]) {
-      const { error } = await supabase.from(table).select("*", { count: "exact", head: true });
+    for (const table of [
+      "profiles",
+      "clients",
+      "creatives",
+      "launches",
+      "downloads",
+      "creative_stats",
+    ]) {
+      // select real, no head: un HEAD no falla si la tabla no esta en el cache.
+      const { error } = await supabase.from(table).select("*").limit(1);
       if (error) bad(`${table}: ${error.message}`);
       else ok(`${table} existe`);
     }
+    const { error: columnError } = await supabase.from("creatives").select("client_id").limit(1);
+    if (columnError) bad("creatives.client_id no existe — falta correr 0004_clients.sql");
+    else ok("creatives.client_id existe");
+
     const { data, error } = await supabase.auth.admin.listUsers();
     if (error) bad(`auth: ${error.message}`);
     else ok(`auth responde (${data.users.length} usuario(s))`);

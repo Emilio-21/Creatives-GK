@@ -40,7 +40,6 @@ export function CreativeCard({ creative }: { creative: Card }) {
           <Badge variant={published ? "default" : "secondary"}>
             {published ? "En circulación" : "Sin lanzar"}
           </Badge>
-          {creative.client ? <Badge variant="outline">{creative.client}</Badge> : null}
           {creative.format ? <Badge variant="outline">{creative.format}</Badge> : null}
         </div>
       </div>
