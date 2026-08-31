@@ -97,6 +97,7 @@ async function main() {
     const columns: [string, string, string][] = [
       ["creatives", "client_id", "0004_clients.sql"],
       ["creative_stats", "active_launch_count", "0005_creative_stats_status.sql"],
+      ["clients", "meta_ad_account_id", "0006_meta_sync.sql"],
     ];
     for (const [table, column, migration] of columns) {
       const { error: columnError } = await supabase.from(table).select(column).limit(1);

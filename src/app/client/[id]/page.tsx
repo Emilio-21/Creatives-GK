@@ -4,6 +4,7 @@ import { LibraryView, readViewParams } from "@/components/library-view";
 import { ClientMenu } from "@/components/client-menu";
 import { StatsStrip } from "@/components/stats-strip";
 import { ClientInsights } from "@/components/client-insights";
+import { MetaPanel } from "@/components/meta-panel";
 import { getClientOverview } from "@/lib/dashboard";
 import { getClient } from "@/lib/clients";
 import { createClient, type Profile } from "@/lib/supabase/server";
@@ -52,6 +53,12 @@ export default async function ClientPage({
         </div>
 
         <StatsStrip stats={overview.kpis} monthSpend={overview.kpis.monthSpend} />
+
+        <MetaPanel
+          clientId={client.id}
+          adAccountId={client.meta_ad_account_id}
+          syncedAt={client.meta_synced_at}
+        />
 
         <ClientInsights
           topByCpa={overview.topByCpa}

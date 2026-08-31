@@ -7,6 +7,8 @@ export type ClientRecord = {
   created_by: string;
   created_at: string;
   archived_at: string | null;
+  meta_ad_account_id: string | null;
+  meta_synced_at: string | null;
 };
 
 export type ClientWithCount = ClientRecord & {

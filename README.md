@@ -20,7 +20,7 @@ Plan completo: `docs/plan.md`.
 | 5 | Lanzamientos, métricas derivadas, orden por performance | listo |
 | 6 | Dashboard resumen | listo |
 | 7 | Pulido, cleanup de huérfanos, backup | listo |
-| 8 | Sync con Meta | pendiente |
+| 8 | Sync con Meta | código listo — falta correr 0006 y poner el token |
 
 ---
 
@@ -221,6 +221,42 @@ instalado (`brew install libpq && brew link --force libpq`).
 
 ---
 
+## Fase 8 — Sync con Meta
+
+No se capturan IDs a mano. Cada creativo tiene un código derivado de su id
+(`GK-c7c05468`) y la app arma el nombre del anuncio ya listo para copiar:
+
+```
+AB_TESTIMONIAL_v3_[GK-c7c05468]
+```
+
+Lo pegas como nombre del ad en Meta. El sync trae los insights a nivel ad de la cuenta,
+extrae el código del nombre con un regex y hace match exacto contra el creativo. **El
+nombre lo genera la app, no la persona**: si la convención dependiera de que alguien la
+recuerde, el match fallaría en silencio y el dashboard quedaría en ceros sin que nadie
+se entere. Los anuncios sin código se listan en el reporte en vez de desaparecer.
+
+Un ad de Meta es un lanzamiento. El upsert va sobre `meta_ad_id` (índice único parcial),
+así que volver a sincronizar actualiza en lugar de duplicar, y un creativo que corre en
+tres ad sets produce tres lanzamientos con su desglose.
+
+### Configuración
+
+1. Correr `supabase/migrations/0006_meta_sync.sql`.
+2. En cada cliente, pegar su **ad account id** (`act_123…`) en el panel de Meta.
+3. En el entorno: `META_ACCESS_TOKEN` con un System User token del Business Manager, y
+   `CRON_SECRET` con cualquier cadena larga.
+
+**El token nunca va en la base.** Un token de Meta puede gastar dinero y la RLS de equipo
+cerrado deja que cualquier usuario autenticado lea las tablas. En `clients` solo vive el
+ad account id, que no es secreto.
+
+El cron de Vercel corre diario a las 13:00 UTC (`vercel.json`); Hobby permite 2 al día.
+La ruta exige `Authorization: Bearer $CRON_SECRET` — sin eso, cualquiera podría dispararla
+y quemar el rate limit de la Graph API.
+
+---
+
 ## Desarrollo
 
 ```bash
@@ -238,6 +274,7 @@ npm run dev
 | `npm run check:cors` | preflight de cada origen contra cada bucket |
 | `npm run cleanup:orphans` | lista/borra objetos de R2 sin registro (mensual) |
 | `npm run backup:db` | `pg_dump` comprimido a `backups/` (semanal) |
+| `npm run test:adcode` | verifica el código que enlaza anuncios con creativos |
 
 ## Convenciones
 

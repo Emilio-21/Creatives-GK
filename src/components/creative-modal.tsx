@@ -3,6 +3,7 @@
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { AdNameCopy } from "@/components/ad-name-copy";
 import { ArchiveButton } from "@/components/archive-button";
 import { LaunchDialog } from "@/components/launch-dialog";
 import { MetadataEditor } from "@/components/metadata-editor";
@@ -126,6 +127,11 @@ export function CreativeModal({
                     />
                   )}
                 </div>
+
+                <AdNameCopy
+                  creativeId={detail.creative.id}
+                  displayName={detail.creative.display_name}
+                />
 
                 <div className="flex flex-wrap gap-2">
                   <Button size="sm" onClick={() => onDownload(detail.creative.id)}>
