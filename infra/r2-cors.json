@@ -1,6 +1,9 @@
 [
   {
-    "AllowedOrigins": ["http://localhost:3000"],
+    "AllowedOrigins": [
+      "http://localhost:3000",
+      "https://creativesgk.vercel.app"
+    ],
     "AllowedMethods": ["GET", "PUT", "HEAD"],
     "AllowedHeaders": ["content-type"],
     "ExposeHeaders": ["etag"],

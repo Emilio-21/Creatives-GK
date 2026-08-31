@@ -9,7 +9,8 @@
     "lint": "eslint",
     "check:setup": "tsx scripts/check-setup.ts",
     "typecheck": "tsc --noEmit",
-    "test:storage": "tsx scripts/test-storage.ts"
+    "test:storage": "tsx scripts/test-storage.ts",
+    "check:cors": "tsx scripts/check-cors.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1121.0",

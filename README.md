@@ -34,9 +34,14 @@ Plan completo: `docs/plan.md`.
 2. R2 → Manage API Tokens → token con **Object Read & Write** limitado a esos buckets.
    El secret se muestra una sola vez.
 3. Anotar el Account ID (endpoint: `https://{ACCOUNT_ID}.r2.cloudflarestorage.com`).
-4. Bucket → Settings → **CORS Policy** → pegar `infra/r2-cors.json`.
+4. **En cada bucket** → Settings → **CORS Policy** → pegar `infra/r2-cors.json`.
+   Es configuración por bucket: hay que pegarla en `creatives-dev` y en `creatives-prod`.
    Sin esto el `PUT` desde el navegador falla con un error de CORS ilegible.
-   Agregar el dominio de Vercel a `AllowedOrigins` cuando exista.
+   Al agregar un dominio nuevo, se edita `infra/r2-cors.json` y se vuelve a pegar en los dos.
+
+```bash
+npm run check:cors   # prueba el preflight de cada origen contra cada bucket
+```
 
 ### 3. Variables de entorno
 ```bash
@@ -96,10 +101,10 @@ Prueba contra el bucket real: PUT firmado, preview byte a byte, que el bucket re
 la request sin firma, `Content-Disposition`, borrado, y el **preflight de CORS**.
 Debe terminar en "Storage OK end-to-end".
 
-Para verificar el CORS del dominio de producción:
+Para el CORS de todos los orígenes contra los dos buckets:
 
 ```bash
-CORS_ORIGIN=https://tu-app.vercel.app npm run test:storage
+npm run check:cors
 ```
 
 Falta la prueba desde el navegador: `npm run dev` → entrar → **`/dev/storage`** →
@@ -121,7 +126,8 @@ npm run dev
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm run lint` | eslint |
 | `npm run check:setup` | verifica env, tablas y bucket |
-| `npm run test:storage` | prueba el ciclo completo contra R2 (incluye CORS) |
+| `npm run test:storage` | prueba el ciclo completo contra R2 |
+| `npm run check:cors` | preflight de cada origen contra cada bucket |
 
 ## Convenciones
 
