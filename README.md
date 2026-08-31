@@ -14,8 +14,9 @@ Plan completo: `docs/plan.md`.
 |---|---|---|
 | 0 | Setup: app, migraciones SQL, config R2/Supabase, deploy | código listo — faltan las cuentas |
 | 1 | Auth: `@supabase/ssr`, middleware, trigger de profile, `/login` | código listo |
-| 2 | Storage: `lib/storage.ts`, presigned URLs, CORS | código listo — falta la prueba en el navegador |
-| 3+ | Upload, biblioteca, descarga, launches, dashboard | pendiente |
+| 2 | Storage: `lib/storage.ts`, presigned URLs, CORS | listo |
+| 3 | Upload múltiple y biblioteca | código listo — falta probarlo con archivos reales |
+| 4+ | Descarga, launches, dashboard | pendiente |
 
 ---
 
@@ -110,6 +111,38 @@ npm run check:cors
 Falta la prueba desde el navegador: `npm run dev` → entrar → **`/dev/storage`** →
 subir un archivo, verlo, descargarlo y borrarlo. Es el banco de pruebas de la fase 2;
 si el PUT falla ahí, falla el upload de la fase 3.
+
+---
+
+## Fase 3 — Upload y biblioteca
+
+### `/upload`
+Dropzone múltiple con progreso por archivo (XHR, no `fetch`, que no expone progreso).
+Por batch: **cliente obligatorio**, formato y tags opcionales.
+
+Del navegador salen las dimensiones, la duración y el **poster frame** de cada video
+(seek a ~1s → `<canvas>` → JPEG 85%, máx 720px de lado largo). El grid solo carga
+posters, nunca el video. Nada de esto puede vivir en el servidor: Vercel Hobby tiene
+10 s de timeout y ~4.5 MB de body.
+
+Un nombre repetido se advierte pero no se bloquea. Reintentar solo re-sube lo que falló.
+
+### `/`
+Grid de tarjetas con badge de estado, filtros (cliente, estado, formato, tag, quién subió),
+buscador por nombre, orden y toggle grid ↔ tabla. Los filtros van en la URL, así que se
+pueden compartir y el botón de atrás funciona.
+
+### Orden de las operaciones
+
+```
+requestUploadUrls  → valida sesión, mime y tamaño ANTES de firmar
+PUT del navegador  → archivo directo a R2, sin pasar por Next
+PUT del poster     → si es video y el navegador pudo pintar el frame
+confirmUpload      → HEAD al objeto real, insert en creatives
+```
+
+Si el insert falla se borra el archivo de R2 en el momento. Lo que se escape lo barre
+`scripts/cleanup-orphans.ts` en la fase 7.
 
 ---
 

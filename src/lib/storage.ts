@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import {
   DeleteObjectCommand,
   GetObjectCommand,
+  HeadObjectCommand,
   PutObjectCommand,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
@@ -61,6 +62,27 @@ export async function getDownloadUrl(path: string, filename: string): Promise<st
     }),
     { expiresIn: DOWNLOAD_TTL_SECONDS },
   );
+}
+
+/**
+ * Tamaño y tipo reales del objeto ya subido.
+ *
+ * El plan pedia cuatro funciones; esta es la quinta a proposito. El `size` que
+ * manda el cliente al pedir la firma no es confiable, asi que confirmUpload
+ * compara contra lo que de verdad quedo en R2 antes de insertar en la DB. Sin
+ * esto, un cliente modificado puede subir 5 GB y quemar el free tier.
+ */
+export async function statFile(
+  path: string,
+): Promise<{ size: number; contentType: string | null } | null> {
+  try {
+    const head = await r2().send(
+      new HeadObjectCommand({ Bucket: serverEnv.r2Bucket, Key: path }),
+    );
+    return { size: head.ContentLength ?? 0, contentType: head.ContentType ?? null };
+  } catch {
+    return null;
+  }
 }
 
 export async function deleteFile(path: string): Promise<void> {

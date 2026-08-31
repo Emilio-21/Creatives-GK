@@ -14,6 +14,7 @@ export function AppHeader({ profile, email }: { profile: Profile | null; email: 
         </Link>
         <nav className="flex items-center gap-4 text-sm text-muted-foreground">
           <Link href="/">Biblioteca</Link>
+          <Link href="/upload">Subir</Link>
         </nav>
         <div className="ml-auto flex items-center gap-3 text-sm">
           <span className="text-muted-foreground">
