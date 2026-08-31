@@ -22,114 +22,238 @@ export type StaleEntry = {
   id: string;
   displayName: string;
   clientName: string | null;
-  /** Fecha del ultimo lanzamiento, o null si nunca se lanzo. */
   lastLaunchedAt: string | null;
   daysIdle: number;
 };
 
 export type MonthlyProduction = { month: string; label: string; count: number };
 
-export async function getDashboard() {
+export type Aggregate = {
+  total: number;
+  launched: number;
+  unlaunched: number;
+  launchedPercent: number;
+  staleCount: number;
+  totalSpend: number | null;
+  impressions: number;
+  clicks: number;
+  results: number;
+  /** Derivadas de los totales, nunca promediando promedios. */
+  ctr: number | null;
+  cpm: number | null;
+  cpc: number | null;
+  cpa: number | null;
+};
+
+export type ClientBreakdown = Aggregate & { id: string; name: string };
+
+type CreativeLite = {
+  id: string;
+  display_name: string;
+  client_id: string | null;
+  created_at: string;
+};
+
+type Row = { creative: CreativeLite; stats: CreativeStats | null };
+
+async function loadRows(clientId?: string) {
   const supabase = await createClient();
 
-  const [{ data: creativeRows }, { data: clientRows }, usage] = await Promise.all([
-    supabase
-      .from("creatives")
-      .select("id, display_name, client_id, created_at")
-      .is("archived_at", null),
+  let query = supabase
+    .from("creatives")
+    .select("id, display_name, client_id, created_at")
+    .is("archived_at", null);
+  if (clientId) query = query.eq("client_id", clientId);
+
+  const [{ data: creativeRows }, { data: clientRows }] = await Promise.all([
+    query,
     supabase.from("clients").select("id, name"),
-    getStorageUsage().catch(() => null),
   ]);
 
-  const creatives = creativeRows ?? [];
-  const clientNames = new Map((clientRows ?? []).map((row) => [row.id as string, row.name as string]));
+  const creatives = (creativeRows ?? []) as CreativeLite[];
+  const clientNames = new Map(
+    (clientRows ?? []).map((row) => [row.id as string, row.name as string]),
+  );
 
   const statsById = new Map<string, CreativeStats>();
-  const ids = creatives.map((row) => row.id as string);
+  const ids = creatives.map((row) => row.id);
   if (ids.length > 0) {
     const { data: stats } = await supabase.from("creative_stats").select("*").in("id", ids);
     for (const row of (stats ?? []) as CreativeStats[]) statsById.set(row.id, row);
   }
 
-  const total = creatives.length;
-  const launched = creatives.filter((row) => statsById.get(row.id as string)?.is_published).length;
-  const unlaunched = total - launched;
+  const rows: Row[] = creatives.map((creative) => ({
+    creative,
+    stats: statsById.get(creative.id) ?? null,
+  }));
 
-  // Gasto de los lanzamientos que arrancaron este mes.
-  const monthStart = new Date();
-  monthStart.setDate(1);
-  monthStart.setHours(0, 0, 0, 0);
-  const { data: monthLaunches } = await supabase
-    .from("launches")
-    .select("spend")
-    .gte("launched_at", monthStart.toISOString().slice(0, 10));
-  const monthSpend = (monthLaunches ?? []).reduce(
-    (sum, row) => sum + Number(row.spend ?? 0),
-    0,
-  );
+  return { rows, clientNames, supabase };
+}
 
-  const describe = (row: (typeof creatives)[number]) => ({
-    id: row.id as string,
-    displayName: row.display_name as string,
-    clientName: clientNames.get(row.client_id as string) ?? null,
+/**
+ * CTR, CPM, CPC y CPA de un conjunto salen de sumar los numeros base y dividir
+ * una sola vez. Promediar los CTR de cada creativo daria otro numero, y estaria
+ * mal: un creativo con 100 impresiones pesaria igual que uno con un millon.
+ */
+function aggregate(rows: Row[]): Aggregate {
+  const total = rows.length;
+  const launched = rows.filter((row) => row.stats?.is_published).length;
+
+  let spend = 0;
+  let hasSpend = false;
+  let impressions = 0;
+  let clicks = 0;
+  let results = 0;
+
+  for (const { stats } of rows) {
+    if (!stats) continue;
+    if (stats.total_spend !== null) {
+      spend += Number(stats.total_spend);
+      hasSpend = true;
+    }
+    impressions += Number(stats.total_impressions ?? 0);
+    clicks += Number(stats.total_clicks ?? 0);
+    results += Number(stats.total_results ?? 0);
+  }
+
+  const now = Date.now();
+  const staleCount = rows.filter((row) => {
+    const reference = row.stats?.last_launched_at ?? row.creative.created_at;
+    return Math.floor((now - new Date(reference).getTime()) / 86_400_000) > STALE_DAYS;
+  }).length;
+
+  return {
+    total,
+    launched,
+    unlaunched: total - launched,
+    launchedPercent: total > 0 ? Math.round((launched / total) * 100) : 0,
+    staleCount,
+    totalSpend: hasSpend ? spend : null,
+    impressions,
+    clicks,
+    results,
+    ctr: impressions > 0 ? (clicks / impressions) * 100 : null,
+    cpm: impressions > 0 && hasSpend ? (spend / impressions) * 1000 : null,
+    cpc: clicks > 0 && hasSpend ? spend / clicks : null,
+    cpa: results > 0 && hasSpend ? spend / results : null,
+  };
+}
+
+function topsFrom(rows: Row[], clientNames: Map<string, string>) {
+  const describe = (row: Row) => ({
+    id: row.creative.id,
+    displayName: row.creative.display_name,
+    clientName: row.creative.client_id
+      ? (clientNames.get(row.creative.client_id) ?? null)
+      : null,
   });
 
-  // Top 10: solo creativos con la metrica disponible.
-  const withStats = creatives
-    .map((row) => ({ row, stats: statsById.get(row.id as string) }))
-    .filter((entry) => entry.stats?.is_published);
+  const published = rows.filter((row) => row.stats?.is_published);
 
-  const topByCpa: TopEntry[] = withStats
-    .filter((entry) => entry.stats?.cpa !== null && entry.stats?.cpa !== undefined)
-    .sort((a, b) => Number(a.stats!.cpa) - Number(b.stats!.cpa))
-    .slice(0, 10)
-    .map((entry) => ({
-      ...describe(entry.row),
-      value: Number(entry.stats!.cpa),
-      spend: entry.stats!.total_spend === null ? null : Number(entry.stats!.total_spend),
-    }));
+  const build = (
+    pick: (row: Row) => number | null,
+    direction: "asc" | "desc",
+  ): TopEntry[] =>
+    published
+      .map((row) => ({ row, value: pick(row) }))
+      .filter((entry): entry is { row: Row; value: number } => entry.value !== null)
+      .sort((a, b) => (direction === "asc" ? a.value - b.value : b.value - a.value))
+      .slice(0, 10)
+      .map((entry) => ({
+        ...describe(entry.row),
+        value: entry.value,
+        spend:
+          entry.row.stats?.total_spend === null || entry.row.stats?.total_spend === undefined
+            ? null
+            : Number(entry.row.stats.total_spend),
+      }));
 
-  const topByCtr: TopEntry[] = withStats
-    .filter((entry) => entry.stats?.ctr !== null && entry.stats?.ctr !== undefined)
-    .sort((a, b) => Number(b.stats!.ctr) - Number(a.stats!.ctr))
-    .slice(0, 10)
-    .map((entry) => ({
-      ...describe(entry.row),
-      value: Number(entry.stats!.ctr),
-      spend: entry.stats!.total_spend === null ? null : Number(entry.stats!.total_spend),
-    }));
+  return {
+    // Menor CPA es mejor.
+    topByCpa: build((row) => (row.stats?.cpa === null ? null : Number(row.stats?.cpa)), "asc"),
+    topByCtr: build((row) => (row.stats?.ctr === null ? null : Number(row.stats?.ctr)), "desc"),
+  };
+}
 
-  // Inventario olvidado: nunca lanzado o sin lanzarse hace mas de 30 dias.
+function staleFrom(rows: Row[], clientNames: Map<string, string>, limit: number): StaleEntry[] {
   const now = Date.now();
-  const daysSince = (iso: string) => Math.floor((now - new Date(iso).getTime()) / 86_400_000);
-
-  const stale: StaleEntry[] = creatives
+  return rows
     .map((row) => {
-      const stats = statsById.get(row.id as string);
-      const reference = stats?.last_launched_at ?? (row.created_at as string);
+      const reference = row.stats?.last_launched_at ?? row.creative.created_at;
       return {
-        ...describe(row),
-        lastLaunchedAt: stats?.last_launched_at ?? null,
-        daysIdle: daysSince(reference),
+        id: row.creative.id,
+        displayName: row.creative.display_name,
+        clientName: row.creative.client_id
+          ? (clientNames.get(row.creative.client_id) ?? null)
+          : null,
+        lastLaunchedAt: row.stats?.last_launched_at ?? null,
+        daysIdle: Math.floor((now - new Date(reference).getTime()) / 86_400_000),
       };
     })
     .filter((entry) => entry.daysIdle > STALE_DAYS)
     .sort((a, b) => b.daysIdle - a.daysIdle)
-    .slice(0, 20);
+    .slice(0, limit);
+}
+
+/** Gasto de los lanzamientos que arrancaron este mes. */
+async function monthSpendFor(creativeIds: string[] | null): Promise<number> {
+  const supabase = await createClient();
+  const monthStart = new Date();
+  monthStart.setDate(1);
+  monthStart.setHours(0, 0, 0, 0);
+
+  let query = supabase
+    .from("launches")
+    .select("spend, creative_id")
+    .gte("launched_at", monthStart.toISOString().slice(0, 10));
+
+  // null = todos los creativos; una lista = solo los de ese cliente.
+  if (creativeIds) {
+    if (creativeIds.length === 0) return 0;
+    query = query.in("creative_id", creativeIds);
+  }
+
+  const { data } = await query;
+  return (data ?? []).reduce((sum, row) => sum + Number(row.spend ?? 0), 0);
+}
+
+export async function getDashboard() {
+  const [{ rows, clientNames }, usage] = await Promise.all([
+    loadRows(),
+    getStorageUsage().catch(() => null),
+  ]);
+
+  const byClient: ClientBreakdown[] = [...clientNames.entries()]
+    .map(([id, name]) => ({
+      id,
+      name,
+      ...aggregate(rows.filter((row) => row.creative.client_id === id)),
+    }))
+    .filter((entry) => entry.total > 0)
+    .sort((a, b) => b.total - a.total);
+
+  return {
+    kpis: { ...aggregate(rows), monthSpend: await monthSpendFor(null) },
+    ...topsFrom(rows, clientNames),
+    stale: staleFrom(rows, clientNames, 20),
+    monthly: monthlyProduction(rows.map((row) => row.creative.created_at)),
+    byClient,
+    storage: usage,
+  };
+}
+
+/** Los mismos numeros, acotados a un cliente. */
+export async function getClientOverview(clientId: string) {
+  const { rows, clientNames } = await loadRows(clientId);
 
   return {
     kpis: {
-      total,
-      launched,
-      unlaunched,
-      launchedPercent: total > 0 ? Math.round((launched / total) * 100) : 0,
-      monthSpend,
+      ...aggregate(rows),
+      monthSpend: await monthSpendFor(rows.map((row) => row.creative.id)),
     },
-    topByCpa,
-    topByCtr,
-    stale,
-    monthly: monthlyProduction(creatives.map((row) => row.created_at as string)),
-    storage: usage,
+    ...topsFrom(rows, clientNames),
+    stale: staleFrom(rows, clientNames, 10),
+    monthly: monthlyProduction(rows.map((row) => row.creative.created_at)),
   };
 }
 

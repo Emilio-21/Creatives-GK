@@ -175,6 +175,14 @@ widget de uso de R2.
 El widget de R2 lista el bucket y suma los tamaños. Sin él te enteras del límite de
 10 GB cuando falla un upload. Avisa a los 8 GB.
 
+Los mismos números existen **por cliente**: `/client/[id]` muestra su franja de KPIs
+(creativos, lanzados, sin lanzar, gasto, CTR, CPA) y, plegado, sus tops y su producción
+mensual. El resumen general trae además una tabla "Por cliente" para compararlos.
+
+CTR y CPA de un conjunto se calculan sumando los números base y dividiendo **una vez**,
+nunca promediando el CTR de cada creativo: un creativo con 100 impresiones pesaría igual
+que uno con un millón.
+
 ---
 
 ## Desarrollo

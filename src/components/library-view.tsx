@@ -22,6 +22,7 @@ export async function LibraryView({
   title,
   subtitle,
   headerExtra,
+  headingLevel = "h1",
 }: {
   basePath: string;
   clientId?: string;
@@ -29,6 +30,8 @@ export async function LibraryView({
   title: string;
   subtitle?: string;
   headerExtra?: React.ReactNode;
+  /** h2 cuando la pagina ya tiene su propio h1 encima. */
+  headingLevel?: "h1" | "h2";
 }) {
   const library = await getLibrary({
     clientId,
@@ -55,12 +58,15 @@ export async function LibraryView({
   };
 
   const uploadHref = clientId ? `/upload?client=${clientId}` : "/upload";
+  const Heading = headingLevel;
 
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <h1 className="truncate text-xl font-semibold">{title}</h1>
+          <Heading className={headingLevel === "h1" ? "truncate text-xl font-semibold" : "truncate text-base font-semibold"}>
+            {title}
+          </Heading>
           <p className="text-sm text-muted-foreground">
             {subtitle ??
               `${library.total} creativo${library.total === 1 ? "" : "s"}`}

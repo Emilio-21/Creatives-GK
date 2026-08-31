@@ -2,14 +2,24 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { ProductionChart } from "@/components/production-chart";
+import { StatsStrip } from "@/components/stats-strip";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   getDashboard,
   R2_LIMIT_BYTES,
   R2_WARN_BYTES,
+  type ClientBreakdown,
   type StaleEntry,
   type TopEntry,
 } from "@/lib/dashboard";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { formatMoney, formatPercent } from "@/lib/metrics";
 import { createClient, type Profile } from "@/lib/supabase/server";
 
@@ -37,25 +47,7 @@ export default async function DashboardPage() {
           </p>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <Kpi label="Creativos" value={String(data.kpis.total)} />
-          <Kpi
-            label="Lanzados"
-            value={`${data.kpis.launchedPercent}%`}
-            hint={`${data.kpis.launched} de ${data.kpis.total}`}
-          />
-          <Kpi
-            label="Sin lanzar"
-            value={String(data.kpis.unlaunched)}
-            hint="Inventario que nunca salió"
-            emphasis
-          />
-          <Kpi
-            label="Gasto del mes"
-            value={formatMoney(data.kpis.monthSpend)}
-            hint="Lanzamientos iniciados este mes"
-          />
-        </div>
+        <StatsStrip stats={data.kpis} monthSpend={data.kpis.monthSpend} />
 
         <div className="grid gap-4 lg:grid-cols-3">
           <Card className="lg:col-span-2">
@@ -70,6 +62,8 @@ export default async function DashboardPage() {
 
           <StorageCard usage={data.storage} />
         </div>
+
+        <ByClientCard entries={data.byClient} />
 
         <div className="grid gap-4 lg:grid-cols-2">
           <TopCard
@@ -92,23 +86,64 @@ export default async function DashboardPage() {
   );
 }
 
-function Kpi({
-  label,
-  value,
-  hint,
-  emphasis,
-}: {
-  label: string;
-  value: string;
-  hint?: string;
-  emphasis?: boolean;
-}) {
+function ByClientCard({ entries }: { entries: ClientBreakdown[] }) {
   return (
-    <Card className={emphasis ? "border-foreground/25" : undefined}>
-      <CardContent className="pt-6">
-        <p className="text-xs uppercase tracking-wide text-muted-foreground">{label}</p>
-        <p className="mt-1 text-3xl font-semibold tabular-nums">{value}</p>
-        {hint ? <p className="mt-1 text-xs text-muted-foreground">{hint}</p> : null}
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base">Por cliente</CardTitle>
+        <CardDescription>
+          Los mismos números, cliente por cliente. CTR y CPA salen de sumar los totales
+          de cada uno, no de promediar sus creativos.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        {entries.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Todavía no hay clientes con creativos.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Cliente</TableHead>
+                  <TableHead className="text-right">Creativos</TableHead>
+                  <TableHead className="text-right">Lanzados</TableHead>
+                  <TableHead className="text-right">Sin lanzar</TableHead>
+                  <TableHead className="text-right">Gasto</TableHead>
+                  <TableHead className="text-right">CTR</TableHead>
+                  <TableHead className="text-right">CPA</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {entries.map((entry) => (
+                  <TableRow key={entry.id}>
+                    <TableCell className="font-medium">
+                      <Link href={`/client/${entry.id}`} className="hover:underline">
+                        {entry.name}
+                      </Link>
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums">{entry.total}</TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {entry.launched}
+                      <span className="ml-1 text-xs text-muted-foreground">
+                        {entry.launchedPercent}%
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums">{entry.unlaunched}</TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {formatMoney(entry.totalSpend)}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {formatPercent(entry.ctr)}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {formatMoney(entry.cpa)}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
