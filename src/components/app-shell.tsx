@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { logout } from "@/app/login/actions";
 import { MobileNav } from "@/components/mobile-nav";
+import { MobileTabBar } from "@/components/mobile-tabbar";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { NewClientForm } from "@/components/new-client-form";
 import { Button } from "@/components/ui/button";
@@ -100,7 +101,7 @@ export async function AppShell({
           </div>
         </aside>
 
-        <main className="min-w-0 flex-1 space-y-4 p-4 sm:p-6">
+        <main className="min-w-0 flex-1 space-y-4 p-4 pb-20 sm:p-6 md:pb-6">
           <MobileNav
             clients={clients.map((client) => ({
               id: client.id,
@@ -113,6 +114,8 @@ export async function AppShell({
           {children}
         </main>
       </div>
+
+      <MobileTabBar />
     </div>
   );
 }

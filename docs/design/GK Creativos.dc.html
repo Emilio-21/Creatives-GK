@@ -19,7 +19,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 a{color:oklch(0.93 0.005 85);text-decoration:none}a:hover{color:oklch(0.8 0.128 85)}
 ::selection{background:oklch(0.8 0.128 85 / 0.35)}
 :focus-visible{outline:2px solid oklch(0.8 0.128 85 / 0.7);outline-offset:2px}
-input::placeholder{color:oklch(0.64 0.012 82 / 0.8)}
+input::placeholder,textarea::placeholder{color:oklch(0.64 0.012 82 / 0.8)}
 @keyframes gk-shimmer{0%,100%{opacity:.45}50%{opacity:.9}}
 @keyframes gk-pulse{0%,100%{opacity:1}50%{opacity:.35}}
 </style>
@@ -27,6 +27,27 @@ input::placeholder{color:oklch(0.64 0.012 82 / 0.8)}
 <div data-theme="{{ tema }}" style="position:relative;height:100vh;display:flex;flex-direction:column;background:var(--background);color:var(--foreground);font-family:'Geist',system-ui,sans-serif;font-size:13.5px;line-height:1.45;overflow:hidden">
 <div style="position:absolute;inset:0;pointer-events:none;background:radial-gradient(900px 480px at 78% -12%, oklch(0.8 0.128 85 / 0.06), transparent 62%), radial-gradient(700px 520px at -8% 95%, oklch(0.9 0.01 85 / 0.03), transparent 60%)"></div>
 
+<sc-if value="{{ isLogin }}" hint-placeholder-val="{{ false }}">
+  <div data-screen-label="Login" style="position:relative;flex:1;display:grid;place-items:center;padding:24px">
+    <div style="width:360px;max-width:100%;border-radius:20px;padding:28px;background:var(--glass);backdrop-filter:blur(20px) saturate(1.4);-webkit-backdrop-filter:blur(20px) saturate(1.4);border:1px solid var(--glass-border);box-shadow:0 24px 64px oklch(0 0 0 / 0.35), inset 0 1px 0 var(--glass-hi)">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="width:40px;height:40px;border-radius:12px;background:var(--primary);color:var(--primary-foreground);display:grid;place-items:center;font-weight:700;font-size:16px;letter-spacing:-0.02em">GK</div>
+        <div>
+          <p style="margin:0;font-weight:600;font-size:16px;letter-spacing:-0.01em">Creativos</p>
+          <p style="margin:0;font-size:12px;color:var(--muted-foreground)">Inventario y control de producción</p>
+        </div>
+      </div>
+      <div style="margin-top:24px;display:flex;flex-direction:column;gap:12px">
+        <div><p style="margin:0 0 5px;font-size:11.5px;font-weight:600;color:var(--muted-foreground)">Correo</p><input placeholder="tu@agencia.mx" style="width:100%;box-sizing:border-box;background:var(--card);border:1px solid var(--input);border-radius:10px;padding:9px 12px;font-size:13.5px;outline:none"></div>
+        <div><p style="margin:0 0 5px;font-size:11.5px;font-weight:600;color:var(--muted-foreground)">Contraseña</p><input type="password" placeholder="••••••••" style="width:100%;box-sizing:border-box;background:var(--card);border:1px solid var(--input);border-radius:10px;padding:9px 12px;font-size:13.5px;outline:none"></div>
+        <button onClick="{{ entrar }}" style="margin-top:6px;width:100%;background:var(--primary);color:var(--primary-foreground);border:none;border-radius:11px;padding:10px;font-size:13.5px;font-weight:600;cursor:pointer" style-hover="filter:brightness(1.07)">Entrar</button>
+      </div>
+      <p style="margin:16px 0 0;font-family:'Geist Mono',monospace;font-size:10.5px;color:var(--muted-foreground)">Acceso por invitación · pide alta a un admin</p>
+    </div>
+  </div>
+</sc-if>
+
+<sc-if value="{{ notLogin }}" hint-placeholder-val="{{ true }}">
 <header style="position:relative;z-index:30;display:flex;align-items:center;gap:16px;height:54px;flex:none;padding:0 20px;background:var(--glass);backdrop-filter:blur(18px) saturate(1.4);-webkit-backdrop-filter:blur(18px) saturate(1.4);border-bottom:1px solid var(--glass-border);box-shadow:inset 0 1px 0 var(--glass-hi)">
   <div onClick="{{ goTodos }}" style="display:flex;align-items:center;gap:10px;cursor:pointer">
     <div style="width:26px;height:26px;border-radius:8px;background:var(--primary);color:var(--primary-foreground);display:grid;place-items:center;font-weight:700;font-size:11.5px;letter-spacing:-0.02em">GK</div>
@@ -34,7 +55,8 @@ input::placeholder{color:oklch(0.64 0.012 82 / 0.8)}
   </div>
   <div style="margin-left:auto;display:flex;align-items:center;gap:12px">
     <span style="font-size:12.5px;color:var(--muted-foreground)">Emilio · admin</span>
-    <button style="background:transparent;border:1px solid var(--input);border-radius:9px;padding:5px 12px;font-size:12.5px;font-weight:500;cursor:pointer" style-hover="background:var(--accent)">Salir</button>
+    <button onClick="{{ toggleTema }}" title="Cambiar tema" style="background:transparent;border:1px solid var(--input);border-radius:9px;padding:5px 12px;font-size:12px;cursor:pointer;color:var(--muted-foreground)" style-hover="background:var(--accent);color:var(--foreground)">{{ temaLabel }}</button>
+    <button onClick="{{ salir }}" style="background:transparent;border:1px solid var(--input);border-radius:9px;padding:5px 12px;font-size:12.5px;font-weight:500;cursor:pointer" style-hover="background:var(--accent)">Salir</button>
   </div>
 </header>
 
@@ -68,10 +90,37 @@ input::placeholder{color:oklch(0.64 0.012 82 / 0.8)}
             <sc-for list="{{ kpis }}" as="k" hint-placeholder-count="6">
               <div style="min-width:0;border-radius:13px;padding:12px 14px;background:{{ k.bg }};border:1px solid {{ k.bd }}">
                 <p style="margin:0;font-size:10.5px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--muted-foreground)">{{ k.l }}</p>
-                <p style="margin:3px 0 0;font-size:20px;font-weight:600;font-variant-numeric:tabular-nums;letter-spacing:-0.02em;color:{{ k.vc }}">{{ k.v }}</p>
+                <p style="margin:3px 0 0;font-size:20px;font-weight:600;font-variant-numeric:tabular-nums;letter-spacing:-0.02em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:{{ k.vc }}">{{ k.v }}</p>
                 <p style="margin:2px 0 0;min-height:15px;font-size:11px;color:var(--muted-foreground)">{{ k.h }}</p>
               </div>
             </sc-for>
+          </div>
+          <div style="display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr) minmax(0,1fr);gap:10px">
+            <div style="border-radius:13px;border:1px solid var(--border);background:var(--card);padding:12px 14px">
+              <p style="margin:0 0 8px;font-size:10.5px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--muted-foreground)">Top del cliente · mejor CPA</p>
+              <div style="display:flex;flex-direction:column;gap:5px">
+                <sc-for list="{{ cliTops }}" as="t" hint-placeholder-count="3">
+                  <div style="display:flex;align-items:baseline;gap:8px;font-size:12px"><span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500">{{ t.n }}</span><span style="margin-left:auto;font-variant-numeric:tabular-nums;font-weight:600;flex:none">{{ t.v }}</span></div>
+                </sc-for>
+              </div>
+            </div>
+            <div style="border-radius:13px;border:1px solid var(--border);background:var(--card);padding:12px 14px">
+              <p style="margin:0 0 8px;font-size:10.5px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--muted-foreground)">Producción · 12 meses</p>
+              <div style="display:flex;gap:3px;align-items:flex-end;height:52px">
+                <sc-for list="{{ miniMonths }}" as="m" hint-placeholder-count="12">
+                  <div style="flex:1;height:{{ m.h }}px;border-radius:3px 3px 1px 1px;background:{{ m.c }}"></div>
+                </sc-for>
+              </div>
+            </div>
+            <div style="border-radius:13px;border:1px solid color-mix(in oklch, var(--primary) 28%, transparent);background:color-mix(in oklch, var(--primary) 5%, var(--card));padding:12px 14px">
+              <p style="margin:0 0 4px;font-size:10.5px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--primary)">Sin movimiento +30 días</p>
+              <p style="margin:0;font-size:20px;font-weight:600;font-variant-numeric:tabular-nums;color:var(--primary)">{{ cliStaleCount }}</p>
+              <div style="margin-top:4px;display:flex;flex-direction:column;gap:2px">
+                <sc-for list="{{ cliStale }}" as="s" hint-placeholder-count="2">
+                  <span style="font-size:11.5px;color:var(--muted-foreground);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ s.n }} · {{ s.d }}</span>
+                </sc-for>
+              </div>
+            </div>
           </div>
         </sc-if>
 
@@ -191,39 +240,60 @@ input::placeholder{color:oklch(0.64 0.012 82 / 0.8)}
     </sc-if>
 
     <sc-if value="{{ isDet }}" hint-placeholder-val="{{ false }}">
-      <div data-screen-label="Detalle de creativo" style="display:flex;flex-direction:column;gap:16px;max-width:1180px">
-        <span onClick="{{ goBack }}" style="font-size:12.5px;color:var(--muted-foreground);cursor:pointer;width:fit-content" style-hover="color:var(--foreground)">← Volver a la biblioteca</span>
+      <div data-screen-label="Detalle de creativo" style="display:flex;flex-direction:column;gap:14px;max-width:1180px">
+        <div style="display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--muted-foreground)">
+          <span onClick="{{ goBack }}" style="cursor:pointer" style-hover="color:var(--foreground)">{{ detCl }}</span>
+          <span>/</span>
+          <span style="color:var(--foreground);font-weight:500;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ detName }}</span>
+        </div>
         <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
           <h1 style="margin:0;font-size:19px;font-weight:600;letter-spacing:-0.01em;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ detName }}</h1>
           <span style="display:inline-flex;align-items:center;gap:5px;padding:2.5px 9px;border-radius:999px;font-size:11px;font-weight:600;background:{{ detBBg }};color:{{ detBFg }};border:1px solid {{ detBBd }}"><span style="width:5px;height:5px;border-radius:50%;background:{{ detBDot }}"></span>{{ detBadge }}</span>
           <div style="margin-left:auto;display:flex;gap:8px">
+            <button onClick="{{ startEdit }}" style="background:transparent;border:1px solid var(--input);border-radius:10px;padding:7px 14px;font-size:12.5px;font-weight:500;cursor:pointer" style-hover="background:var(--accent)">Editar</button>
             <button style="background:transparent;border:1px solid var(--input);border-radius:10px;padding:7px 14px;font-size:12.5px;font-weight:500;cursor:pointer" style-hover="background:var(--accent)">Archivar</button>
             <button style="background:var(--primary);color:var(--primary-foreground);border:none;border-radius:10px;padding:7px 16px;font-size:12.5px;font-weight:600;cursor:pointer" style-hover="filter:brightness(1.07)">Descargar</button>
           </div>
         </div>
 
-        <div style="display:grid;grid-template-columns:minmax(0,420px) 1fr;gap:18px;align-items:start">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:16px;align-items:start">
           <div style="display:flex;flex-direction:column;gap:14px">
             <div style="border-radius:16px;overflow:hidden;border:1px solid var(--border);background:var(--card)">
-              <div style="aspect-ratio:4/5;position:relative;background:{{ detThumb }}">
-                <sc-if value="{{ detNoPoster }}" hint-placeholder-val="{{ false }}">
-                  <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:var(--thumb)">
-                    <div style="width:52px;height:52px;border-radius:50%;border:1.5px solid var(--input);display:grid;place-items:center"><div style="width:0;height:0;border-top:8px solid transparent;border-bottom:8px solid transparent;border-left:12px solid var(--muted-foreground);margin-left:3px"></div></div>
-                    <span style="font-family:'Geist Mono',monospace;font-size:10.5px;color:var(--muted-foreground);letter-spacing:0.05em">SIN PÓSTER · CODEC NO SOPORTADO</span>
-                    <span style="font-size:11.5px;color:var(--muted-foreground)">El video se reproduce igual al descargarlo</span>
-                  </div>
-                </sc-if>
-                <sc-if value="{{ detPlay }}" hint-placeholder-val="{{ false }}">
-                  <div style="position:absolute;inset:0;display:grid;place-items:center">
-                    <div style="width:60px;height:60px;border-radius:50%;display:grid;place-items:center;cursor:pointer;background:oklch(0.1 0 0 / 0.4);border:1px solid oklch(1 0 0 / 0.25);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)" style-hover="background:oklch(0.1 0 0 / 0.6)"><div style="width:0;height:0;border-top:10px solid transparent;border-bottom:10px solid transparent;border-left:16px solid oklch(0.97 0 0);margin-left:4px"></div></div>
-                  </div>
-                </sc-if>
+              <div style="height:440px;display:grid;place-items:center;background:var(--thumb);padding:14px;box-sizing:border-box">
+                <div style="position:relative;height:100%;max-width:100%;aspect-ratio:{{ detAr }};border-radius:10px;overflow:hidden;background:{{ detThumb }}">
+                  <sc-if value="{{ detNoPoster }}" hint-placeholder-val="{{ false }}">
+                    <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px">
+                      <div style="width:52px;height:52px;border-radius:50%;border:1.5px solid var(--input);display:grid;place-items:center"><div style="width:0;height:0;border-top:8px solid transparent;border-bottom:8px solid transparent;border-left:12px solid var(--muted-foreground);margin-left:3px"></div></div>
+                      <span style="font-family:'Geist Mono',monospace;font-size:10.5px;color:var(--muted-foreground);letter-spacing:0.05em;text-align:center">SIN PÓSTER<br>CODEC NO SOPORTADO</span>
+                    </div>
+                  </sc-if>
+                  <sc-if value="{{ detPlay }}" hint-placeholder-val="{{ false }}">
+                    <div style="position:absolute;inset:0;display:grid;place-items:center">
+                      <div style="width:56px;height:56px;border-radius:50%;display:grid;place-items:center;cursor:pointer;background:oklch(0.1 0 0 / 0.4);border:1px solid oklch(1 0 0 / 0.25);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)" style-hover="background:oklch(0.1 0 0 / 0.6)"><div style="width:0;height:0;border-top:9px solid transparent;border-bottom:9px solid transparent;border-left:14px solid oklch(0.97 0 0);margin-left:4px"></div></div>
+                    </div>
+                    <div style="position:absolute;left:10px;right:10px;bottom:10px;display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:9px;background:oklch(0.1 0 0 / 0.45);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)">
+                      <div style="width:0;height:0;border-top:5px solid transparent;border-bottom:5px solid transparent;border-left:8px solid oklch(0.97 0 0)"></div>
+                      <div style="flex:1;height:3px;border-radius:999px;background:oklch(1 0 0 / 0.25)"><div style="width:30%;height:100%;border-radius:999px;background:oklch(0.97 0 0)"></div></div>
+                      <span style="font-family:'Geist Mono',monospace;font-size:10px;color:oklch(0.97 0 0)">0:06 / {{ detDur }}</span>
+                    </div>
+                  </sc-if>
+                </div>
               </div>
               <div style="display:flex;align-items:center;gap:8px;padding:10px 14px;border-top:1px solid var(--border)">
-                <span style="font-family:'Geist Mono',monospace;font-size:11px;color:var(--muted-foreground)">{{ detFile }}</span>
-                <span style="margin-left:auto;font-family:'Geist Mono',monospace;font-size:10px;color:var(--muted-foreground);border:1px solid var(--border);border-radius:6px;padding:1.5px 6px">preload=none</span>
+                <span style="font-family:'Geist Mono',monospace;font-size:11px;color:var(--muted-foreground);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ detFile }}</span>
+                <span style="margin-left:auto;flex:none;font-family:'Geist Mono',monospace;font-size:10px;color:var(--muted-foreground);border:1px solid var(--border);border-radius:6px;padding:1.5px 6px">preload=none</span>
               </div>
             </div>
+
+            <div style="border-radius:16px;border:1px solid var(--border);background:var(--card);padding:14px 16px">
+              <p style="margin:0 0 8px;font-size:12px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted-foreground)">Archivo</p>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 14px;font-size:12px">
+                <sc-for list="{{ detFixed }}" as="fx" hint-placeholder-count="6">
+                  <div style="display:flex;gap:8px;min-width:0"><span style="color:var(--muted-foreground);flex:none;width:76px">{{ fx.l }}</span><span style="font-family:'Geist Mono',monospace;font-size:11px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ fx.v }}</span></div>
+                </sc-for>
+              </div>
+            </div>
+
             <div style="border-radius:16px;border:1px solid var(--border);background:var(--card);padding:14px 16px">
               <p style="margin:0 0 10px;font-size:12px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted-foreground)">Descargas</p>
               <sc-if value="{{ detHasDl }}" hint-placeholder-val="{{ true }}">
@@ -244,51 +314,75 @@ input::placeholder{color:oklch(0.64 0.012 82 / 0.8)}
           </div>
 
           <div style="display:flex;flex-direction:column;gap:14px;min-width:0">
-            <div style="border-radius:16px;border:1px solid var(--border);background:var(--card);padding:16px">
-              <p style="margin:0 0 12px;font-size:12px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted-foreground)">{{ detAcumTitle }}</p>
-              <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px 10px">
-                <sc-for list="{{ detAcum }}" as="a" hint-placeholder-count="8">
-                  <div><p style="margin:0;font-size:10.5px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted-foreground)">{{ a.l }}</p><p style="margin:3px 0 0;font-size:16px;font-weight:600;font-variant-numeric:tabular-nums;letter-spacing:-0.01em">{{ a.v }}</p></div>
+            <div style="border-radius:16px;border:1px solid {{ detAcumBd }};background:{{ detAcumBg }};padding:16px">
+              <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:12px;flex-wrap:wrap">
+                <p style="margin:0;font-size:12px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted-foreground)">Acumulado</p>
+                <span style="font-size:11.5px;color:{{ detBurnColor }};font-weight:500">{{ detBurn }}</span>
+              </div>
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:12px">
+                <sc-for list="{{ detBig }}" as="a" hint-placeholder-count="4">
+                  <div style="min-width:0"><p style="margin:0;font-size:10.5px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted-foreground)">{{ a.l }}</p><p style="margin:3px 0 0;font-size:19px;font-weight:600;font-variant-numeric:tabular-nums;letter-spacing:-0.02em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ a.v }}</p></div>
                 </sc-for>
               </div>
+              <p style="margin:12px 0 0;font-family:'Geist Mono',monospace;font-size:10.5px;color:var(--muted-foreground)">{{ detSecondary }}</p>
             </div>
 
             <div style="border-radius:16px;border:1px solid var(--border);background:var(--card);padding:16px">
-              <p style="margin:0 0 6px;font-size:12px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted-foreground)">Metadata</p>
-              <div style="display:flex;flex-direction:column">
-                <sc-for list="{{ detMeta }}" as="m" hint-placeholder-count="5">
-                  <div style="display:flex;align-items:center;gap:12px;padding:8px 0;border-top:1px solid var(--border);font-size:12.5px">
-                    <span style="width:88px;flex:none;color:var(--muted-foreground)">{{ m.l }}</span>
-                    <span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:text;border-bottom:1px dashed transparent" style-hover="border-bottom-color:var(--input)">{{ m.v }}</span>
-                    <span style="margin-left:auto;font-size:11px;color:var(--muted-foreground);opacity:0;cursor:pointer" style-hover="opacity:1">Editar</span>
+              <div style="display:flex;align-items:center;margin-bottom:6px">
+                <p style="margin:0;font-size:12px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted-foreground)">Metadata</p>
+                <sc-if value="{{ metaEdit }}" hint-placeholder-val="{{ false }}">
+                  <div style="margin-left:auto;display:flex;gap:6px">
+                    <button onClick="{{ cancelEdit }}" style="background:transparent;border:none;padding:4px 10px;font-size:11.5px;color:var(--muted-foreground);cursor:pointer;border-radius:8px" style-hover="color:var(--foreground)">Cancelar</button>
+                    <button onClick="{{ saveEdit }}" style="background:var(--primary);color:var(--primary-foreground);border:none;border-radius:8px;padding:4px 12px;font-size:11.5px;font-weight:600;cursor:pointer">Guardar</button>
                   </div>
-                </sc-for>
-                <div style="display:flex;align-items:center;gap:12px;padding:8px 0;border-top:1px solid var(--border);font-size:12.5px">
-                  <span style="width:88px;flex:none;color:var(--muted-foreground)">Tags</span>
-                  <div style="display:flex;gap:6px;flex-wrap:wrap">
-                    <sc-for list="{{ detTags }}" as="t" hint-placeholder-count="3">
-                      <span style="font-family:'Geist Mono',monospace;font-size:10.5px;color:var(--muted-foreground);border:1px solid var(--border);border-radius:6px;padding:2px 7px">{{ t.n }}</span>
-                    </sc-for>
-                    <span style="font-size:11px;color:var(--muted-foreground);cursor:pointer;padding:2px 4px" style-hover="color:var(--foreground)">+ añadir</span>
+                </sc-if>
+                <sc-if value="{{ metaRead }}" hint-placeholder-val="{{ true }}">
+                  <span onClick="{{ startEdit }}" style="margin-left:auto;font-size:11.5px;color:var(--muted-foreground);cursor:pointer" style-hover="color:var(--foreground)">Editar</span>
+                </sc-if>
+              </div>
+              <sc-if value="{{ metaRead }}" hint-placeholder-val="{{ true }}">
+                <div style="display:flex;flex-direction:column">
+                  <sc-for list="{{ detMeta }}" as="m" hint-placeholder-count="4">
+                    <div style="display:flex;align-items:baseline;gap:12px;padding:8px 0;border-top:1px solid var(--border);font-size:12.5px">
+                      <span style="width:80px;flex:none;color:var(--muted-foreground)">{{ m.l }}</span>
+                      <span style="min-width:0">{{ m.v }}</span>
+                    </div>
+                  </sc-for>
+                  <div style="display:flex;align-items:center;gap:12px;padding:8px 0;border-top:1px solid var(--border);font-size:12.5px">
+                    <span style="width:80px;flex:none;color:var(--muted-foreground)">Tags</span>
+                    <div style="display:flex;gap:6px;flex-wrap:wrap">
+                      <sc-for list="{{ detTags }}" as="t" hint-placeholder-count="3">
+                        <span style="font-family:'Geist Mono',monospace;font-size:10.5px;color:var(--muted-foreground);border:1px solid var(--border);border-radius:6px;padding:2px 7px">{{ t.n }}</span>
+                      </sc-for>
+                    </div>
                   </div>
                 </div>
-              </div>
+              </sc-if>
+              <sc-if value="{{ metaEdit }}" hint-placeholder-val="{{ false }}">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px">
+                  <div style="grid-column:1 / -1"><p style="margin:0 0 4px;font-size:11px;font-weight:600;color:var(--muted-foreground)">Nombre</p><input defaultValue="{{ detName }}" style="width:100%;box-sizing:border-box;background:var(--background);border:1px solid var(--input);border-radius:9px;padding:7px 10px;font-size:12.5px;outline:none"></div>
+                  <div style="grid-column:1 / -1"><p style="margin:0 0 4px;font-size:11px;font-weight:600;color:var(--muted-foreground)">Concepto</p><input defaultValue="{{ detConcepto }}" style="width:100%;box-sizing:border-box;background:var(--background);border:1px solid var(--input);border-radius:9px;padding:7px 10px;font-size:12.5px;outline:none"></div>
+                  <div><p style="margin:0 0 4px;font-size:11px;font-weight:600;color:var(--muted-foreground)">Formato</p><select defaultValue="reel" style="width:100%;background:var(--background);border:1px solid var(--input);border-radius:9px;padding:7px 10px;font-size:12.5px;cursor:pointer"><option value="reel">Reel 9:16</option><option value="feed">Feed 1:1</option><option value="feed45">Feed 4:5</option><option value="feed169">Feed 16:9</option><option value="historia">Historia 9:16</option><option value="carrusel">Carrusel 1:1</option></select></div>
+                  <div><p style="margin:0 0 4px;font-size:11px;font-weight:600;color:var(--muted-foreground)">Tags</p><input defaultValue="ugc, skincare, hook-directo" style="width:100%;box-sizing:border-box;background:var(--background);border:1px solid var(--input);border-radius:9px;padding:7px 10px;font-size:12.5px;outline:none"></div>
+                  <div style="grid-column:1 / -1"><p style="margin:0 0 4px;font-size:11px;font-weight:600;color:var(--muted-foreground)">Notas</p><textarea rows="2" defaultValue="{{ detNotas }}" style="width:100%;box-sizing:border-box;background:var(--background);border:1px solid var(--input);border-radius:9px;padding:7px 10px;font-size:12.5px;outline:none;resize:vertical;font-family:inherit"></textarea></div>
+                </div>
+              </sc-if>
             </div>
 
             <div style="border-radius:16px;border:1px solid var(--border);background:var(--card);padding:16px">
               <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
                 <p style="margin:0;font-size:12px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted-foreground)">Lanzamientos</p>
+                <span style="font-size:11.5px;color:var(--muted-foreground);font-variant-numeric:tabular-nums">{{ detLnCount }}</span>
                 <button onClick="{{ openModal }}" style="margin-left:auto;background:var(--primary);color:var(--primary-foreground);border:none;border-radius:9px;padding:6px 13px;font-size:12px;font-weight:600;cursor:pointer" style-hover="filter:brightness(1.07)">Registrar lanzamiento</button>
               </div>
               <sc-if value="{{ detHasLaunches }}" hint-placeholder-val="{{ true }}">
                 <table style="width:100%;border-collapse:collapse;font-size:12px">
                   <thead><tr style="text-align:left">
-                    <th style="padding:7px 4px;font-size:10px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--muted-foreground)">Campaña</th>
                     <th style="padding:7px 4px;font-size:10px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--muted-foreground)">Periodo</th>
+                    <th style="padding:7px 4px;font-size:10px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--muted-foreground)">Campaña · Ad set</th>
                     <th style="padding:7px 4px;text-align:right;font-size:10px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--muted-foreground)">Gasto</th>
                     <th style="padding:7px 4px;text-align:right;font-size:10px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--muted-foreground)">Impr.</th>
-                    <th style="padding:7px 4px;text-align:right;font-size:10px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--muted-foreground)">Clicks</th>
-                    <th style="padding:7px 4px;text-align:right;font-size:10px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--muted-foreground)">Result.</th>
+                    <th style="padding:7px 4px;text-align:right;font-size:10px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--muted-foreground)">Clics</th>
                     <th style="padding:7px 4px;text-align:right;font-size:10px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--muted-foreground)">CTR</th>
                     <th style="padding:7px 4px;text-align:right;font-size:10px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--muted-foreground)">CPA</th>
                     <th style="padding:7px 4px"></th>
@@ -296,12 +390,11 @@ input::placeholder{color:oklch(0.64 0.012 82 / 0.8)}
                   <tbody>
                     <sc-for list="{{ detLaunches }}" as="ln" hint-placeholder-count="3">
                       <tr style="border-top:1px solid var(--border)" style-hover="background:var(--accent)">
-                        <td style="padding:8px 4px;font-weight:500"><span style="display:inline-flex;align-items:center;gap:6px"><sc-if value="{{ ln.activa }}" hint-placeholder-val="{{ false }}"><span style="width:6px;height:6px;border-radius:50%;background:var(--primary);animation:gk-pulse 1.8s ease-in-out infinite"></span></sc-if>{{ ln.camp }}</span></td>
-                        <td style="padding:8px 4px;color:var(--muted-foreground);font-variant-numeric:tabular-nums">{{ ln.per }}</td>
+                        <td style="padding:8px 4px;font-variant-numeric:tabular-nums;white-space:nowrap"><span style="display:inline-flex;align-items:center;gap:6px"><sc-if value="{{ ln.activa }}" hint-placeholder-val="{{ false }}"><span style="width:6px;height:6px;border-radius:50%;background:var(--primary);animation:gk-pulse 1.8s ease-in-out infinite"></span></sc-if><span style="color:{{ ln.perC }}">{{ ln.per }}</span></span></td>
+                        <td style="padding:8px 4px;max-width:190px"><span style="display:block;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ ln.camp }}</span><span style="display:block;font-size:11px;color:var(--muted-foreground);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ ln.as }}</span></td>
                         <td style="padding:8px 4px;text-align:right;font-variant-numeric:tabular-nums">{{ ln.gasto }}</td>
                         <td style="padding:8px 4px;text-align:right;font-variant-numeric:tabular-nums">{{ ln.impr }}</td>
                         <td style="padding:8px 4px;text-align:right;font-variant-numeric:tabular-nums">{{ ln.clicks }}</td>
-                        <td style="padding:8px 4px;text-align:right;font-variant-numeric:tabular-nums">{{ ln.res }}</td>
                         <td style="padding:8px 4px;text-align:right;font-variant-numeric:tabular-nums">{{ ln.ctr }}</td>
                         <td style="padding:8px 4px;text-align:right;font-variant-numeric:tabular-nums">{{ ln.cpa }}</td>
                         <td style="padding:8px 4px;text-align:right;white-space:nowrap"><span style="font-size:11px;color:var(--muted-foreground);cursor:pointer;padding:2px 5px" style-hover="color:var(--foreground)">Editar</span><span style="font-size:11px;color:var(--muted-foreground);cursor:pointer;padding:2px 5px" style-hover="color:var(--destructive)">Borrar</span></td>
@@ -323,48 +416,68 @@ input::placeholder{color:oklch(0.64 0.012 82 / 0.8)}
     </sc-if>
 
     <sc-if value="{{ isSubir }}" hint-placeholder-val="{{ false }}">
-      <div data-screen-label="Subir creativos" style="display:flex;flex-direction:column;gap:16px;max-width:820px">
+      <div data-screen-label="Subir creativos" style="display:flex;flex-direction:column;gap:16px;max-width:860px">
         <div>
           <h1 style="margin:0;font-size:19px;font-weight:600;letter-spacing:-0.01em">Subir creativos</h1>
           <p style="margin:2px 0 0;font-size:12.5px;color:var(--muted-foreground)">Imágenes y videos para la biblioteca. El cliente aplica a todo el lote.</p>
         </div>
-        <div style="border:1.5px dashed var(--input);border-radius:16px;padding:44px 24px;display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;background:color-mix(in oklch, var(--card) 50%, transparent);cursor:pointer" style-hover="border-color:var(--ring)">
-          <p style="margin:0;font-size:14px;font-weight:600">Arrastra imágenes o videos aquí</p>
-          <p style="margin:0;font-size:12px;color:var(--muted-foreground)">o haz clic para elegir · hasta 500 MB por archivo</p>
-        </div>
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
-          <div><p style="margin:0 0 5px;font-size:11.5px;font-weight:600;color:var(--muted-foreground)">Cliente <span style="color:var(--primary)">*</span></p><select defaultValue="dermik" style="width:100%;background:var(--card);border:1px solid var(--input);border-radius:10px;padding:8px 10px;font-size:12.5px;cursor:pointer"><option value="dermik">Dermik</option><option value="plg">PLG Seguros</option><option value="vitalia">Vitalia Gym</option><option value="kuvo">Kuvo Café</option><option value="brava">Brava Inmobiliaria</option></select></div>
+          <div><p style="margin:0 0 5px;font-size:11.5px;font-weight:600;color:var(--muted-foreground)">Cliente <span style="color:var(--primary)">*</span></p><select defaultValue="kuvo" style="width:100%;background:var(--card);border:1px solid var(--input);border-radius:10px;padding:8px 10px;font-size:12.5px;cursor:pointer"><option value="dermik">Dermik</option><option value="plg">PLG Seguros</option><option value="vitalia">Vitalia Gym</option><option value="kuvo">Kuvo Café</option><option value="brava">Brava Inmobiliaria</option></select></div>
           <div><p style="margin:0 0 5px;font-size:11.5px;font-weight:600;color:var(--muted-foreground)">Formato <span style="font-weight:400">(opcional)</span></p><select defaultValue="reel" style="width:100%;background:var(--card);border:1px solid var(--input);border-radius:10px;padding:8px 10px;font-size:12.5px;cursor:pointer"><option value="reel">Reel 9:16</option><option value="feed">Feed 1:1</option><option value="historia">Historia 9:16</option><option value="carrusel">Carrusel 1:1</option></select></div>
           <div><p style="margin:0 0 5px;font-size:11.5px;font-weight:600;color:var(--muted-foreground)">Tags <span style="font-weight:400">(opcional)</span></p><input placeholder="ugc, promo…" style="width:100%;box-sizing:border-box;background:var(--card);border:1px solid var(--input);border-radius:10px;padding:8px 10px;font-size:12.5px;outline:none"></div>
         </div>
+        <div style="border:1.5px dashed var(--input);border-radius:16px;padding:40px 24px;display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;background:color-mix(in oklch, var(--card) 50%, transparent);cursor:pointer" style-hover="border-color:var(--ring)">
+          <p style="margin:0;font-size:14px;font-weight:600">Arrastra imágenes o videos aquí</p>
+          <p style="margin:0;font-size:12px;color:var(--muted-foreground)">o haz clic para elegir · hasta 500 MB por archivo</p>
+        </div>
         <div style="border-radius:16px;border:1px solid var(--border);background:var(--card)">
-          <div style="display:flex;align-items:center;padding:12px 16px;border-bottom:1px solid var(--border)">
-            <p style="margin:0;font-size:12px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted-foreground)">Cola · 3 archivos</p>
-            <span style="margin-left:auto;font-size:11.5px;color:var(--muted-foreground);font-variant-numeric:tabular-nums">1 completado · 1 en curso · 1 con error</span>
+          <div style="display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--border)">
+            <p style="margin:0;font-size:12px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted-foreground)">Cola · 5 archivos</p>
+            <span style="font-size:11.5px;color:var(--muted-foreground);font-variant-numeric:tabular-nums">1 completado · 1 subiendo · 1 listo · 1 leyendo · 1 con error</span>
+            <button style="margin-left:auto;background:var(--primary);color:var(--primary-foreground);border:none;border-radius:9px;padding:6px 13px;font-size:12px;font-weight:600;cursor:pointer" style-hover="filter:brightness(1.07)">Subir todo</button>
           </div>
-          <div style="padding:6px 16px 12px;display:flex;flex-direction:column">
+          <div style="padding:4px 16px 10px;display:flex;flex-direction:column">
+
+            <div style="display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--border)">
+              <div style="width:38px;height:38px;flex:none;border-radius:9px;background:var(--thumb);animation:gk-shimmer 1.6s ease-in-out infinite"></div>
+              <div style="flex:1;min-width:0;display:flex;align-items:baseline;gap:8px"><span style="font-size:12.5px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">kuvo-parallax-fachada.mp4</span><span style="font-size:11px;color:var(--muted-foreground);flex:none">48.1 MB</span></div>
+              <span style="flex:none;font-family:'Geist Mono',monospace;font-size:10.5px;color:var(--muted-foreground)">— · —</span>
+              <span style="flex:none;display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:var(--muted-foreground)"><span style="width:6px;height:6px;border-radius:50%;background:var(--muted-foreground);animation:gk-pulse 1.2s ease-in-out infinite"></span>Leyendo metadata…</span>
+            </div>
+
+            <div style="display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--border)">
+              <div style="width:38px;height:38px;flex:none;border-radius:9px;background:linear-gradient(135deg, oklch(0.5 0.05 160), oklch(0.3 0.03 180))"></div>
+              <div style="flex:1;min-width:0;display:flex;align-items:baseline;gap:8px"><span style="font-size:12.5px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">kuvo-menu-primavera.mov</span><span style="font-size:11px;color:var(--muted-foreground);flex:none">112.4 MB</span></div>
+              <span style="flex:none;font-family:'Geist Mono',monospace;font-size:10.5px;color:var(--muted-foreground)">1080×1920 · 0:14</span>
+              <span style="flex:none;font-size:11.5px;color:var(--muted-foreground)">Listo para subir</span>
+              <span style="flex:none;font-size:11px;color:var(--muted-foreground);cursor:pointer" style-hover="color:var(--foreground)">Quitar</span>
+            </div>
+
             <div style="display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--border)">
               <div style="width:38px;height:38px;flex:none;border-radius:9px;background:linear-gradient(135deg, oklch(0.55 0.08 40), oklch(0.35 0.05 20))"></div>
               <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:5px">
-                <div style="display:flex;align-items:baseline;gap:8px"><span style="font-size:12.5px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">dermik-serum-vitc-hook1.mp4</span><span style="font-size:11px;color:var(--muted-foreground)">24.8 MB</span><span style="margin-left:auto;font-size:11.5px;font-variant-numeric:tabular-nums;color:var(--muted-foreground)">60%</span></div>
-                <div style="height:5px;border-radius:999px;background:color-mix(in oklch, var(--foreground) 10%, transparent);overflow:hidden"><div style="width:60%;height:100%;border-radius:999px;background:var(--primary)"></div></div>
+                <div style="display:flex;align-items:baseline;gap:8px"><span style="font-size:12.5px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">kuvo-barista-pov.mp4</span><span style="font-size:11px;color:var(--muted-foreground)">86.3 MB</span><span style="font-family:'Geist Mono',monospace;font-size:10.5px;color:var(--muted-foreground)">1080×1920 · 0:21</span><span style="margin-left:auto;font-size:11.5px;font-variant-numeric:tabular-nums;color:var(--muted-foreground)">62%</span></div>
+                <div style="height:5px;border-radius:999px;background:color-mix(in oklch, var(--foreground) 10%, transparent);overflow:hidden"><div style="width:62%;height:100%;border-radius:999px;background:var(--primary)"></div></div>
               </div>
-              <span style="font-size:11px;color:var(--muted-foreground);cursor:pointer" style-hover="color:var(--foreground)">Cancelar</span>
+              <span style="flex:none;font-size:11px;color:var(--muted-foreground);cursor:pointer" style-hover="color:var(--foreground)">Cancelar</span>
             </div>
+
             <div style="display:flex;flex-direction:column;gap:5px;padding:11px 0;border-bottom:1px solid var(--border)">
               <div style="display:flex;align-items:center;gap:12px">
-                <div style="width:38px;height:38px;flex:none;border-radius:9px;background:linear-gradient(135deg, oklch(0.5 0.05 160), oklch(0.3 0.03 180))"></div>
-                <div style="flex:1;min-width:0;display:flex;align-items:baseline;gap:8px"><span style="font-size:12.5px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">dermik-serum-vitc-hook2.mp4</span><span style="font-size:11px;color:var(--muted-foreground)">31.2 MB</span></div>
-                <span style="display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600;color:var(--foreground)"><span style="width:15px;height:15px;border-radius:50%;background:color-mix(in oklch, var(--foreground) 12%, transparent);display:grid;place-items:center;font-size:9px">✓</span>Completado</span>
+                <div style="width:38px;height:38px;flex:none;border-radius:9px;background:linear-gradient(135deg, oklch(0.45 0.06 250), oklch(0.28 0.04 270))"></div>
+                <div style="flex:1;min-width:0;display:flex;align-items:baseline;gap:8px"><span style="font-size:12.5px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">kuvo-latte-art-v2.mp4</span><span style="font-size:11px;color:var(--muted-foreground);flex:none">24.8 MB</span></div>
+                <span style="flex:none;font-family:'Geist Mono',monospace;font-size:10.5px;color:var(--muted-foreground)">1080×1920 · 0:08</span>
+                <span style="flex:none;display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600"><span style="width:15px;height:15px;border-radius:50%;background:color-mix(in oklch, var(--foreground) 12%, transparent);display:grid;place-items:center;font-size:9px">✓</span>Completado</span>
               </div>
               <div style="display:flex;align-items:center;gap:6px;margin-left:50px"><span style="width:5px;height:5px;border-radius:50%;background:var(--primary);flex:none"></span><span style="font-size:11.5px;color:var(--primary)">Ya existe un creativo con este nombre — se subirá igual</span></div>
             </div>
+
             <div style="display:flex;align-items:center;gap:12px;padding:11px 0">
               <div style="width:38px;height:38px;flex:none;border-radius:9px;background:var(--thumb);display:grid;place-items:center"><span style="font-family:'Geist Mono',monospace;font-size:9px;color:var(--muted-foreground)">PNG</span></div>
               <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:5px">
-                <div style="display:flex;align-items:baseline;gap:8px"><span style="font-size:12.5px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">dermik-packshot-alt.png</span><span style="font-size:11px;color:var(--muted-foreground)">4.1 MB</span></div>
+                <div style="display:flex;align-items:baseline;gap:8px"><span style="font-size:12.5px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">kuvo-packshot-tarde.png</span><span style="font-size:11px;color:var(--muted-foreground)">4.1 MB</span><span style="font-family:'Geist Mono',monospace;font-size:10.5px;color:var(--muted-foreground)">2048×2048 · —</span></div>
                 <sc-if value="{{ u3Failed }}" hint-placeholder-val="{{ true }}">
-                  <span style="font-size:11.5px;color:var(--destructive)">Error de red al subir</span>
+                  <span style="font-size:11.5px;color:var(--destructive)">Error de red al subir — el resto de la cola continúa</span>
                 </sc-if>
                 <sc-if value="{{ u3Retrying }}" hint-placeholder-val="{{ false }}">
                   <div style="height:5px;border-radius:999px;background:color-mix(in oklch, var(--foreground) 10%, transparent);overflow:hidden"><div style="width:45%;height:100%;border-radius:999px;background:var(--primary)"></div></div>
@@ -377,6 +490,7 @@ input::placeholder{color:oklch(0.64 0.012 82 / 0.8)}
                 <span style="font-size:11.5px;font-variant-numeric:tabular-nums;color:var(--muted-foreground)">45%</span>
               </sc-if>
             </div>
+
           </div>
         </div>
       </div>
@@ -405,7 +519,7 @@ input::placeholder{color:oklch(0.64 0.012 82 / 0.8)}
             <sc-for list="{{ kpisG }}" as="k" hint-placeholder-count="6">
               <div style="min-width:0;border-radius:13px;padding:12px 14px;background:{{ k.bg }};border:1px solid {{ k.bd }}">
                 <p style="margin:0;font-size:10.5px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--muted-foreground)">{{ k.l }}</p>
-                <p style="margin:3px 0 0;font-size:20px;font-weight:600;font-variant-numeric:tabular-nums;letter-spacing:-0.02em;color:{{ k.vc }}">{{ k.v }}</p>
+                <p style="margin:3px 0 0;font-size:20px;font-weight:600;font-variant-numeric:tabular-nums;letter-spacing:-0.02em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:{{ k.vc }}">{{ k.v }}</p>
                 <p style="margin:2px 0 0;min-height:15px;font-size:11px;color:var(--muted-foreground)">{{ k.h }}</p>
               </div>
             </sc-for>
@@ -524,7 +638,7 @@ input::placeholder{color:oklch(0.64 0.012 82 / 0.8)}
       <div data-screen-label="Vista móvil" style="display:flex;flex-direction:column;gap:16px">
         <div>
           <h1 style="margin:0;font-size:19px;font-weight:600;letter-spacing:-0.01em">Móvil</h1>
-          <p style="margin:2px 0 0;font-size:12.5px;color:var(--muted-foreground)">Biblioteca, selector de clientes (reemplaza el &lt;select&gt; actual) y detalle · 390 px</p>
+          <p style="margin:2px 0 0;font-size:12.5px;color:var(--muted-foreground)">Biblioteca, selector de clientes (reemplaza el &lt;select&gt; actual), detalle y subir · 390 px</p>
         </div>
         <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start">
 
@@ -607,7 +721,7 @@ input::placeholder{color:oklch(0.64 0.012 82 / 0.8)}
                   <div><p style="margin:0;font-size:9.5px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted-foreground)">Gasto</p><p style="margin:2px 0 0;font-size:15px;font-weight:600;font-variant-numeric:tabular-nums">$21,340.75</p></div>
                   <div><p style="margin:0;font-size:9.5px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted-foreground)">CPA</p><p style="margin:2px 0 0;font-size:15px;font-weight:600;font-variant-numeric:tabular-nums">$94.01</p></div>
                   <div><p style="margin:0;font-size:9.5px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted-foreground)">CTR</p><p style="margin:2px 0 0;font-size:15px;font-weight:600;font-variant-numeric:tabular-nums">3.08%</p></div>
-                  <div><p style="margin:0;font-size:9.5px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted-foreground)">Resultados</p><p style="margin:2px 0 0;font-size:15px;font-weight:600;font-variant-numeric:tabular-nums">227</p></div>
+                  <div><p style="margin:0;font-size:9.5px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted-foreground)">CPC</p><p style="margin:2px 0 0;font-size:15px;font-weight:600;font-variant-numeric:tabular-nums">$0.70</p></div>
                 </div>
               </div>
               <div style="border-radius:14px;border:1px solid var(--border);background:var(--card);padding:12px 14px;display:flex;flex-direction:column;gap:8px">
@@ -623,12 +737,53 @@ input::placeholder{color:oklch(0.64 0.012 82 / 0.8)}
             </div>
           </div>
 
+          <div data-screen-label="Móvil · Subir" style="width:390px;height:760px;flex:none;border-radius:28px;border:1px solid var(--border);background:var(--background);overflow:hidden;position:relative;display:flex;flex-direction:column">
+            <div style="flex:none;display:flex;align-items:center;gap:10px;padding:14px 16px 10px;background:var(--glass);backdrop-filter:blur(18px) saturate(1.4);-webkit-backdrop-filter:blur(18px) saturate(1.4);border-bottom:1px solid var(--glass-border)">
+              <span style="font-weight:600;font-size:14px">Subir creativos</span>
+            </div>
+            <div style="flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column;gap:12px;padding:14px 16px">
+              <div style="display:flex;gap:8px">
+                <div style="flex:1;background:var(--card);border:1px solid var(--input);border-radius:10px;padding:8px 10px;font-size:12px;display:flex;align-items:center;gap:6px"><span style="color:var(--muted-foreground)">Cliente</span><span style="font-weight:600">Kuvo Café</span><span style="margin-left:auto;color:var(--muted-foreground)">▾</span></div>
+                <div style="flex:1;background:var(--card);border:1px solid var(--input);border-radius:10px;padding:8px 10px;font-size:12px;display:flex;align-items:center;gap:6px"><span style="color:var(--muted-foreground)">Formato</span><span style="font-weight:600">Reel</span><span style="margin-left:auto;color:var(--muted-foreground)">▾</span></div>
+              </div>
+              <div style="border:1.5px dashed var(--input);border-radius:14px;padding:26px 16px;text-align:center">
+                <p style="margin:0;font-size:13px;font-weight:600">Toca para elegir archivos</p>
+                <p style="margin:2px 0 0;font-size:11.5px;color:var(--muted-foreground)">o comparte desde la galería</p>
+              </div>
+              <div style="border-radius:14px;border:1px solid var(--border);background:var(--card);padding:4px 14px;display:flex;flex-direction:column">
+                <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)">
+                  <div style="width:34px;height:34px;flex:none;border-radius:8px;background:linear-gradient(135deg, oklch(0.55 0.08 40), oklch(0.35 0.05 20))"></div>
+                  <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px">
+                    <div style="display:flex;align-items:baseline;gap:6px"><span style="font-size:12px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">kuvo-barista-pov.mp4</span><span style="margin-left:auto;font-size:10.5px;font-variant-numeric:tabular-nums;color:var(--muted-foreground)">62%</span></div>
+                    <div style="height:4px;border-radius:999px;background:color-mix(in oklch, var(--foreground) 10%, transparent);overflow:hidden"><div style="width:62%;height:100%;background:var(--primary)"></div></div>
+                  </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)">
+                  <div style="width:34px;height:34px;flex:none;border-radius:8px;background:linear-gradient(135deg, oklch(0.45 0.06 250), oklch(0.28 0.04 270))"></div>
+                  <span style="flex:1;min-width:0;font-size:12px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">kuvo-latte-art-v2.mp4</span>
+                  <span style="flex:none;font-size:11px;font-weight:600">✓</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:10px;padding:10px 0">
+                  <div style="width:34px;height:34px;flex:none;border-radius:8px;background:var(--thumb);display:grid;place-items:center"><span style="font-family:'Geist Mono',monospace;font-size:8px;color:var(--muted-foreground)">PNG</span></div>
+                  <div style="flex:1;min-width:0;display:flex;flex-direction:column"><span style="font-size:12px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">kuvo-packshot-tarde.png</span><span style="font-size:10.5px;color:var(--destructive)">Error de red</span></div>
+                  <span style="flex:none;font-size:11px;border:1px solid var(--input);border-radius:8px;padding:4px 9px">Reintentar</span>
+                </div>
+              </div>
+            </div>
+            <div style="flex:none;display:flex;padding:10px 16px 18px;background:var(--glass);backdrop-filter:blur(18px) saturate(1.4);-webkit-backdrop-filter:blur(18px) saturate(1.4);border-top:1px solid var(--glass-border)">
+              <div style="flex:1;text-align:center;font-size:11.5px;color:var(--muted-foreground)">Biblioteca</div>
+              <div style="flex:1;text-align:center;font-size:11.5px;color:var(--muted-foreground)">Resumen</div>
+              <div style="flex:1;text-align:center;font-size:11.5px;font-weight:600;color:var(--primary)">Subir</div>
+            </div>
+          </div>
+
         </div>
       </div>
     </sc-if>
 
   </main>
 </div>
+</sc-if>
 
 <sc-if value="{{ hasSel }}" hint-placeholder-val="{{ false }}">
   <div style="position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:40;display:flex;align-items:center;gap:12px;padding:9px 10px 9px 16px;border-radius:999px;background:var(--glass);backdrop-filter:blur(20px) saturate(1.4);-webkit-backdrop-filter:blur(20px) saturate(1.4);border:1px solid var(--glass-border);box-shadow:0 12px 32px oklch(0 0 0 / 0.35), inset 0 1px 0 var(--glass-hi);white-space:nowrap">
@@ -640,24 +795,35 @@ input::placeholder{color:oklch(0.64 0.012 82 / 0.8)}
 
 <sc-if value="{{ modal }}" hint-placeholder-val="{{ false }}">
   <div onClick="{{ closeModal }}" style="position:fixed;inset:0;z-index:50;display:grid;place-items:center;padding:20px;background:oklch(0.08 0.005 80 / 0.55);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)">
-    <div onClick="{{ stop }}" style="width:540px;max-width:100%;border-radius:18px;padding:20px;background:color-mix(in oklch, var(--popover) 90%, transparent);backdrop-filter:blur(24px) saturate(1.4);-webkit-backdrop-filter:blur(24px) saturate(1.4);border:1px solid var(--glass-border);box-shadow:0 24px 64px oklch(0 0 0 / 0.45), inset 0 1px 0 var(--glass-hi)">
+    <div onClick="{{ stop }}" style="width:600px;max-width:100%;max-height:calc(100vh - 60px);overflow-y:auto;border-radius:18px;padding:20px;box-sizing:border-box;background:color-mix(in oklch, var(--popover) 90%, transparent);backdrop-filter:blur(24px) saturate(1.4);-webkit-backdrop-filter:blur(24px) saturate(1.4);border:1px solid var(--glass-border);box-shadow:0 24px 64px oklch(0 0 0 / 0.45), inset 0 1px 0 var(--glass-hi)">
       <p style="margin:0;font-size:16px;font-weight:600;letter-spacing:-0.01em">Registrar lanzamiento</p>
-      <p style="margin:3px 0 16px;font-size:12.5px;color:var(--muted-foreground)">{{ detName }} · los derivados se calculan solos</p>
+      <p style="margin:3px 0 16px;font-size:12.5px;color:var(--muted-foreground)">{{ detName }}</p>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-        <div style="grid-column:1 / -1"><p style="margin:0 0 5px;font-size:11.5px;font-weight:600;color:var(--muted-foreground)">Campaña</p><input placeholder="DK-Prospección-Sep" style="width:100%;box-sizing:border-box;background:var(--card);border:1px solid var(--input);border-radius:10px;padding:8px 11px;font-size:13px;outline:none"></div>
-        <div><p style="margin:0 0 5px;font-size:11.5px;font-weight:600;color:var(--muted-foreground)">Inicio</p><input placeholder="01/09/2026" style="width:100%;box-sizing:border-box;background:var(--card);border:1px solid var(--input);border-radius:10px;padding:8px 11px;font-size:13px;outline:none;font-variant-numeric:tabular-nums"></div>
-        <div><p style="margin:0 0 5px;font-size:11.5px;font-weight:600;color:var(--muted-foreground)">Fin <span style="font-weight:400">(opcional)</span></p><input placeholder="—" style="width:100%;box-sizing:border-box;background:var(--card);border:1px solid var(--input);border-radius:10px;padding:8px 11px;font-size:13px;outline:none;font-variant-numeric:tabular-nums"></div>
+        <div><p style="margin:0 0 5px;font-size:11.5px;font-weight:600;color:var(--muted-foreground)">Fecha inicio <span style="color:var(--primary)">*</span></p><input placeholder="01/09/2026" style="width:100%;box-sizing:border-box;background:var(--card);border:1px solid var(--input);border-radius:10px;padding:8px 11px;font-size:13px;outline:none;font-variant-numeric:tabular-nums"></div>
+        <div><p style="margin:0 0 5px;font-size:11.5px;font-weight:600;color:var(--muted-foreground)">Fecha fin <span style="font-weight:400">(vacía = al aire)</span></p><input placeholder="—" style="width:100%;box-sizing:border-box;background:var(--card);border:1px solid var(--input);border-radius:10px;padding:8px 11px;font-size:13px;outline:none;font-variant-numeric:tabular-nums"></div>
+        <div><p style="margin:0 0 5px;font-size:11.5px;font-weight:600;color:var(--muted-foreground)">Campaña</p><input placeholder="DK-Prospección-Sep" style="width:100%;box-sizing:border-box;background:var(--card);border:1px solid var(--input);border-radius:10px;padding:8px 11px;font-size:13px;outline:none"></div>
+        <div><p style="margin:0 0 5px;font-size:11.5px;font-weight:600;color:var(--muted-foreground)">Ad set</p><input placeholder="AS-Lookalike-2%" style="width:100%;box-sizing:border-box;background:var(--card);border:1px solid var(--input);border-radius:10px;padding:8px 11px;font-size:13px;outline:none"></div>
+        <div><p style="margin:0 0 5px;font-size:11.5px;font-weight:600;color:var(--muted-foreground)">meta_ad_id</p><input placeholder="120211043761230589" style="width:100%;box-sizing:border-box;background:var(--card);border:1px solid var(--input);border-radius:10px;padding:8px 11px;font-size:12px;outline:none;font-family:'Geist Mono',monospace"></div>
+        <div><p style="margin:0 0 5px;font-size:11.5px;font-weight:600;color:var(--muted-foreground)">meta_adset_id</p><input placeholder="120211043761190588" style="width:100%;box-sizing:border-box;background:var(--card);border:1px solid var(--input);border-radius:10px;padding:8px 11px;font-size:12px;outline:none;font-family:'Geist Mono',monospace"></div>
+      </div>
+      <div style="margin-top:12px;display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
         <div><p style="margin:0 0 5px;font-size:11.5px;font-weight:600;color:var(--muted-foreground)">Gasto (MXN)</p><input value="{{ laSpend }}" onChange="{{ setLaSpend }}" inputMode="decimal" placeholder="0.00" style="width:100%;box-sizing:border-box;background:var(--card);border:1px solid var(--input);border-radius:10px;padding:8px 11px;font-size:13px;outline:none;font-variant-numeric:tabular-nums"></div>
         <div><p style="margin:0 0 5px;font-size:11.5px;font-weight:600;color:var(--muted-foreground)">Impresiones</p><input value="{{ laImpr }}" onChange="{{ setLaImpr }}" inputMode="numeric" placeholder="0" style="width:100%;box-sizing:border-box;background:var(--card);border:1px solid var(--input);border-radius:10px;padding:8px 11px;font-size:13px;outline:none;font-variant-numeric:tabular-nums"></div>
-        <div><p style="margin:0 0 5px;font-size:11.5px;font-weight:600;color:var(--muted-foreground)">Clicks</p><input value="{{ laClicks }}" onChange="{{ setLaClicks }}" inputMode="numeric" placeholder="0" style="width:100%;box-sizing:border-box;background:var(--card);border:1px solid var(--input);border-radius:10px;padding:8px 11px;font-size:13px;outline:none;font-variant-numeric:tabular-nums"></div>
+        <div><p style="margin:0 0 5px;font-size:11.5px;font-weight:600;color:var(--muted-foreground)">Alcance</p><input inputMode="numeric" placeholder="0" style="width:100%;box-sizing:border-box;background:var(--card);border:1px solid var(--input);border-radius:10px;padding:8px 11px;font-size:13px;outline:none;font-variant-numeric:tabular-nums"></div>
+        <div><p style="margin:0 0 5px;font-size:11.5px;font-weight:600;color:var(--muted-foreground)">Clics</p><input value="{{ laClicks }}" onChange="{{ setLaClicks }}" inputMode="numeric" placeholder="0" style="width:100%;box-sizing:border-box;background:var(--card);border:1px solid var(--input);border-radius:10px;padding:8px 11px;font-size:13px;outline:none;font-variant-numeric:tabular-nums"></div>
         <div><p style="margin:0 0 5px;font-size:11.5px;font-weight:600;color:var(--muted-foreground)">Resultados</p><input value="{{ laRes }}" onChange="{{ setLaRes }}" inputMode="numeric" placeholder="0" style="width:100%;box-sizing:border-box;background:var(--card);border:1px solid var(--input);border-radius:10px;padding:8px 11px;font-size:13px;outline:none;font-variant-numeric:tabular-nums"></div>
+        <div><p style="margin:0 0 5px;font-size:11.5px;font-weight:600;color:var(--muted-foreground)">Tipo de resultado</p><select defaultValue="compras" style="width:100%;background:var(--card);border:1px solid var(--input);border-radius:10px;padding:8px 10px;font-size:12.5px;cursor:pointer"><option value="compras">Compras</option><option value="leads">Leads</option><option value="mensajes">Mensajes</option><option value="registros">Registros</option></select></div>
       </div>
-      <div style="margin-top:14px;border-radius:12px;background:var(--card);border:1px solid var(--border);padding:12px 14px;display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
-        <div><p style="margin:0;font-family:'Geist Mono',monospace;font-size:9.5px;letter-spacing:0.08em;color:var(--muted-foreground)">CTR</p><p style="margin:2px 0 0;font-size:14px;font-weight:600;font-variant-numeric:tabular-nums;color:var(--muted-foreground)">{{ dCtr }}</p></div>
-        <div><p style="margin:0;font-family:'Geist Mono',monospace;font-size:9.5px;letter-spacing:0.08em;color:var(--muted-foreground)">CPM</p><p style="margin:2px 0 0;font-size:14px;font-weight:600;font-variant-numeric:tabular-nums;color:var(--muted-foreground)">{{ dCpm }}</p></div>
-        <div><p style="margin:0;font-family:'Geist Mono',monospace;font-size:9.5px;letter-spacing:0.08em;color:var(--muted-foreground)">CPC</p><p style="margin:2px 0 0;font-size:14px;font-weight:600;font-variant-numeric:tabular-nums;color:var(--muted-foreground)">{{ dCpc }}</p></div>
-        <div><p style="margin:0;font-family:'Geist Mono',monospace;font-size:9.5px;letter-spacing:0.08em;color:var(--muted-foreground)">CPA</p><p style="margin:2px 0 0;font-size:14px;font-weight:600;font-variant-numeric:tabular-nums;color:var(--muted-foreground)">{{ dCpa }}</p></div>
+      <div style="margin-top:14px;border-radius:12px;background:var(--card);border:1px solid var(--border);padding:12px 14px">
+        <p style="margin:0 0 8px;font-family:'Geist Mono',monospace;font-size:9.5px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted-foreground)">Calculado — esto no se captura</p>
+        <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px">
+          <div><p style="margin:0;font-family:'Geist Mono',monospace;font-size:9.5px;letter-spacing:0.08em;color:var(--muted-foreground)">CTR</p><p style="margin:2px 0 0;font-size:15px;font-weight:600;font-variant-numeric:tabular-nums;color:var(--muted-foreground)">{{ dCtr }}</p></div>
+          <div><p style="margin:0;font-family:'Geist Mono',monospace;font-size:9.5px;letter-spacing:0.08em;color:var(--muted-foreground)">CPM</p><p style="margin:2px 0 0;font-size:15px;font-weight:600;font-variant-numeric:tabular-nums;color:var(--muted-foreground)">{{ dCpm }}</p></div>
+          <div><p style="margin:0;font-family:'Geist Mono',monospace;font-size:9.5px;letter-spacing:0.08em;color:var(--muted-foreground)">CPC</p><p style="margin:2px 0 0;font-size:15px;font-weight:600;font-variant-numeric:tabular-nums;color:var(--muted-foreground)">{{ dCpc }}</p></div>
+          <div><p style="margin:0;font-family:'Geist Mono',monospace;font-size:9.5px;letter-spacing:0.08em;color:var(--muted-foreground)">CPA</p><p style="margin:2px 0 0;font-size:15px;font-weight:600;font-variant-numeric:tabular-nums;color:var(--muted-foreground)">{{ dCpa }}</p></div>
+        </div>
       </div>
+      <div style="margin-top:12px"><p style="margin:0 0 5px;font-size:11.5px;font-weight:600;color:var(--muted-foreground)">Notas</p><textarea rows="2" placeholder="Contexto del lanzamiento…" style="width:100%;box-sizing:border-box;background:var(--card);border:1px solid var(--input);border-radius:10px;padding:8px 11px;font-size:13px;outline:none;resize:vertical;font-family:inherit"></textarea></div>
       <div style="margin-top:16px;display:flex;justify-content:flex-end;gap:8px">
         <button onClick="{{ closeModal }}" style="background:transparent;border:none;border-radius:10px;padding:8px 14px;font-size:13px;font-weight:500;color:var(--muted-foreground);cursor:pointer" style-hover="color:var(--foreground)">Cancelar</button>
         <button onClick="{{ closeModal }}" style="background:var(--primary);color:var(--primary-foreground);border:none;border-radius:10px;padding:8px 18px;font-size:13px;font-weight:600;cursor:pointer" style-hover="filter:brightness(1.07)">Guardar lanzamiento</button>
@@ -669,14 +835,14 @@ input::placeholder{color:oklch(0.64 0.012 82 / 0.8)}
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;tema&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;dark&quot;,&quot;light&quot;],&quot;default&quot;:&quot;dark&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Tema&quot;},&quot;vacio&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Estados de la maqueta&quot;},&quot;cargando&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Estados de la maqueta&quot;},&quot;r2_alerta&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Estados de la maqueta&quot;}}">
 class Component extends DCLogic {
-  state = { view: 'todos', cid: null, det: null, from: null, mode: 'grid', sel: [], q: '', fSin: false, fArch: false, modal: false, la: { spend: '', impr: '', clicks: '', res: '' }, u3: 'fail' };
+  state = { view: 'todos', cid: null, det: null, from: null, mode: 'grid', sel: [], q: '', fSin: false, fArch: false, modal: false, la: { spend: '', impr: '', clicks: '', res: '' }, u3: 'fail', temaS: null, editMeta: false };
 
   CLIENTS = [
-    { id: 'plg', name: 'PLG Seguros', count: 24 },
-    { id: 'dermik', name: 'Dermik', count: 18 },
-    { id: 'vitalia', name: 'Vitalia Gym', count: 12 },
-    { id: 'kuvo', name: 'Kuvo Café', count: 7 },
-    { id: 'brava', name: 'Brava Inmobiliaria', count: 0 },
+    { id: 'plg', name: 'PLG Seguros', short: 'PLG', count: 24 },
+    { id: 'dermik', name: 'Dermik', short: 'Dermik', count: 18 },
+    { id: 'vitalia', name: 'Vitalia Gym', short: 'Vitalia', count: 12 },
+    { id: 'kuvo', name: 'Kuvo Café', short: 'Kuvo', count: 7 },
+    { id: 'brava', name: 'Brava Inmobiliaria', short: 'Brava', count: 0 },
   ];
 
   G = [
@@ -696,18 +862,18 @@ class Component extends DCLogic {
   };
 
   CREATIVES = [
-    { id: 'c4', n: 'kuvo-menu-otono-hevc', cid: 'kuvo', cl: 'Kuvo Café', tipo: 'video', dur: '0:12', fmt: 'Historia 9:16', est: 'sin', gasto: null, ctr: null, cpa: null, fecha: '27/08/26', g: 0, noPoster: true },
-    { id: 'c5', n: 'plg-estatico-cobertura-a', cid: 'plg', cl: 'PLG Seguros', tipo: 'img', dur: '', fmt: 'Feed 1:1', est: 'sin', gasto: null, ctr: null, cpa: null, fecha: '21/08/26', g: 1 },
-    { id: 'c6', n: 'dermik-antes-despues-04', cid: 'dermik', cl: 'Dermik', tipo: 'img', dur: '', fmt: 'Historia 9:16', est: 'sin', gasto: null, ctr: null, cpa: null, fecha: '19/08/26', g: 5 },
-    { id: 'c2', n: 'plg-remarketing-hook3-v2', cid: 'plg', cl: 'PLG Seguros', tipo: 'video', dur: '0:15', fmt: 'Reel 9:16', est: 'circ', gasto: 12480.5, ctr: 2.34, cpa: 118.4, fecha: '12/08/26', g: 1 },
-    { id: 'c11', n: 'vitalia-promo-anualidad', cid: 'vitalia', cl: 'Vitalia Gym', tipo: 'img', dur: '', fmt: 'Feed 1:1', est: 'sin', gasto: null, ctr: null, cpa: null, fecha: '08/08/26', g: 4 },
-    { id: 'c1', n: 'dermik-rutina-noche-ugc', cid: 'dermik', cl: 'Dermik', tipo: 'video', dur: '0:22', fmt: 'Reel 9:16', est: 'circ', gasto: 21340.75, ctr: 3.08, cpa: 94.01, fecha: '05/08/26', g: 2 },
-    { id: 'c3', n: 'vitalia-reto-30dias-v1', cid: 'vitalia', cl: 'Vitalia Gym', tipo: 'video', dur: '0:18', fmt: 'Reel 9:16', est: 'circ', gasto: 15220.3, ctr: 2.76, cpa: 88.9, fecha: '02/08/26', g: 3 },
-    { id: 'c7', n: 'vitalia-ugc-socia-karen', cid: 'vitalia', cl: 'Vitalia Gym', tipo: 'video', dur: '0:26', fmt: 'Reel 9:16', est: 'circ', gasto: 9875.4, ctr: 2.21, cpa: 130.75, fecha: '25/07/26', g: 5 },
-    { id: 'c8', n: 'kuvo-latte-art-loop', cid: 'kuvo', cl: 'Kuvo Café', tipo: 'video', dur: '0:08', fmt: 'Reel 9:16', est: 'fin', gasto: 3150, ctr: 4.05, cpa: 42.6, fecha: '30/06/26', g: 2 },
-    { id: 'c9', n: 'dermik-carrusel-acidos', cid: 'dermik', cl: 'Dermik', tipo: 'img', dur: '', fmt: 'Carrusel 1:1', est: 'fin', gasto: 6410, ctr: 1.42, cpa: 201.35, fecha: '18/06/26', g: 3 },
-    { id: 'c10', n: 'plg-testimonio-maria-01', cid: 'plg', cl: 'PLG Seguros', tipo: 'video', dur: '0:30', fmt: 'Feed 4:5', est: 'fin', gasto: 8920, ctr: 1.87, cpa: 156.2, fecha: '11/06/26', g: 4 },
-    { id: 'c12', n: 'plg-comparativa-planes', cid: 'plg', cl: 'PLG Seguros', tipo: 'img', dur: '', fmt: 'Feed 1:1', est: 'arch', gasto: 2100, ctr: 0.98, cpa: 310.4, fecha: '02/05/26', g: 0 },
+    { id: 'c4', n: 'kuvo-menu-otono-hevc', cid: 'kuvo', cl: 'Kuvo Café', tipo: 'video', dur: '0:12', fmt: 'Historia 9:16', ar: '9/16', est: 'sin', gasto: null, ctr: null, cpa: null, fecha: '27/08/26', g: 0, noPoster: true },
+    { id: 'c5', n: 'plg-estatico-cobertura-a', cid: 'plg', cl: 'PLG Seguros', tipo: 'img', dur: '', fmt: 'Feed 1:1', ar: '1/1', est: 'sin', gasto: null, ctr: null, cpa: null, fecha: '21/08/26', g: 1 },
+    { id: 'c6', n: 'dermik-antes-despues-04', cid: 'dermik', cl: 'Dermik', tipo: 'img', dur: '', fmt: 'Historia 9:16', ar: '9/16', est: 'sin', gasto: null, ctr: null, cpa: null, fecha: '19/08/26', g: 5 },
+    { id: 'c2', n: 'plg-remarketing-hook3-v2', cid: 'plg', cl: 'PLG Seguros', tipo: 'video', dur: '0:15', fmt: 'Reel 9:16', ar: '9/16', est: 'circ', gasto: 12480.5, ctr: 2.34, cpa: 118.4, fecha: '12/08/26', g: 1 },
+    { id: 'c11', n: 'vitalia-promo-anualidad', cid: 'vitalia', cl: 'Vitalia Gym', tipo: 'img', dur: '', fmt: 'Feed 1:1', ar: '1/1', est: 'sin', gasto: null, ctr: null, cpa: null, fecha: '08/08/26', g: 4 },
+    { id: 'c1', n: 'dermik-rutina-noche-ugc', cid: 'dermik', cl: 'Dermik', tipo: 'video', dur: '0:22', fmt: 'Reel 9:16', ar: '9/16', est: 'circ', gasto: 21340.75, ctr: 3.08, cpa: 94.01, fecha: '05/08/26', g: 2 },
+    { id: 'c3', n: 'vitalia-reto-30dias-v1', cid: 'vitalia', cl: 'Vitalia Gym', tipo: 'video', dur: '0:18', fmt: 'Reel 9:16', ar: '9/16', est: 'circ', gasto: 15220.3, ctr: 2.76, cpa: 88.9, fecha: '02/08/26', g: 3 },
+    { id: 'c7', n: 'vitalia-ugc-socia-karen', cid: 'vitalia', cl: 'Vitalia Gym', tipo: 'video', dur: '0:26', fmt: 'Reel 9:16', ar: '9/16', est: 'circ', gasto: 9875.4, ctr: 2.21, cpa: 130.75, fecha: '25/07/26', g: 5 },
+    { id: 'c8', n: 'kuvo-latte-art-loop', cid: 'kuvo', cl: 'Kuvo Café', tipo: 'video', dur: '0:08', fmt: 'Feed 16:9', ar: '16/9', est: 'fin', gasto: 3150, ctr: 4.05, cpa: 42.6, fecha: '30/06/26', g: 2 },
+    { id: 'c9', n: 'dermik-carrusel-acidos', cid: 'dermik', cl: 'Dermik', tipo: 'img', dur: '', fmt: 'Carrusel 1:1', ar: '1/1', est: 'fin', gasto: 6410, ctr: 1.42, cpa: 201.35, fecha: '18/06/26', g: 3 },
+    { id: 'c10', n: 'plg-testimonio-maria-01', cid: 'plg', cl: 'PLG Seguros', tipo: 'video', dur: '0:30', fmt: 'Feed 4:5', ar: '4/5', est: 'fin', gasto: 8920, ctr: 1.87, cpa: 156.2, fecha: '11/06/26', g: 4 },
+    { id: 'c12', n: 'plg-comparativa-planes', cid: 'plg', cl: 'PLG Seguros', tipo: 'img', dur: '', fmt: 'Feed 1:1', ar: '1/1', est: 'arch', gasto: 2100, ctr: 0.98, cpa: 310.4, fecha: '02/05/26', g: 0 },
   ];
 
   KPIS = {
@@ -743,13 +909,12 @@ class Component extends DCLogic {
 
   DETAIL = {
     launches: [
-      { camp: 'DK-Remarketing-Ago', per: '05 ago — activa', gasto: '$9,100.25', impr: '388,140', clicks: '11,905', res: '96', ctr: '3.07%', cpa: '$94.79', activa: true },
-      { camp: 'DK-Prospección-Jul', per: '14 jul – 02 ago', gasto: '$8,240.50', impr: '412,300', clicks: '13,050', res: '92', ctr: '3.17%', cpa: '$89.57', activa: false },
-      { camp: 'DK-Test-Hooks', per: '20 jun – 03 jul', gasto: '$4,000.00', impr: '190,000', clicks: '5,510', res: '39', ctr: '2.90%', cpa: '$102.56', activa: false },
+      { camp: 'DK-Remarketing-Ago', as: 'AS-Lookalike-2%', per: '05 ago 26 → al aire', perC: 'var(--foreground)', gasto: '$9,100.25', impr: '388,140', clicks: '11,905', res: '96', ctr: '3.07%', cpa: '$94.79', activa: true },
+      { camp: 'DK-Prospección-Jul', as: 'AS-Intereses-Skincare', per: '14 jul → 02 ago 26', perC: 'var(--muted-foreground)', gasto: '$8,240.50', impr: '412,300', clicks: '13,050', res: '92', ctr: '3.17%', cpa: '$89.57', activa: false },
+      { camp: 'DK-Test-Hooks', as: 'AS-Broad-18-45', per: '20 jun → 03 jul 26', perC: 'var(--muted-foreground)', gasto: '$4,000.00', impr: '190,000', clicks: '5,510', res: '39', ctr: '2.90%', cpa: '$102.56', activa: false },
     ],
-    acum: [
-      { l: 'Gasto', v: '$21,340.75' }, { l: 'Impresiones', v: '990,440' }, { l: 'Clicks', v: '30,465' }, { l: 'Resultados', v: '227' },
-      { l: 'CTR', v: '3.08%' }, { l: 'CPM', v: '$21.55' }, { l: 'CPC', v: '$0.70' }, { l: 'CPA', v: '$94.01' },
+    big: [
+      { l: 'Gasto', v: '$21,340.75' }, { l: 'CTR', v: '3.08%' }, { l: 'CPC', v: '$0.70' }, { l: 'CPA', v: '$94.01' },
     ],
     dl: [
       { q: 'Emilio', t: 'zip · lote de 3', d: '28 ago 2026 · 14:12' },
@@ -802,9 +967,9 @@ class Component extends DCLogic {
   money(n) { return n === null || n === undefined || isNaN(n) ? '—' : '$' + n.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
   pct(n) { return n === null || n === undefined || isNaN(n) ? '—' : n.toFixed(2) + '%'; }
 
-  go(view, cid) { this.setState({ view, cid: cid || null, sel: [], q: '', fSin: false, fArch: false }); }
+  go(view, cid) { this.setState({ view, cid: cid || null, sel: [], q: '', fSin: false, fArch: false, editMeta: false, modal: false }); }
 
-  openDet(c) { this.setState({ det: c, from: { view: this.state.view, cid: this.state.cid }, view: 'det' }); }
+  openDet(c) { this.setState({ det: c, from: { view: this.state.view, cid: this.state.cid }, view: 'det', editMeta: false }); }
 
   toggleSel(id) {
     this.setState((s) => ({ sel: s.sel.includes(id) ? s.sel.filter((x) => x !== id) : s.sel.concat(id) }));
@@ -812,10 +977,11 @@ class Component extends DCLogic {
 
   renderVals() {
     const s = this.state;
-    const tema = this.props.tema ?? 'dark';
+    const tema = s.temaS || this.props.tema || 'dark';
     const vacio = this.props.vacio ?? false;
     const cargando = this.props.cargando ?? false;
     const r2Alert = this.props.r2_alerta ?? false;
+    const isLogin = s.view === 'login';
     const isLib = s.view === 'todos' || s.view === 'cliente';
     const cid = s.view === 'cliente' ? s.cid : null;
     const client = cid ? this.CLIENTS.find((c) => c.id === cid) : null;
@@ -862,7 +1028,7 @@ class Component extends DCLogic {
     const det = s.det || this.CREATIVES[5];
     const detE = this.EST[det.est];
     const detLaunched = det.est === 'circ' || det.est === 'fin';
-    const dashes = this.DETAIL.acum.map((a) => ({ l: a.l, v: '—' }));
+    const dashes = this.DETAIL.big.map((a) => ({ l: a.l, v: '—' }));
 
     const la = s.la;
     const f = (x) => parseFloat(String(x).replace(/,/g, ''));
@@ -882,6 +1048,12 @@ class Component extends DCLogic {
 
     const r2Used = r2Alert ? '8.6 GB' : '4.2 GB';
     const months = this.MONTHS.map((m, i) => ({ ...m, n: String(m.c), h: m.c * 11, c: i === 11 ? 'var(--chart-1)' : 'color-mix(in oklch, var(--foreground) 16%, transparent)' }));
+    const miniMonths = this.MONTHS.map((m, i) => ({ h: Math.max(4, m.c * 5), c: i === 11 ? 'var(--chart-1)' : 'color-mix(in oklch, var(--foreground) 16%, transparent)' }));
+
+    const short = client ? client.short : '';
+    const cliTops = client ? this.TOP_CPA.filter((t) => t.cl === short).slice(0, 3) : [];
+    const cliStale = client ? this.STALE.filter((x) => x.cl === client.name).slice(0, 2) : [];
+    const staleCounts = { plg: 3, dermik: 1, vitalia: 2, kuvo: 3 };
 
     const byClient = [
       { n: 'PLG Seguros', t: '24', ln: '15', s: '9', g: '$98,410.20', ctr: '2.18%', cpa: '$124.60', id: 'plg' },
@@ -899,16 +1071,23 @@ class Component extends DCLogic {
 
     return {
       tema, cargando,
+      isLogin, notLogin: !isLogin,
+      entrar: () => this.go('todos'),
+      salir: () => this.go('login'),
+      toggleTema: () => this.setState({ temaS: tema === 'dark' ? 'light' : 'dark' }),
+      temaLabel: tema === 'dark' ? 'Claro' : 'Oscuro',
       isLib, isDet: s.view === 'det', isSubir: s.view === 'subir', isDash: s.view === 'resumen', isMovil: s.view === 'movil',
       dashReady: !cargando,
       navItems, clientItems,
       goTodos: () => this.go('todos'),
       goSubir: () => this.go('subir'),
       goMovil: () => this.go('movil'),
-      goBack: () => this.setState({ view: s.from ? s.from.view : 'todos', cid: s.from ? s.from.cid : null, det: null }),
+      goBack: () => this.setState({ view: s.from ? s.from.view : 'todos', cid: s.from ? s.from.cid : null, det: null, editMeta: false }),
       hasKpis: Boolean(cid && client && client.count > 0 && !cargando),
       kpis: cid && this.KPIS[cid] ? this.KPIS[cid].map(kpiStyle) : [],
       kpisG: this.KPIS.global.map(kpiStyle),
+      cliTops, cliStale,
+      cliStaleCount: client ? String(staleCounts[client.id] || 0) : '0',
       libTitle: client ? client.name : 'Todos los creativos',
       libSub: vacio ? '0 creativos' : client ? client.count + ' creativos' : '61 creativos · página 1 de 2',
       q: s.q, onSearch: (e) => this.setState({ q: e.target.value }),
@@ -930,20 +1109,39 @@ class Component extends DCLogic {
       selLabel: s.sel.length + ' seleccionado' + (s.sel.length === 1 ? '' : 's'),
       selBtn: s.sel.length === 1 ? 'Descargar' : 'Descargar zip',
       clearSel: () => this.setState({ sel: [] }),
-      detName: det.n,
+      detName: det.n, detCl: det.cl,
       detThumb: det.noPoster ? 'var(--thumb)' : this.G[det.g],
       detNoPoster: Boolean(det.noPoster),
       detPlay: det.tipo === 'video' && !det.noPoster,
+      detAr: det.ar || '1/1', detDur: det.dur || '0:00',
       detBadge: detE.label, detBBg: detE.bg, detBFg: detE.fg, detBBd: detE.bd, detBDot: detE.dot,
-      detFile: det.tipo === 'video' ? det.n + '.mp4 · 1080×1920 · 24.8 MB' : det.n + '.png · 1080×1080 · 2.1 MB',
-      detAcumTitle: detLaunched ? 'Acumulado · 3 lanzamientos' : 'Acumulado · sin lanzamientos',
-      detAcum: detLaunched ? this.DETAIL.acum : dashes,
+      detFile: det.tipo === 'video' ? det.n + '.mp4' : det.n + '.png',
+      detFixed: [
+        { l: 'Original', v: det.tipo === 'video' ? det.n + '.mp4' : det.n + '.png' },
+        { l: 'Tipo', v: det.tipo === 'video' ? 'video/mp4 · H.264' : 'image/png' },
+        { l: 'Peso', v: det.tipo === 'video' ? '24.8 MB' : '2.1 MB' },
+        { l: 'Dimensiones', v: det.ar === '16/9' ? '1920×1080' : det.ar === '1/1' ? '1080×1080' : det.ar === '4/5' ? '1080×1350' : '1080×1920' },
+        { l: 'Duración', v: det.dur || '—' },
+        { l: 'Subido', v: det.fecha + ' · Emilio' },
+      ],
+      detBig: detLaunched ? this.DETAIL.big : dashes,
+      detAcumBd: detLaunched ? 'var(--border)' : 'color-mix(in oklch, var(--primary) 28%, transparent)',
+      detAcumBg: detLaunched ? 'var(--card)' : 'color-mix(in oklch, var(--primary) 5%, var(--card))',
+      detBurn: detLaunched ? '3 lanzamientos · 47 días al aire · uno activo ahora' : 'Nunca lanzado · en inventario desde ' + det.fecha,
+      detBurnColor: detLaunched ? 'var(--muted-foreground)' : 'var(--primary)',
+      detSecondary: detLaunched ? 'Impresiones 990,440 · Clics 30,465 · Resultados 227 · CPM $21.55' : 'Sin números todavía — se llenan con el primer lanzamiento',
+      detLnCount: detLaunched ? '3' : '0',
+      detConcepto: detLaunched ? 'Rutina de noche narrada por creadora, hook directo a cámara' : '—',
+      detNotas: detLaunched ? 'Funciona mejor en remarketing que en prospección.' : '',
+      metaRead: !s.editMeta, metaEdit: s.editMeta,
+      startEdit: () => this.setState({ editMeta: true }),
+      cancelEdit: () => this.setState({ editMeta: false }),
+      saveEdit: () => this.setState({ editMeta: false }),
       detMeta: [
         { l: 'Nombre', v: det.n },
-        { l: 'Cliente', v: det.cl },
+        { l: 'Concepto', v: detLaunched ? 'Rutina de noche narrada por creadora, hook directo a cámara' : '—' },
         { l: 'Formato', v: det.fmt },
-        { l: 'Subido', v: det.fecha + ' · Emilio' },
-        { l: 'Archivo', v: det.tipo === 'video' ? 'MP4 · H.264 · 24.8 MB' : 'PNG · 2.1 MB' },
+        { l: 'Notas', v: detLaunched ? 'Funciona mejor en remarketing que en prospección.' : '—' },
       ],
       detTags: detLaunched ? [{ n: 'ugc' }, { n: 'skincare' }, { n: 'hook-directo' }] : [{ n: 'pendiente' }],
       detHasLaunches: detLaunched, detNoLaunches: !detLaunched,
@@ -958,7 +1156,7 @@ class Component extends DCLogic {
       dCtr, dCpm, dCpc, dCpa,
       u3Failed: s.u3 === 'fail', u3Retrying: s.u3 === 'retry',
       retry3: () => this.setState({ u3: 'retry' }),
-      months, byClient, topCpa: this.TOP_CPA, topCtr: this.TOP_CTR, stale: this.STALE,
+      months, miniMonths, byClient, topCpa: this.TOP_CPA, topCtr: this.TOP_CTR, stale: this.STALE,
       r2Used, r2Pct: r2Alert ? '86%' : '42%',
       r2Color: r2Alert ? 'var(--destructive)' : 'var(--primary)',
       r2Alert, r2Ok: !r2Alert, r2Left: '1.4',

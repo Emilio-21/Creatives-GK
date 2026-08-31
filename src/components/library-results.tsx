@@ -4,7 +4,6 @@ import { useState } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { CreativeCard } from "@/components/creative-card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -19,6 +18,21 @@ import { requestDownloads } from "@/app/creative/actions";
 import { downloadOne, downloadZip } from "@/lib/download";
 import { formatMoney, formatPercent, statusOf, STATUS_LABEL } from "@/lib/metrics";
 import type { CreativeCard as Card } from "@/lib/creatives";
+
+const STATUS_DOT: Record<ReturnType<typeof statusOf>, string> = {
+  "sin-lanzar": "bg-primary",
+  "en-circulacion": "bg-primary/60",
+  finalizado: "bg-muted-foreground/60",
+};
+
+function StatusPill({ status }: { status: ReturnType<typeof statusOf> }) {
+  return (
+    <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border px-2 py-0.5 text-xs text-muted-foreground">
+      <span className={`size-1.5 rounded-full ${STATUS_DOT[status]}`} />
+      {STATUS_LABEL[status]}
+    </span>
+  );
+}
 
 export function LibraryResults({
   cards,
@@ -99,13 +113,13 @@ export function LibraryResults({
                     aria-label="Seleccionar todos"
                   />
                 </TableHead>
-                <TableHead>Nombre</TableHead>
-                <TableHead>Estado</TableHead>
-                <TableHead>Formato</TableHead>
-                <TableHead className="text-right">Gasto</TableHead>
-                <TableHead className="text-right">CTR</TableHead>
-                <TableHead className="text-right">CPA</TableHead>
-                <TableHead className="text-right">Subido</TableHead>
+                <TableHead className="text-xs uppercase tracking-wider">Nombre</TableHead>
+                <TableHead className="text-xs uppercase tracking-wider">Estado</TableHead>
+                <TableHead className="text-xs uppercase tracking-wider">Formato</TableHead>
+                <TableHead className="text-right text-xs uppercase tracking-wider">Gasto</TableHead>
+                <TableHead className="text-right text-xs uppercase tracking-wider">CTR</TableHead>
+                <TableHead className="text-right text-xs uppercase tracking-wider">CPA</TableHead>
+                <TableHead className="text-right text-xs uppercase tracking-wider">Subido</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -124,13 +138,11 @@ export function LibraryResults({
                     </Link>
                   </TableCell>
                   <TableCell>
-                    <Badge
-                      variant={statusOf(card.stats) === "en-circulacion" ? "default" : "secondary"}
-                    >
-                      {STATUS_LABEL[statusOf(card.stats)]}
-                    </Badge>
+                    <StatusPill status={statusOf(card.stats)} />
                   </TableCell>
-                  <TableCell>{card.format ?? "—"}</TableCell>
+                  <TableCell className="font-mono text-xs text-muted-foreground">
+                    {card.format ?? "—"}
+                  </TableCell>
                   <TableCell className="text-right tabular-nums">
                     {formatMoney(card.stats?.total_spend ?? null)}
                   </TableCell>

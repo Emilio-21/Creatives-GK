@@ -1,12 +1,13 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 type Option = { id: string; name: string; count: number };
 
 /**
- * En movil el sidebar no cabe: la navegacion por cliente se vuelve un select
- * que navega al elegir.
+ * En movil el sidebar no cabe. En vez de un <select>, una fila de chips que se
+ * desplaza: se ve a que cliente estas entrando y cuantos creativos tiene sin
+ * abrir nada.
  */
 export function MobileNav({
   clients,
@@ -17,28 +18,48 @@ export function MobileNav({
   activeClientId?: string | null;
   activeSection?: "biblioteca" | "dashboard";
 }) {
-  const router = useRouter();
-  const value =
-    activeSection === "dashboard" ? "/dashboard" : activeClientId ? `/client/${activeClientId}` : "/";
+  const total = clients.reduce((sum, client) => sum + client.count, 0);
+  const allActive = activeSection !== "dashboard" && !activeClientId;
 
   return (
-    <select
-      aria-label="Ir a"
-      value={value}
-      onChange={(event) => router.push(event.target.value)}
-      className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 md:hidden"
+    <div className="-mx-4 overflow-x-auto px-4 pb-1 md:hidden">
+      <div className="flex w-max gap-2">
+        <Chip href="/" active={allActive}>
+          Todos · {total}
+        </Chip>
+        {clients.map((client) => (
+          <Chip
+            key={client.id}
+            href={`/client/${client.id}`}
+            active={activeClientId === client.id}
+          >
+            {client.name} {client.count}
+          </Chip>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function Chip({
+  href,
+  active,
+  children,
+}: {
+  href: string;
+  active: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <Link
+      href={href}
+      className={`whitespace-nowrap rounded-full border px-3 py-1.5 text-sm transition-colors ${
+        active
+          ? "border-primary/40 bg-primary/15 font-medium text-primary"
+          : "text-muted-foreground"
+      }`}
     >
-      <option value="/">Todos los creativos</option>
-      <option value="/dashboard">Resumen</option>
-      {clients.length > 0 ? (
-        <optgroup label="Clientes">
-          {clients.map((client) => (
-            <option key={client.id} value={`/client/${client.id}`}>
-              {client.name} ({client.count})
-            </option>
-          ))}
-        </optgroup>
-      ) : null}
-    </select>
+      {children}
+    </Link>
   );
 }
