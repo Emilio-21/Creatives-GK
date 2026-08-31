@@ -112,14 +112,14 @@ async function main() {
   if (afterDelete.status === 404) ok("el objeto ya no existe (404)");
   else bad(`despues de borrar responde ${afterDelete.status}`);
 
-  console.log("\n6. CORS del bucket (preflight desde localhost:3000)");
+  const origin = process.env.CORS_ORIGIN ?? "http://localhost:3000";
+  console.log(`\n6. CORS del bucket (preflight desde ${origin})`);
   const preflightKey = `creatives/${randomUUID()}/cors-check.png`;
   const preflightUrl = await getSignedUrl(
     r2,
     new PutObjectCommand({ Bucket: BUCKET, Key: preflightKey, ContentType: "image/png" }),
     { expiresIn: 300 },
   );
-  const origin = process.env.CORS_ORIGIN ?? "http://localhost:3000";
   const preflight = await fetch(preflightUrl, {
     method: "OPTIONS",
     headers: {
