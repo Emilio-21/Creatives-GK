@@ -1,7 +1,12 @@
 import Link from "next/link";
-import { Badge } from "@/components/ui/badge";
 import { statusOf, STATUS_LABEL } from "@/lib/metrics";
 import type { CreativeCard as Card } from "@/lib/creatives";
+
+const STATUS_DOT: Record<ReturnType<typeof statusOf>, string> = {
+  "sin-lanzar": "bg-primary",
+  "en-circulacion": "bg-primary/60",
+  finalizado: "bg-muted-foreground/60",
+};
 
 export function CreativeCard({ creative }: { creative: Card }) {
   const status = statusOf(creative.stats);
@@ -9,9 +14,9 @@ export function CreativeCard({ creative }: { creative: Card }) {
   return (
     <Link
       href={`/creative/${creative.id}`}
-      className="group overflow-hidden rounded-lg border transition-colors hover:border-foreground/30"
+      className="group overflow-hidden rounded-xl border bg-card transition-colors hover:border-primary/40"
     >
-      <div className="relative aspect-square bg-muted">
+      <div className="relative aspect-[4/5] bg-muted">
         {creative.previewUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -21,30 +26,60 @@ export function CreativeCard({ creative }: { creative: Card }) {
             className="h-full w-full object-cover"
           />
         ) : (
-          <div className="flex h-full items-center justify-center text-xs text-muted-foreground">
-            {creative.media_type === "video" ? "sin poster" : "sin preview"}
+          // Sin poster no es un error: hay codecs que el navegador no puede
+          // pintar en canvas. El placeholder tiene que verse intencional.
+          <div className="flex h-full flex-col items-center justify-center gap-3 text-muted-foreground">
+            <span className="flex size-10 items-center justify-center rounded-full border">
+              <PlayIcon />
+            </span>
+            <span className="font-mono text-[10px] uppercase tracking-widest">
+              sin póster
+              {creative.mime_type === "video/quicktime" ? " · mov" : ""}
+            </span>
           </div>
         )}
 
-        {creative.media_type === "video" ? (
-          <span className="absolute bottom-2 right-2 rounded bg-black/70 px-1.5 py-0.5 text-[10px] font-medium text-white">
-            {creative.duration_seconds ? `${Math.round(creative.duration_seconds)}s` : "video"}
+        {creative.media_type === "video" && creative.duration_seconds ? (
+          <span className="absolute bottom-2 right-2 rounded bg-black/70 px-1.5 py-0.5 font-mono text-[10px] text-white">
+            {formatDuration(creative.duration_seconds)}
           </span>
         ) : null}
       </div>
 
-      <div className="space-y-1.5 p-3">
+      <div className="space-y-2 p-3">
         <p className="truncate text-sm font-medium" title={creative.display_name}>
           {creative.display_name}
         </p>
         <div className="flex flex-wrap items-center gap-1.5">
-          <Badge variant={status === "en-circulacion" ? "default" : "secondary"}>
+          <span className="inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 text-[11px] text-muted-foreground">
+            <span className={`size-1.5 rounded-full ${STATUS_DOT[status]}`} />
             {STATUS_LABEL[status]}
-          </Badge>
-          {creative.format ? <Badge variant="outline">{creative.format}</Badge> : null}
-          {creative.archived_at ? <Badge variant="outline">Archivado</Badge> : null}
+          </span>
+          {creative.format ? (
+            <span className="rounded-md border px-2 py-0.5 font-mono text-[11px] text-muted-foreground">
+              {creative.format}
+            </span>
+          ) : null}
+          {creative.archived_at ? (
+            <span className="rounded-md border px-2 py-0.5 text-[11px] text-muted-foreground">
+              Archivado
+            </span>
+          ) : null}
         </div>
       </div>
     </Link>
   );
+}
+
+function PlayIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="size-4" aria-hidden="true">
+      <path d="M8 5.5v13l11-6.5z" fill="currentColor" />
+    </svg>
+  );
+}
+
+function formatDuration(seconds: number): string {
+  const total = Math.round(seconds);
+  return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, "0")}`;
 }

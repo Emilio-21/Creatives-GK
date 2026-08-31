@@ -72,7 +72,9 @@ export async function LibraryView({
           </Heading>
           <p className="text-sm text-muted-foreground">
             {subtitle ??
-              `${library.total} creativo${library.total === 1 ? "" : "s"}`}
+              `${library.total} creativo${library.total === 1 ? "" : "s"}${
+                library.pageCount > 1 ? ` · página ${library.page} de ${library.pageCount}` : ""
+              }`}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -127,12 +129,24 @@ export async function LibraryView({
           Archivados
         </Link>
 
-        <Link
-          href={linkTo({ view: params.view === "grid" ? "tabla" : undefined })}
-          className={`${buttonVariants({ variant: "ghost", size: "sm" })} ml-auto`}
-        >
-          {params.view === "grid" ? "Ver tabla" : "Ver grid"}
-        </Link>
+        <div className="ml-auto flex rounded-lg border p-0.5">
+          <Link
+            href={linkTo({ view: undefined })}
+            className={`rounded-md px-3 py-1 text-sm transition-colors ${
+              params.view === "grid" ? "bg-muted font-medium" : "text-muted-foreground"
+            }`}
+          >
+            Grid
+          </Link>
+          <Link
+            href={linkTo({ view: "tabla" })}
+            className={`rounded-md px-3 py-1 text-sm transition-colors ${
+              params.view === "tabla" ? "bg-muted font-medium" : "text-muted-foreground"
+            }`}
+          >
+            Tabla
+          </Link>
+        </div>
       </div>
 
       {library.cards.length === 0 ? (

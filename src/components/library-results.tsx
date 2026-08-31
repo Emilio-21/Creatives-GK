@@ -76,7 +76,7 @@ export function LibraryResults({
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4">
           {cards.map((card) => (
             <div key={card.id} className="relative">
-              <label className="absolute left-2 top-2 z-10 flex cursor-pointer items-center rounded bg-background/85 p-1 shadow-sm backdrop-blur-sm">
+              <label className="absolute left-2.5 top-2.5 z-10 flex cursor-pointer items-center rounded-md border border-white/15 bg-black/55 p-1 shadow-sm backdrop-blur-sm">
                 <Checkbox
                   checked={selected.has(card.id)}
                   onCheckedChange={() => toggle(card.id)}

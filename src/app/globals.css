@@ -49,6 +49,10 @@
 }
 
 :root {
+  /* shadcn mapea --font-sans en @theme, pero next/font define --font-geist-sans.
+     Sin este puente la app entera cae al serif por defecto del navegador. */
+  --font-sans: var(--font-geist-sans, ui-sans-serif), system-ui, sans-serif;
+
   --background: oklch(0.965 0.004 85);
   --foreground: oklch(0.22 0.008 80);
   --card: oklch(0.995 0.002 85);

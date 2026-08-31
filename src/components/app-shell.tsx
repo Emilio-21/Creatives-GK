@@ -33,7 +33,10 @@ export async function AppShell({
     <div className="min-h-svh">
       <header className="glass sticky top-0 z-30 border-b">
         <div className="flex h-14 items-center gap-4 px-4 sm:px-6">
-          <Link href="/" className="font-semibold">
+          <Link href="/" className="flex items-center gap-2 font-semibold">
+            <span className="flex size-7 items-center justify-center rounded-lg bg-primary font-mono text-xs text-primary-foreground">
+              GK
+            </span>
             Creativos
           </Link>
           <div className="ml-auto flex items-center gap-3 text-sm">
@@ -56,6 +59,7 @@ export async function AppShell({
           <nav className="space-y-1">
             <SidebarLink
               href="/"
+              count={clients.reduce((sum, client) => sum + client.creativeCount, 0)}
               active={
                 activeSection !== "dashboard" &&
                 (activeClientId === undefined || activeClientId === null)
