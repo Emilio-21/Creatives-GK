@@ -8,6 +8,7 @@ export type ViewParams = {
   q?: string;
   sort?: LibraryFilters["sort"];
   onlyUnlaunched: boolean;
+  onlyArchived: boolean;
   view: "grid" | "tabla";
   page: number;
 };
@@ -37,6 +38,7 @@ export async function LibraryView({
     clientId,
     q: params.q,
     onlyUnlaunched: params.onlyUnlaunched,
+    onlyArchived: params.onlyArchived,
     sort: params.sort,
     page: params.page,
   });
@@ -47,6 +49,7 @@ export async function LibraryView({
       q: params.q,
       sort: params.sort === "recientes" ? undefined : params.sort,
       sinLanzar: params.onlyUnlaunched ? "1" : undefined,
+      archivados: params.onlyArchived ? "1" : undefined,
       view: params.view === "tabla" ? "tabla" : undefined,
       page: params.page > 1 ? String(params.page) : undefined,
     };
@@ -83,6 +86,7 @@ export async function LibraryView({
       <div className="flex flex-wrap items-center gap-2">
         <form method="get" action={basePath} className="flex gap-2">
           {params.onlyUnlaunched ? <input type="hidden" name="sinLanzar" value="1" /> : null}
+          {params.onlyArchived ? <input type="hidden" name="archivados" value="1" /> : null}
           {params.view === "tabla" ? <input type="hidden" name="view" value="tabla" /> : null}
           <Input
             name="q"
@@ -114,6 +118,16 @@ export async function LibraryView({
         </Link>
 
         <Link
+          href={linkTo({ archivados: params.onlyArchived ? undefined : "1", page: undefined })}
+          className={buttonVariants({
+            variant: params.onlyArchived ? "default" : "outline",
+            size: "sm",
+          })}
+        >
+          Archivados
+        </Link>
+
+        <Link
           href={linkTo({ view: params.view === "grid" ? "tabla" : undefined })}
           className={`${buttonVariants({ variant: "ghost", size: "sm" })} ml-auto`}
         >
@@ -123,7 +137,7 @@ export async function LibraryView({
 
       {library.cards.length === 0 ? (
         <EmptyState
-          filtered={Boolean(params.q || params.onlyUnlaunched)}
+          filtered={Boolean(params.q || params.onlyUnlaunched || params.onlyArchived)}
           uploadHref={uploadHref}
         />
       ) : (
@@ -194,6 +208,7 @@ export function readViewParams(params: Record<string, string | string[] | undefi
       ? (sort as ViewParams["sort"])
       : "recientes",
     onlyUnlaunched: one("sinLanzar") === "1",
+    onlyArchived: one("archivados") === "1",
     view: one("view") === "tabla" ? "tabla" : "grid",
     page: Math.max(1, Number(one("page") ?? 1) || 1),
   };

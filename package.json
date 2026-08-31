@@ -10,7 +10,9 @@
     "check:setup": "tsx scripts/check-setup.ts",
     "typecheck": "tsc --noEmit",
     "test:storage": "tsx scripts/test-storage.ts",
-    "check:cors": "tsx scripts/check-cors.ts"
+    "check:cors": "tsx scripts/check-cors.ts",
+    "cleanup:orphans": "tsx scripts/cleanup-orphans.ts",
+    "backup:db": "./scripts/backup-db.sh"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1121.0",

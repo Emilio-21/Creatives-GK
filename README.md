@@ -19,7 +19,8 @@ Plan completo: `docs/plan.md`.
 | 4 | Descarga individual y en lote (zip) | código listo |
 | 5 | Lanzamientos, métricas derivadas, orden por performance | listo |
 | 6 | Dashboard resumen | listo |
-| 7 | Pulido, cleanup de huérfanos, backup | pendiente |
+| 7 | Pulido, cleanup de huérfanos, backup | listo |
+| 8 | Sync con Meta | pendiente |
 
 ---
 
@@ -185,6 +186,41 @@ que uno con un millón.
 
 ---
 
+## Fase 7 — Pulido y mantenimiento
+
+**Archivar** un creativo lo saca de la biblioteca y de los KPIs sin borrar nada: el
+archivo sigue en R2 y sus lanzamientos con sus métricas siguen existiendo. El botón
+"Archivados" de la biblioteca los muestra y desde el detalle se restauran.
+
+Skeletons en las cuatro pantallas, navegación por cliente en móvil (el sidebar no cabe)
+y edición de metadata en el detalle.
+
+### Los dos scripts que la infra gratis exige
+
+```bash
+npm run cleanup:orphans                        # dry run, lista lo que borraría
+npm run cleanup:orphans -- --delete
+npm run cleanup:orphans -- --delete --bucket creatives-prod
+```
+
+Compara los objetos de R2 contra `creatives.storage_path` y `poster_path` y borra lo
+que no tenga registro — un PUT exitoso con insert fallido deja el archivo ocupando
+espacio para siempre. **Respeta los objetos de menos de 24 h** para no matar un upload
+en curso; `--min-age-hours 0` salta ese margen. Usa la service role key porque tiene
+que ver todos los creativos, no solo los tuyos. Correr mensual, en cada bucket.
+
+```bash
+npm run backup:db
+```
+
+`pg_dump` del esquema `public` comprimido a `backups/`. El free tier de Supabase **no
+tiene backups automáticos**: si se corrompe la base pierdes las métricas, aunque los
+archivos sigan en R2. Correr semanal. Necesita `SUPABASE_DB_URL` en `.env.local`
+(Supabase → Project Settings → Database → Connection string → URI) y `pg_dump`
+instalado (`brew install libpq && brew link --force libpq`).
+
+---
+
 ## Desarrollo
 
 ```bash
@@ -200,6 +236,8 @@ npm run dev
 | `npm run check:setup` | verifica env, tablas y bucket |
 | `npm run test:storage` | prueba el ciclo completo contra R2 |
 | `npm run check:cors` | preflight de cada origen contra cada bucket |
+| `npm run cleanup:orphans` | lista/borra objetos de R2 sin registro (mensual) |
+| `npm run backup:db` | `pg_dump` comprimido a `backups/` (semanal) |
 
 ## Convenciones
 

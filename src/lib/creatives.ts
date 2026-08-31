@@ -63,6 +63,8 @@ export type LibraryFilters = {
   clientId?: string;
   q?: string;
   onlyUnlaunched?: boolean;
+  /** Por defecto se ocultan; con true se muestran SOLO los archivados. */
+  onlyArchived?: boolean;
   sort?: LibrarySort;
   page?: number;
 };
@@ -74,11 +76,10 @@ export async function getLibrary(filters: LibraryFilters) {
   // El universo es de unos cientos de archivos, no millones: se traen todos los
   // que pasan el filtro y se ordena/pagina aqui. Asi se puede ordenar por
   // metricas, que viven en la vista y no en la tabla.
-  let query = supabase
-    .from("creatives")
-    .select("*")
-    .is("archived_at", null)
-    .limit(2000);
+  let query = supabase.from("creatives").select("*").limit(2000);
+  query = filters.onlyArchived
+    ? query.not("archived_at", "is", null)
+    : query.is("archived_at", null);
 
   if (filters.clientId) query = query.eq("client_id", filters.clientId);
   if (filters.q) query = query.ilike("display_name", `%${filters.q}%`);

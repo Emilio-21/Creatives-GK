@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ArchiveButton } from "@/components/archive-button";
 import { DownloadButton } from "@/components/download-button";
 import { MetadataEditor } from "@/components/metadata-editor";
 import type { CreativeRow } from "@/lib/creatives";
@@ -17,9 +18,15 @@ export function CreativeDetails({ creative }: { creative: CreativeRow }) {
         <CardTitle className="min-w-0 break-all">{creative.display_name}</CardTitle>
         <div className="flex shrink-0 gap-2">
           {!editing ? (
-            <Button size="sm" variant="outline" onClick={() => setEditing(true)}>
-              Editar
-            </Button>
+            <>
+              <ArchiveButton
+                creativeId={creative.id}
+                archived={creative.archived_at !== null}
+              />
+              <Button size="sm" variant="outline" onClick={() => setEditing(true)}>
+                Editar
+              </Button>
+            </>
           ) : null}
           <DownloadButton creativeId={creative.id} />
         </div>

@@ -42,6 +42,7 @@ export function CreativeCard({ creative }: { creative: Card }) {
             {STATUS_LABEL[status]}
           </Badge>
           {creative.format ? <Badge variant="outline">{creative.format}</Badge> : null}
+          {creative.archived_at ? <Badge variant="outline">Archivado</Badge> : null}
         </div>
       </div>
     </Link>

@@ -42,3 +42,4 @@ next-env.d.ts
 
 # permitir el template de env
 !.env.example
+backups/

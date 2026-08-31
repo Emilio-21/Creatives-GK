@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { logout } from "@/app/login/actions";
+import { MobileNav } from "@/components/mobile-nav";
 import { NewClientForm } from "@/components/new-client-form";
 import { Button } from "@/components/ui/button";
 import { getClientsWithCounts } from "@/lib/clients";
@@ -93,7 +94,18 @@ export async function AppShell({
           </div>
         </aside>
 
-        <main className="min-w-0 flex-1 p-4 sm:p-6">{children}</main>
+        <main className="min-w-0 flex-1 space-y-4 p-4 sm:p-6">
+          <MobileNav
+            clients={clients.map((client) => ({
+              id: client.id,
+              name: client.name,
+              count: client.creativeCount,
+            }))}
+            activeClientId={activeClientId}
+            activeSection={activeSection}
+          />
+          {children}
+        </main>
       </div>
     </div>
   );
