@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
+import { statusOf, STATUS_LABEL } from "@/lib/metrics";
 import type { CreativeCard as Card } from "@/lib/creatives";
 
 export function CreativeCard({ creative }: { creative: Card }) {
-  const published = creative.stats?.is_published ?? false;
+  const status = statusOf(creative.stats);
 
   return (
     <Link
@@ -37,8 +38,8 @@ export function CreativeCard({ creative }: { creative: Card }) {
           {creative.display_name}
         </p>
         <div className="flex flex-wrap items-center gap-1.5">
-          <Badge variant={published ? "default" : "secondary"}>
-            {published ? "En circulación" : "Sin lanzar"}
+          <Badge variant={status === "en-circulacion" ? "default" : "secondary"}>
+            {STATUS_LABEL[status]}
           </Badge>
           {creative.format ? <Badge variant="outline">{creative.format}</Badge> : null}
         </div>

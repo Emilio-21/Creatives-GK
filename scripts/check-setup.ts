@@ -94,9 +94,15 @@ async function main() {
       if (error) bad(`${table}: ${error.message}`);
       else ok(`${table} existe`);
     }
-    const { error: columnError } = await supabase.from("creatives").select("client_id").limit(1);
-    if (columnError) bad("creatives.client_id no existe — falta correr 0004_clients.sql");
-    else ok("creatives.client_id existe");
+    const columns: [string, string, string][] = [
+      ["creatives", "client_id", "0004_clients.sql"],
+      ["creative_stats", "active_launch_count", "0005_creative_stats_status.sql"],
+    ];
+    for (const [table, column, migration] of columns) {
+      const { error: columnError } = await supabase.from(table).select(column).limit(1);
+      if (columnError) bad(`${table}.${column} no existe — falta correr ${migration}`);
+      else ok(`${table}.${column} existe`);
+    }
 
     const { data, error } = await supabase.auth.admin.listUsers();
     if (error) bad(`auth: ${error.message}`);

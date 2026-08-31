@@ -88,6 +88,9 @@ export async function LibraryView({
             <option value="recientes">Más recientes</option>
             <option value="antiguos">Más antiguos</option>
             <option value="nombre">Nombre</option>
+            <option value="gasto">Más gasto</option>
+            <option value="ctr">Mejor CTR</option>
+            <option value="cpa">Mejor CPA</option>
           </select>
           <button type="submit" className={buttonVariants({ variant: "outline", size: "sm" })}>
             Buscar
@@ -178,9 +181,12 @@ export function readViewParams(params: Record<string, string | string[] | undefi
     return text && text.length > 0 ? text : undefined;
   };
   const sort = one("sort");
+  const validSorts = ["antiguos", "nombre", "gasto", "ctr", "cpa"] as const;
   return {
     q: one("q"),
-    sort: sort === "antiguos" || sort === "nombre" ? sort : "recientes",
+    sort: validSorts.includes(sort as (typeof validSorts)[number])
+      ? (sort as ViewParams["sort"])
+      : "recientes",
     onlyUnlaunched: one("sinLanzar") === "1",
     view: one("view") === "tabla" ? "tabla" : "grid",
     page: Math.max(1, Number(one("page") ?? 1) || 1),

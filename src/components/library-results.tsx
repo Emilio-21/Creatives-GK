@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/table";
 import { requestDownloads } from "@/app/creative/actions";
 import { downloadOne, downloadZip } from "@/lib/download";
+import { formatMoney, formatPercent, statusOf, STATUS_LABEL } from "@/lib/metrics";
 import type { CreativeCard as Card } from "@/lib/creatives";
 
 export function LibraryResults({
@@ -101,8 +102,9 @@ export function LibraryResults({
                 <TableHead>Nombre</TableHead>
                 <TableHead>Estado</TableHead>
                 <TableHead>Formato</TableHead>
-                <TableHead>Subido por</TableHead>
-                <TableHead className="text-right">Peso</TableHead>
+                <TableHead className="text-right">Gasto</TableHead>
+                <TableHead className="text-right">CTR</TableHead>
+                <TableHead className="text-right">CPA</TableHead>
                 <TableHead className="text-right">Subido</TableHead>
               </TableRow>
             </TableHeader>
@@ -122,14 +124,21 @@ export function LibraryResults({
                     </Link>
                   </TableCell>
                   <TableCell>
-                    <Badge variant={card.stats?.is_published ? "default" : "secondary"}>
-                      {card.stats?.is_published ? "En circulación" : "Sin lanzar"}
+                    <Badge
+                      variant={statusOf(card.stats) === "en-circulacion" ? "default" : "secondary"}
+                    >
+                      {STATUS_LABEL[statusOf(card.stats)]}
                     </Badge>
                   </TableCell>
                   <TableCell>{card.format ?? "—"}</TableCell>
-                  <TableCell>{card.uploaderName ?? "—"}</TableCell>
                   <TableCell className="text-right tabular-nums">
-                    {(card.file_size / 1024 / 1024).toFixed(1)} MB
+                    {formatMoney(card.stats?.total_spend ?? null)}
+                  </TableCell>
+                  <TableCell className="text-right tabular-nums">
+                    {formatPercent(card.stats?.ctr ?? null)}
+                  </TableCell>
+                  <TableCell className="text-right tabular-nums">
+                    {formatMoney(card.stats?.cpa ?? null)}
                   </TableCell>
                   <TableCell className="text-right tabular-nums">
                     {new Date(card.created_at).toLocaleDateString("es-MX")}

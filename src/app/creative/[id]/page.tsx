@@ -1,13 +1,16 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
+import { CreativeDetails } from "@/components/creative-details";
+import { LaunchesSection } from "@/components/launches-section";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DownloadButton } from "@/components/download-button";
 import { getDownloadHistory } from "@/app/creative/actions";
+import { getLaunches } from "@/lib/launches";
+import { formatMoney, formatPercent, statusOf, STATUS_LABEL } from "@/lib/metrics";
 import { getPreviewUrl } from "@/lib/storage";
 import { createClient, type Profile } from "@/lib/supabase/server";
-import type { CreativeRow } from "@/lib/creatives";
+import type { CreativeRow, CreativeStats } from "@/lib/creatives";
 
 export default async function CreativeDetailPage({
   params,
@@ -29,12 +32,16 @@ export default async function CreativeDetailPage({
   if (!row) notFound();
   const creative = row as CreativeRow & { clients: { id: string; name: string } | null };
 
-  // Video: preview del archivo, con poster para no descargarlo hasta que le den play.
-  const [mediaUrl, posterUrl, history] = await Promise.all([
+  const [mediaUrl, posterUrl, launches, history, { data: statsRow }] = await Promise.all([
     getPreviewUrl(creative.storage_path),
     creative.poster_path ? getPreviewUrl(creative.poster_path) : Promise.resolve(null),
+    getLaunches(creative.id),
     getDownloadHistory(creative.id),
+    supabase.from("creative_stats").select("*").eq("id", creative.id).maybeSingle(),
   ]);
+
+  const stats = (statsRow as CreativeStats) ?? null;
+  const status = statusOf(stats);
 
   return (
     <AppShell
@@ -43,12 +50,17 @@ export default async function CreativeDetailPage({
       activeClientId={creative.clients?.id}
     >
       <div className="mx-auto max-w-3xl space-y-6">
-        <Link
-          href={creative.clients ? `/client/${creative.clients.id}` : "/"}
-          className="text-sm text-muted-foreground hover:underline"
-        >
-          ← {creative.clients?.name ?? "Biblioteca"}
-        </Link>
+        <div className="flex items-center justify-between gap-3">
+          <Link
+            href={creative.clients ? `/client/${creative.clients.id}` : "/"}
+            className="text-sm text-muted-foreground hover:underline"
+          >
+            ← {creative.clients?.name ?? "Biblioteca"}
+          </Link>
+          <Badge variant={status === "en-circulacion" ? "default" : "secondary"}>
+            {STATUS_LABEL[status]}
+          </Badge>
+        </div>
 
         <div className="overflow-hidden rounded-lg border bg-muted">
           {creative.media_type === "video" ? (
@@ -69,54 +81,23 @@ export default async function CreativeDetailPage({
           )}
         </div>
 
-        <Card>
-          <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0">
-            <CardTitle className="min-w-0 break-all">{creative.display_name}</CardTitle>
-            <DownloadButton creativeId={creative.id} />
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex flex-wrap gap-1.5">
-              {creative.clients ? (
-                <Link href={`/client/${creative.clients.id}`}>
-                  <Badge variant="outline">{creative.clients.name}</Badge>
-                </Link>
-              ) : null}
-              {creative.format ? <Badge variant="outline">{creative.format}</Badge> : null}
-              {creative.tags.map((tag) => (
-                <Badge key={tag} variant="secondary">
-                  {tag}
-                </Badge>
-              ))}
-            </div>
+        {stats && stats.launch_count > 0 ? (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Acumulado de {stats.launch_count} lanzamiento{stats.launch_count === 1 ? "" : "s"}</CardTitle>
+            </CardHeader>
+            <CardContent className="grid grid-cols-2 gap-4 text-sm sm:grid-cols-4">
+              <Metric label="Gasto" value={formatMoney(stats.total_spend)} />
+              <Metric label="CTR" value={formatPercent(stats.ctr)} />
+              <Metric label="CPC" value={formatMoney(stats.cpc)} />
+              <Metric label="CPA" value={formatMoney(stats.cpa)} />
+            </CardContent>
+          </Card>
+        ) : null}
 
-            <dl className="grid gap-2 text-sm sm:grid-cols-2">
-              <Field label="Archivo original" value={creative.original_filename} />
-              <Field label="Tipo" value={creative.mime_type} />
-              <Field
-                label="Peso"
-                value={`${(creative.file_size / 1024 / 1024).toFixed(2)} MB`}
-              />
-              <Field
-                label="Dimensiones"
-                value={creative.width ? `${creative.width}×${creative.height}` : "—"}
-              />
-              <Field
-                label="Duración"
-                value={
-                  creative.duration_seconds ? `${creative.duration_seconds.toFixed(1)} s` : "—"
-                }
-              />
-              <Field
-                label="Subido"
-                value={new Date(creative.created_at).toLocaleString("es-MX")}
-              />
-            </dl>
+        <CreativeDetails creative={creative} />
 
-            <p className="text-xs text-muted-foreground">
-              Edición de metadata y lanzamientos llegan en la fase 5.
-            </p>
-          </CardContent>
-        </Card>
+        <LaunchesSection creativeId={creative.id} launches={launches} />
 
         <Card>
           <CardHeader>
@@ -130,7 +111,7 @@ export default async function CreativeDetailPage({
                 {history.map((entry) => (
                   <li key={entry.id} className="flex justify-between gap-4">
                     <span>{entry.userName}</span>
-                    <span className="text-muted-foreground tabular-nums">
+                    <span className="tabular-nums text-muted-foreground">
                       {new Date(entry.downloaded_at).toLocaleString("es-MX")}
                     </span>
                   </li>
@@ -144,11 +125,11 @@ export default async function CreativeDetailPage({
   );
 }
 
-function Field({ label, value }: { label: string; value: string }) {
+function Metric({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex gap-2">
-      <dt className="w-36 shrink-0 text-muted-foreground">{label}</dt>
-      <dd className="break-all font-mono text-xs">{value}</dd>
+    <div>
+      <p className="text-xs uppercase tracking-wide text-muted-foreground">{label}</p>
+      <p className="tabular-nums">{value}</p>
     </div>
   );
 }
