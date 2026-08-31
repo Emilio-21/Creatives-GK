@@ -151,7 +151,7 @@ export function LibraryResults({
       )}
 
       {selected.size > 0 ? (
-        <div className="sticky bottom-4 z-20 mx-auto flex w-fit items-center gap-3 rounded-full border bg-background/95 px-4 py-2 shadow-lg backdrop-blur">
+        <div className="glass sticky bottom-4 z-20 mx-auto flex w-fit items-center gap-3 rounded-full border px-4 py-2 shadow-lg">
           <span className="text-sm">
             {selected.size} seleccionado{selected.size === 1 ? "" : "s"}
           </span>

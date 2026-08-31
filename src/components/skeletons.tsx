@@ -8,14 +8,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 export function ShellSkeleton({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-svh">
-      <header className="border-b">
+      <header className="glass sticky top-0 z-30 border-b">
         <div className="flex h-14 items-center gap-4 px-4 sm:px-6">
           <span className="font-semibold">Creativos</span>
           <Skeleton className="ml-auto h-8 w-32" />
         </div>
       </header>
       <div className="flex">
-        <aside className="hidden w-60 shrink-0 space-y-2 border-r p-3 md:block">
+        <aside className="glass sticky top-14 hidden h-[calc(100svh-3.5rem)] w-60 shrink-0 space-y-2 border-r p-3 md:block">
           {Array.from({ length: 5 }).map((_, index) => (
             <Skeleton key={index} className="h-7 w-full" />
           ))}

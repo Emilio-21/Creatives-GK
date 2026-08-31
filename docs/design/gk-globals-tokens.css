@@ -1,52 +1,5 @@
-@import "tailwindcss";
-@import "tw-animate-css";
-@import "shadcn/tailwind.css";
-
-@custom-variant dark (&:is(.dark *));
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
-  --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sans);
-  --color-sidebar-ring: var(--sidebar-ring);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar: var(--sidebar);
-  --color-chart-5: var(--chart-5);
-  --color-chart-4: var(--chart-4);
-  --color-chart-3: var(--chart-3);
-  --color-chart-2: var(--chart-2);
-  --color-chart-1: var(--chart-1);
-  --color-ring: var(--ring);
-  --color-input: var(--input);
-  --color-border: var(--border);
-  --color-destructive: var(--destructive);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-accent: var(--accent);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-muted: var(--muted);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-secondary: var(--secondary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-primary: var(--primary);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-popover: var(--popover);
-  --color-card-foreground: var(--card-foreground);
-  --color-card: var(--card);
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
-  --radius-2xl: calc(var(--radius) * 1.8);
-  --radius-3xl: calc(var(--radius) * 2.2);
-  --radius-4xl: calc(var(--radius) * 2.6);
-}
+/* GK Creativos — tokens oklch para globals.css (shadcn/ui + Tailwind v4).
+   :root = light, .dark = dark. Acento único ámbar; neutros con tinte cálido (hue 80–85). */
 
 :root {
   --background: oklch(0.965 0.004 85);
@@ -126,32 +79,10 @@
   --glass-highlight: oklch(0.98 0.02 85 / 7%);
 }
 
-@layer base {
-  * {
-    @apply border-border outline-ring/50;
-  }
-  body {
-    @apply bg-background text-foreground;
-  }
-  html {
-    @apply font-sans;
-  }
-}
-/* Liquid glass. Solo en capas de navegacion y overlays: sidebar, header, barra
-   flotante de seleccion, modales. Nunca sobre tablas ni listas de metricas —
-   un blur detras de una columna de numeros la vuelve ilegible. Maximo 2-3
-   superficies con backdrop-filter visibles a la vez. */
-@utility glass {
-  background: var(--glass);
-  backdrop-filter: blur(18px) saturate(1.4);
-  -webkit-backdrop-filter: blur(18px) saturate(1.4);
-  border-color: var(--glass-border);
-  box-shadow: inset 0 1px 0 var(--glass-highlight);
-}
-
-/* Sin soporte de backdrop-filter, opaco: translucido sin blur es ilegible. */
-@supports not (backdrop-filter: blur(1px)) {
-  .glass {
-    background: var(--card);
-  }
-}
+/* Receta glass de referencia (solo capas de navegación y overlays):
+   background: var(--glass);
+   backdrop-filter: blur(18px) saturate(1.4);
+   border: 1px solid var(--glass-border);
+   box-shadow: inset 0 1px 0 var(--glass-highlight);
+   Máximo 2–3 superficies con backdrop-filter visibles a la vez;
+   nunca sobre contenido que se scrollea rápido. */

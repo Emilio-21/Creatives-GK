@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { logout } from "@/app/login/actions";
 import { MobileNav } from "@/components/mobile-nav";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { NewClientForm } from "@/components/new-client-form";
 import { Button } from "@/components/ui/button";
 import { getClientsWithCounts } from "@/lib/clients";
@@ -30,7 +31,7 @@ export async function AppShell({
 
   return (
     <div className="min-h-svh">
-      <header className="border-b">
+      <header className="glass sticky top-0 z-30 border-b">
         <div className="flex h-14 items-center gap-4 px-4 sm:px-6">
           <Link href="/" className="font-semibold">
             Creativos
@@ -40,6 +41,7 @@ export async function AppShell({
               {name}
               {profile?.role === "admin" ? " · admin" : ""}
             </span>
+            <ThemeToggle />
             <form action={logout}>
               <Button type="submit" variant="outline" size="sm">
                 Salir
@@ -50,7 +52,7 @@ export async function AppShell({
       </header>
 
       <div className="flex">
-        <aside className="hidden w-60 shrink-0 border-r p-3 md:block">
+        <aside className="glass sticky top-14 hidden h-[calc(100svh-3.5rem)] w-60 shrink-0 overflow-y-auto border-r p-3 md:block">
           <nav className="space-y-1">
             <SidebarLink
               href="/"
