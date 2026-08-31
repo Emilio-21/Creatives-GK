@@ -20,6 +20,7 @@ import { quickLaunch } from "@/app/creative/detail-actions";
 import { downloadOne, downloadZip } from "@/lib/download";
 import { useRouter } from "next/navigation";
 import { formatMoney, formatPercent, statusOf, STATUS_LABEL } from "@/lib/metrics";
+import { adCodeFor } from "@/lib/ad-code";
 import type { CreativeCard as Card } from "@/lib/creatives";
 
 const STATUS_DOT: Record<ReturnType<typeof statusOf>, string> = {
@@ -27,6 +28,31 @@ const STATUS_DOT: Record<ReturnType<typeof statusOf>, string> = {
   "en-circulacion": "bg-primary/60",
   finalizado: "bg-muted-foreground/60",
 };
+
+/** El código que enlaza el creativo con su anuncio en Meta. */
+function CodeCell({ creativeId }: { creativeId: string }) {
+  const code = adCodeFor(creativeId);
+  const [copied, setCopied] = useState(false);
+
+  return (
+    <button
+      type="button"
+      title="Copiar el código para pegarlo en el nombre del ad"
+      onClick={async () => {
+        try {
+          await navigator.clipboard.writeText(`[${code}]`);
+          setCopied(true);
+          setTimeout(() => setCopied(false), 1500);
+        } catch {
+          toast.error("No se pudo copiar.");
+        }
+      }}
+      className="rounded border px-1.5 py-0.5 font-mono text-[11px] text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground"
+    >
+      {copied ? "copiado" : `[${code}]`}
+    </button>
+  );
+}
 
 function StatusPill({ status }: { status: ReturnType<typeof statusOf> }) {
   return (
@@ -154,6 +180,7 @@ export function LibraryResults({
                   />
                 </TableHead>
                 <TableHead className="text-xs uppercase tracking-wider">Nombre</TableHead>
+                <TableHead className="text-xs uppercase tracking-wider">Código de ad</TableHead>
                 <TableHead className="text-xs uppercase tracking-wider">Estado</TableHead>
                 <TableHead className="text-xs uppercase tracking-wider">Formato</TableHead>
                 <TableHead className="text-right text-xs uppercase tracking-wider">Gasto</TableHead>
@@ -176,6 +203,9 @@ export function LibraryResults({
                     <Link href={`/creative/${card.id}`} className="hover:underline">
                       {card.display_name}
                     </Link>
+                  </TableCell>
+                  <TableCell>
+                    <CodeCell creativeId={card.id} />
                   </TableCell>
                   <TableCell>
                     <StatusPill status={statusOf(card.stats)} />
