@@ -61,16 +61,6 @@ export function CreativeDetails({ creative }: { creative: CreativeRow }) {
 
             <dl className="grid gap-2 text-sm sm:grid-cols-2">
               <Field label="Archivo original" value={creative.original_filename} />
-              <Field label="Tipo" value={creative.mime_type} />
-              <Field label="Peso" value={`${(creative.file_size / 1024 / 1024).toFixed(2)} MB`} />
-              <Field
-                label="Dimensiones"
-                value={creative.width ? `${creative.width}×${creative.height}` : "—"}
-              />
-              <Field
-                label="Duración"
-                value={creative.duration_seconds ? `${creative.duration_seconds.toFixed(1)} s` : "—"}
-              />
               <Field label="Subido" value={new Date(creative.created_at).toLocaleString("es-MX")} />
             </dl>
           </>

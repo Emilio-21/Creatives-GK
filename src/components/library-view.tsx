@@ -9,7 +9,7 @@ export type ViewParams = {
   sort?: LibraryFilters["sort"];
   onlyUnlaunched: boolean;
   onlyArchived: boolean;
-  view: "grid" | "tabla";
+  view: "tablero" | "tabla";
   page: number;
 };
 
@@ -110,16 +110,6 @@ export async function LibraryView({
         </form>
 
         <Link
-          href={linkTo({ sinLanzar: params.onlyUnlaunched ? undefined : "1", page: undefined })}
-          className={buttonVariants({
-            variant: params.onlyUnlaunched ? "default" : "outline",
-            size: "sm",
-          })}
-        >
-          Sin lanzar
-        </Link>
-
-        <Link
           href={linkTo({ archivados: params.onlyArchived ? undefined : "1", page: undefined })}
           className={buttonVariants({
             variant: params.onlyArchived ? "default" : "outline",
@@ -133,10 +123,10 @@ export async function LibraryView({
           <Link
             href={linkTo({ view: undefined })}
             className={`rounded-md px-3 py-1 text-sm transition-colors ${
-              params.view === "grid" ? "bg-muted font-medium" : "text-muted-foreground"
+              params.view === "tablero" ? "bg-muted font-medium" : "text-muted-foreground"
             }`}
           >
-            Grid
+            Tablero
           </Link>
           <Link
             href={linkTo({ view: "tabla" })}
@@ -223,7 +213,7 @@ export function readViewParams(params: Record<string, string | string[] | undefi
       : "recientes",
     onlyUnlaunched: one("sinLanzar") === "1",
     onlyArchived: one("archivados") === "1",
-    view: one("view") === "tabla" ? "tabla" : "grid",
+    view: one("view") === "tabla" ? "tabla" : "tablero",
     page: Math.max(1, Number(one("page") ?? 1) || 1),
   };
 }

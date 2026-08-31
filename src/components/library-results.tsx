@@ -3,7 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
-import { CreativeCard } from "@/components/creative-card";
+import { CreativeModal } from "@/components/creative-modal";
+import { CreativeTile } from "@/components/creative-tile";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -15,7 +16,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { requestDownloads } from "@/app/creative/actions";
+import { quickLaunch } from "@/app/creative/detail-actions";
 import { downloadOne, downloadZip } from "@/lib/download";
+import { useRouter } from "next/navigation";
 import { formatMoney, formatPercent, statusOf, STATUS_LABEL } from "@/lib/metrics";
 import type { CreativeCard as Card } from "@/lib/creatives";
 
@@ -40,11 +43,13 @@ export function LibraryResults({
   zipBaseName,
 }: {
   cards: Card[];
-  view: "grid" | "tabla";
+  view: "tablero" | "tabla";
   zipBaseName: string;
 }) {
+  const router = useRouter();
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [busy, setBusy] = useState(false);
+  const [openId, setOpenId] = useState<string | null>(null);
 
   const toggle = (id: string) =>
     setSelected((prev) => {
@@ -57,6 +62,31 @@ export function LibraryResults({
   const allSelected = cards.length > 0 && cards.every((card) => selected.has(card.id));
   const toggleAll = () =>
     setSelected(allSelected ? new Set() : new Set(cards.map((card) => card.id)));
+
+  async function downloadOneById(id: string) {
+    setBusy(true);
+    try {
+      const [target] = await requestDownloads([id]);
+      if (target) downloadOne(target);
+    } catch (error) {
+      toast.error((error as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function markLaunched(id: string) {
+    setBusy(true);
+    try {
+      await quickLaunch(id);
+      toast.success("Marcado como lanzado. Captura las métricas cuando las tengas.");
+      router.refresh();
+    } catch (error) {
+      toast.error((error as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
 
   async function download() {
     const ids = [...selected];
@@ -86,20 +116,30 @@ export function LibraryResults({
 
   return (
     <>
-      {view === "grid" ? (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4">
-          {cards.map((card) => (
-            <div key={card.id} className="relative">
-              <label className="absolute left-2.5 top-2.5 z-10 flex cursor-pointer items-center rounded-md border border-white/15 bg-black/55 p-1 shadow-sm backdrop-blur-sm">
-                <Checkbox
-                  checked={selected.has(card.id)}
-                  onCheckedChange={() => toggle(card.id)}
-                  aria-label={`Seleccionar ${card.display_name}`}
-                />
-              </label>
-              <CreativeCard creative={card} />
-            </div>
-          ))}
+      {view === "tablero" ? (
+        <div className="grid gap-4 lg:grid-cols-2">
+          <BoardColumn
+            title="Sin lanzar"
+            hint="Inventario que nunca salió al aire"
+            cards={cards.filter((card) => statusOf(card.stats) === "sin-lanzar")}
+            selected={selected}
+            onToggle={toggle}
+            onOpen={setOpenId}
+            onDownload={downloadOneById}
+            onLaunch={markLaunched}
+            busy={busy}
+          />
+          <BoardColumn
+            title="Lanzados"
+            hint="En circulación o ya finalizados"
+            cards={cards.filter((card) => statusOf(card.stats) !== "sin-lanzar")}
+            selected={selected}
+            onToggle={toggle}
+            onOpen={setOpenId}
+            onDownload={downloadOneById}
+            onLaunch={markLaunched}
+            busy={busy}
+          />
         </div>
       ) : (
         <div className="overflow-x-auto rounded-lg border">
@@ -162,6 +202,16 @@ export function LibraryResults({
         </div>
       )}
 
+
+      {openId ? (
+        <CreativeModal
+          creativeId={openId}
+          open
+          onOpenChange={(next) => (next ? null : setOpenId(null))}
+          onDownload={downloadOneById}
+        />
+      ) : null}
+
       {selected.size > 0 ? (
         <div className="glass sticky bottom-4 z-20 mx-auto flex w-fit items-center gap-3 rounded-full border px-4 py-2 shadow-lg">
           <span className="text-sm">
@@ -176,5 +226,62 @@ export function LibraryResults({
         </div>
       ) : null}
     </>
+  );
+}
+
+function BoardColumn({
+  title,
+  hint,
+  cards,
+  selected,
+  onToggle,
+  onOpen,
+  onDownload,
+  onLaunch,
+  busy,
+}: {
+  title: string;
+  hint: string;
+  cards: Card[];
+  selected: Set<string>;
+  onToggle: (id: string) => void;
+  onOpen: (id: string) => void;
+  onDownload: (id: string) => void;
+  onLaunch: (id: string) => void;
+  busy: boolean;
+}) {
+  return (
+    <section className="rounded-xl border bg-muted/25 p-3">
+      <header className="mb-3 flex items-baseline justify-between gap-2 px-1">
+        <h3 className="text-sm font-semibold">
+          {title}
+          <span className="ml-2 font-mono text-xs font-normal text-muted-foreground">
+            {cards.length}
+          </span>
+        </h3>
+        <p className="truncate text-[11px] text-muted-foreground">{hint}</p>
+      </header>
+
+      {cards.length === 0 ? (
+        <p className="px-1 py-6 text-center text-xs text-muted-foreground">
+          Nada aquí.
+        </p>
+      ) : (
+        <div className="grid grid-cols-2 gap-2.5 xl:grid-cols-3">
+          {cards.map((card) => (
+            <CreativeTile
+              key={card.id}
+              creative={card}
+              selected={selected.has(card.id)}
+              onToggle={() => onToggle(card.id)}
+              onOpen={() => onOpen(card.id)}
+              onDownload={() => onDownload(card.id)}
+              onLaunch={() => onLaunch(card.id)}
+              busy={busy}
+            />
+          ))}
+        </div>
+      )}
+    </section>
   );
 }

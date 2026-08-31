@@ -5,7 +5,6 @@ import { CreativeDetails } from "@/components/creative-details";
 import { LaunchesSection } from "@/components/launches-section";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { getDownloadHistory } from "@/app/creative/actions";
 import { getLaunches } from "@/lib/launches";
 import { formatMoney, formatPercent, statusOf, STATUS_LABEL } from "@/lib/metrics";
 import { getPreviewUrl } from "@/lib/storage";
@@ -32,11 +31,10 @@ export default async function CreativeDetailPage({
   if (!row) notFound();
   const creative = row as CreativeRow & { clients: { id: string; name: string } | null };
 
-  const [mediaUrl, posterUrl, launches, history, { data: statsRow }] = await Promise.all([
+  const [mediaUrl, posterUrl, launches, { data: statsRow }] = await Promise.all([
     getPreviewUrl(creative.storage_path),
     creative.poster_path ? getPreviewUrl(creative.poster_path) : Promise.resolve(null),
     getLaunches(creative.id),
-    getDownloadHistory(creative.id),
     supabase.from("creative_stats").select("*").eq("id", creative.id).maybeSingle(),
   ]);
 
@@ -102,27 +100,6 @@ export default async function CreativeDetailPage({
 
         <LaunchesSection creativeId={creative.id} launches={launches} />
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Historial de descargas</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {history.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Nadie lo ha descargado todavía.</p>
-            ) : (
-              <ul className="space-y-1 text-sm">
-                {history.map((entry) => (
-                  <li key={entry.id} className="flex justify-between gap-4">
-                    <span>{entry.userName}</span>
-                    <span className="tabular-nums text-muted-foreground">
-                      {new Date(entry.downloaded_at).toLocaleString("es-MX")}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </CardContent>
-        </Card>
       </div>
     </AppShell>
   );
