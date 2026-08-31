@@ -14,7 +14,7 @@ Plan completo: `docs/plan.md`.
 |---|---|---|
 | 0 | Setup: app, migraciones SQL, config R2/Supabase, deploy | código listo — faltan las cuentas |
 | 1 | Auth: `@supabase/ssr`, middleware, trigger de profile, `/login` | código listo |
-| 2 | `lib/storage.ts` (presigned URLs) | pendiente |
+| 2 | Storage: `lib/storage.ts`, presigned URLs, CORS | código listo — falta la prueba en el navegador |
 | 3+ | Upload, biblioteca, descarga, launches, dashboard | pendiente |
 
 ---
@@ -72,6 +72,42 @@ update profiles set role = 'admin' where id = (select id from auth.users where e
 
 ---
 
+## Fase 2 — Storage
+
+`src/lib/storage.ts` expone exactamente cuatro funciones y **ningún componente llama al SDK de S3 directo**:
+
+| Función | TTL | Para qué |
+|---|---|---|
+| `getUploadUrl(path, contentType)` | 15 min | PUT directo del navegador |
+| `getPreviewUrl(path)` | 1 h | `src` de `<img>` / `<video>` |
+| `getDownloadUrl(path, filename)` | 5 min | descarga con `Content-Disposition: attachment` |
+| `deleteFile(path)` | — | borrado |
+
+La protección de los archivos **no** es RLS: es que la URL solo se firma después de
+`requireUser()` (`src/lib/auth.ts`). Toda Server Action que toque storage debe llamarla primero.
+
+### Verificación
+
+```bash
+npm run test:storage
+```
+
+Prueba contra el bucket real: PUT firmado, preview byte a byte, que el bucket rechace
+la request sin firma, `Content-Disposition`, borrado, y el **preflight de CORS**.
+Debe terminar en "Storage OK end-to-end".
+
+Para verificar el CORS del dominio de producción:
+
+```bash
+CORS_ORIGIN=https://tu-app.vercel.app npm run test:storage
+```
+
+Falta la prueba desde el navegador: `npm run dev` → entrar → **`/dev/storage`** →
+subir un archivo, verlo, descargarlo y borrarlo. Es el banco de pruebas de la fase 2;
+si el PUT falla ahí, falla el upload de la fase 3.
+
+---
+
 ## Desarrollo
 
 ```bash
@@ -85,6 +121,7 @@ npm run dev
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm run lint` | eslint |
 | `npm run check:setup` | verifica env, tablas y bucket |
+| `npm run test:storage` | prueba el ciclo completo contra R2 (incluye CORS) |
 
 ## Convenciones
 
