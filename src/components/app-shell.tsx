@@ -15,11 +15,13 @@ export async function AppShell({
   profile,
   email,
   activeClientId,
+  activeSection,
   children,
 }: {
   profile: Profile | null;
   email: string;
   activeClientId?: string | null;
+  activeSection?: "biblioteca" | "dashboard";
   children: React.ReactNode;
 }) {
   const clients = await getClientsWithCounts();
@@ -49,8 +51,17 @@ export async function AppShell({
       <div className="flex">
         <aside className="hidden w-60 shrink-0 border-r p-3 md:block">
           <nav className="space-y-1">
-            <SidebarLink href="/" active={activeClientId === undefined || activeClientId === null}>
+            <SidebarLink
+              href="/"
+              active={
+                activeSection !== "dashboard" &&
+                (activeClientId === undefined || activeClientId === null)
+              }
+            >
               Todos los creativos
+            </SidebarLink>
+            <SidebarLink href="/dashboard" active={activeSection === "dashboard"}>
+              Resumen
             </SidebarLink>
           </nav>
 

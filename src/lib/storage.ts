@@ -2,6 +2,7 @@ import "server-only";
 import { randomUUID } from "node:crypto";
 import {
   DeleteObjectCommand,
+  ListObjectsV2Command,
   GetObjectCommand,
   HeadObjectCommand,
   PutObjectCommand,
@@ -89,6 +90,32 @@ export async function deleteFile(path: string): Promise<void> {
   await r2().send(
     new DeleteObjectCommand({ Bucket: serverEnv.r2Bucket, Key: path }),
   );
+}
+
+/**
+ * Bytes y objetos que ocupa el bucket. Sexta funcion: el free tier son 10 GB
+ * acumulados y sin este dato te enteras del limite cuando falla un upload (§8).
+ */
+export async function getStorageUsage(): Promise<{ bytes: number; objects: number }> {
+  let bytes = 0;
+  let objects = 0;
+  let token: string | undefined;
+
+  do {
+    const page = await r2().send(
+      new ListObjectsV2Command({
+        Bucket: serverEnv.r2Bucket,
+        ContinuationToken: token,
+      }),
+    );
+    for (const object of page.Contents ?? []) {
+      bytes += object.Size ?? 0;
+      objects += 1;
+    }
+    token = page.IsTruncated ? page.NextContinuationToken : undefined;
+  } while (token);
+
+  return { bytes, objects };
 }
 
 // ---------------------------------------------------------------------------

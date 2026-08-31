@@ -17,7 +17,9 @@ Plan completo: `docs/plan.md`.
 | 2 | Storage: `lib/storage.ts`, presigned URLs, CORS | listo |
 | 3 | Upload múltiple y biblioteca por cliente | listo |
 | 4 | Descarga individual y en lote (zip) | código listo |
-| 5+ | Lanzamientos, métricas, dashboard | pendiente |
+| 5 | Lanzamientos, métricas derivadas, orden por performance | listo |
+| 6 | Dashboard resumen | listo |
+| 7 | Pulido, cleanup de huérfanos, backup | pendiente |
 
 ---
 
@@ -160,6 +162,18 @@ servidor: Vercel Hobby corta a los 10 s.
 
 Tope de 25 archivos por lote, porque el zip se arma en memoria del navegador. Nombres
 repetidos dentro del zip se numeran (`video.mp4`, `video (2).mp4`).
+
+---
+
+## Fase 6 — Resumen
+
+`/dashboard`: total de creativos, % lanzados, **creativos sin lanzar** (el número que
+importa), gasto de los lanzamientos iniciados este mes, top 10 por CPA y por CTR,
+inventario con más de 30 días sin lanzarse, producción de los últimos 12 meses y el
+widget de uso de R2.
+
+El widget de R2 lista el bucket y suma los tamaños. Sin él te enteras del límite de
+10 GB cuando falla un upload. Avisa a los 8 GB.
 
 ---
 
