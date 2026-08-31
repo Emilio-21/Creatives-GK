@@ -1,16 +1,7 @@
 import Link from "next/link";
-import { CreativeCard } from "@/components/creative-card";
-import { Badge } from "@/components/ui/badge";
+import { LibraryResults } from "@/components/library-results";
 import { buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { getLibrary, type LibraryFilters } from "@/lib/creatives";
 
 export type ViewParams = {
@@ -126,51 +117,12 @@ export async function LibraryView({
           filtered={Boolean(params.q || params.onlyUnlaunched)}
           uploadHref={uploadHref}
         />
-      ) : params.view === "grid" ? (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4">
-          {library.cards.map((creative) => (
-            <CreativeCard key={creative.id} creative={creative} />
-          ))}
-        </div>
       ) : (
-        <div className="overflow-x-auto rounded-lg border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nombre</TableHead>
-                <TableHead>Estado</TableHead>
-                <TableHead>Formato</TableHead>
-                <TableHead>Subido por</TableHead>
-                <TableHead className="text-right">Peso</TableHead>
-                <TableHead className="text-right">Subido</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {library.cards.map((creative) => (
-                <TableRow key={creative.id}>
-                  <TableCell className="max-w-xs truncate font-medium">
-                    <Link href={`/creative/${creative.id}`} className="hover:underline">
-                      {creative.display_name}
-                    </Link>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={creative.stats?.is_published ? "default" : "secondary"}>
-                      {creative.stats?.is_published ? "En circulación" : "Sin lanzar"}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{creative.format ?? "—"}</TableCell>
-                  <TableCell>{creative.uploaderName ?? "—"}</TableCell>
-                  <TableCell className="text-right tabular-nums">
-                    {(creative.file_size / 1024 / 1024).toFixed(1)} MB
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums">
-                    {new Date(creative.created_at).toLocaleDateString("es-MX")}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+        <LibraryResults
+          cards={library.cards}
+          view={params.view}
+          zipBaseName={slug(title)}
+        />
       )}
 
       {library.pageCount > 1 ? (
@@ -233,4 +185,16 @@ export function readViewParams(params: Record<string, string | string[] | undefi
     view: one("view") === "tabla" ? "tabla" : "grid",
     page: Math.max(1, Number(one("page") ?? 1) || 1),
   };
+}
+
+/** Nombre de archivo del zip a partir del titulo de la vista. */
+function slug(text: string): string {
+  return (
+    text
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "") || "creativos"
+  );
 }

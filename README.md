@@ -15,8 +15,9 @@ Plan completo: `docs/plan.md`.
 | 0 | Setup: app, migraciones SQL, config R2/Supabase, deploy | código listo — faltan las cuentas |
 | 1 | Auth: `@supabase/ssr`, middleware, trigger de profile, `/login` | código listo |
 | 2 | Storage: `lib/storage.ts`, presigned URLs, CORS | listo |
-| 3 | Upload múltiple y biblioteca | código listo — falta probarlo con archivos reales |
-| 4+ | Descarga, launches, dashboard | pendiente |
+| 3 | Upload múltiple y biblioteca por cliente | listo |
+| 4 | Descarga individual y en lote (zip) | código listo |
+| 5+ | Lanzamientos, métricas, dashboard | pendiente |
 
 ---
 
@@ -143,6 +144,22 @@ confirmUpload      → HEAD al objeto real, insert en creatives
 
 Si el insert falla se borra el archivo de R2 en el momento. Lo que se escape lo barre
 `scripts/cleanup-orphans.ts` en la fase 7.
+
+---
+
+## Fase 4 — Descarga
+
+Presigned URL de 5 minutos con `Content-Disposition: attachment`, así que el archivo
+baja con su nombre original en vez de abrirse en una pestaña. Cada descarga queda
+registrada en `downloads` y se ve en el historial del detalle.
+
+En la biblioteca cada tarjeta tiene checkbox: seleccionas varias y la barra de abajo
+ofrece descargar. Uno solo baja directo; varios se empaquetan en un **zip generado en
+el navegador** con `jszip`, bajando cada archivo desde su presigned URL. Nunca en el
+servidor: Vercel Hobby corta a los 10 s.
+
+Tope de 25 archivos por lote, porque el zip se arma en memoria del navegador. Nombres
+repetidos dentro del zip se numeran (`video.mp4`, `video (2).mp4`).
 
 ---
 

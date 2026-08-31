@@ -3,6 +3,8 @@ import { notFound, redirect } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { DownloadButton } from "@/components/download-button";
+import { getDownloadHistory } from "@/app/creative/actions";
 import { getPreviewUrl } from "@/lib/storage";
 import { createClient, type Profile } from "@/lib/supabase/server";
 import type { CreativeRow } from "@/lib/creatives";
@@ -28,9 +30,10 @@ export default async function CreativeDetailPage({
   const creative = row as CreativeRow & { clients: { id: string; name: string } | null };
 
   // Video: preview del archivo, con poster para no descargarlo hasta que le den play.
-  const [mediaUrl, posterUrl] = await Promise.all([
+  const [mediaUrl, posterUrl, history] = await Promise.all([
     getPreviewUrl(creative.storage_path),
     creative.poster_path ? getPreviewUrl(creative.poster_path) : Promise.resolve(null),
+    getDownloadHistory(creative.id),
   ]);
 
   return (
@@ -67,8 +70,9 @@ export default async function CreativeDetailPage({
         </div>
 
         <Card>
-          <CardHeader>
-            <CardTitle className="break-all">{creative.display_name}</CardTitle>
+          <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0">
+            <CardTitle className="min-w-0 break-all">{creative.display_name}</CardTitle>
+            <DownloadButton creativeId={creative.id} />
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex flex-wrap gap-1.5">
@@ -109,11 +113,32 @@ export default async function CreativeDetailPage({
             </dl>
 
             <p className="text-xs text-muted-foreground">
-              Descarga, edición de metadata y lanzamientos llegan en las fases 4 y 5.
+              Edición de metadata y lanzamientos llegan en la fase 5.
             </p>
           </CardContent>
         </Card>
 
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Historial de descargas</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {history.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Nadie lo ha descargado todavía.</p>
+            ) : (
+              <ul className="space-y-1 text-sm">
+                {history.map((entry) => (
+                  <li key={entry.id} className="flex justify-between gap-4">
+                    <span>{entry.userName}</span>
+                    <span className="text-muted-foreground tabular-nums">
+                      {new Date(entry.downloaded_at).toLocaleString("es-MX")}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </AppShell>
   );
