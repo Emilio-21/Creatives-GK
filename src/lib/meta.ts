@@ -7,6 +7,17 @@ import "server-only";
 const API_VERSION = process.env.META_API_VERSION ?? "v21.0";
 const BASE = `https://graph.facebook.com/${API_VERSION}`;
 
+export type MetaAd = {
+  adId: string;
+  adName: string;
+  adsetId: string | null;
+  adsetName: string | null;
+  campaignId: string | null;
+  campaignName: string | null;
+  status: string | null;
+  createdTime: string | null;
+};
+
 export type MetaAdInsight = {
   adId: string;
   adName: string;
@@ -40,6 +51,71 @@ function accountPath(adAccountId: string): string {
   return clean.startsWith("act_") ? clean : `act_${clean}`;
 }
 
+type RawAd = {
+  id?: string;
+  name?: string;
+  adset_id?: string;
+  campaign_id?: string;
+  status?: string;
+  effective_status?: string;
+  created_time?: string;
+  adset?: { name?: string };
+  campaign?: { name?: string };
+};
+
+/**
+ * TODOS los anuncios de la cuenta, con entrega o sin ella.
+ *
+ * El endpoint de insights solo devuelve anuncios que gastaron en el periodo: un
+ * ad recien creado, pausado o en revision no aparece ahi. Para enlazar y para
+ * reportar "sin codigo" hace falta la lista completa.
+ */
+export async function fetchAccountAds(adAccountId: string): Promise<MetaAd[]> {
+  const params = new URLSearchParams({
+    limit: "200",
+    fields: "id,name,adset_id,campaign_id,status,effective_status,created_time,adset{name},campaign{name}",
+    access_token: token(),
+  });
+
+  const ads: MetaAd[] = [];
+  let url = `${BASE}/${accountPath(adAccountId)}/ads?${params.toString()}`;
+
+  for (let page = 0; page < 10 && url; page += 1) {
+    const response = await fetch(url, { cache: "no-store" });
+    const body = (await response.json()) as {
+      data?: RawAd[];
+      paging?: { next?: string };
+      error?: { message?: string };
+    };
+
+    if (!response.ok || body.error) {
+      throw new Error(
+        `Meta respondió ${response.status} al listar anuncios: ${
+          body.error?.message ?? "error desconocido"
+        }`,
+      );
+    }
+
+    for (const row of body.data ?? []) {
+      if (!row.id) continue;
+      ads.push({
+        adId: row.id,
+        adName: row.name ?? "",
+        adsetId: row.adset_id ?? null,
+        adsetName: row.adset?.name ?? null,
+        campaignId: row.campaign_id ?? null,
+        campaignName: row.campaign?.name ?? null,
+        status: row.effective_status ?? row.status ?? null,
+        createdTime: row.created_time ?? null,
+      });
+    }
+
+    url = body.paging?.next ?? "";
+  }
+
+  return ads;
+}
+
 type RawInsight = {
   ad_id?: string;
   ad_name?: string;
@@ -64,7 +140,7 @@ type RawInsight = {
  */
 export async function fetchAccountInsights(
   adAccountId: string,
-  datePreset = "last_90d",
+  datePreset = "maximum",
 ): Promise<MetaAdInsight[]> {
   const params = new URLSearchParams({
     level: "ad",

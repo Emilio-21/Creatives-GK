@@ -230,8 +230,17 @@ No se capturan IDs a mano. Cada creativo tiene un código derivado de su id
 AB_TESTIMONIAL_v3_[GK-c7c05468]
 ```
 
-Lo pegas como nombre del ad en Meta. El sync trae los insights a nivel ad de la cuenta,
-extrae el código del nombre con un regex y hace match exacto contra el creativo. **El
+Lo pegas como nombre del ad en Meta. El código puede ir donde sea dentro del nombre, así que convive con la nomenclatura que
+ya use el equipo:
+
+```
+[C019-A01-Ad01] John 1 Abril | VSL | Copy 01.1 [GK-c7c05468]
+```
+
+El sync lista **todos** los anuncios de la cuenta y aparte pide los insights. No usa solo
+insights porque ese endpoint se salta los anuncios que no gastaron: uno recién creado,
+pausado o en revisión no aparece ahí, y esos también hay que enlazar. Los enlazados sin
+métricas quedan registrados con métricas vacías, listos para llenarse en el siguiente sync. **El
 nombre lo genera la app, no la persona**: si la convención dependiera de que alguien la
 recuerde, el match fallaría en silencio y el dashboard quedaría en ceros sin que nadie
 se entere. Los anuncios sin código se listan en el reporte en vez de desaparecer.

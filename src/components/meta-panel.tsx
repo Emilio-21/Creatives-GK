@@ -94,8 +94,16 @@ export function MetaPanel({
         <div className="mt-3 space-y-2 border-t pt-3 text-xs">
           <p className="text-muted-foreground">
             {report.adsFound} anuncios en la cuenta · {report.matched} enlazados ·{" "}
-            {report.launchesWritten} lanzamientos escritos
+            {report.withMetrics} con métricas · {report.launchesWritten} lanzamientos
+            escritos
           </p>
+          {report.matched > report.withMetrics ? (
+            <p className="text-muted-foreground">
+              {report.matched - report.withMetrics} enlazado
+              {report.matched - report.withMetrics === 1 ? "" : "s"} sin métricas todavía:
+              son anuncios que aún no gastan.
+            </p>
+          ) : null}
 
           {report.adsWithoutCode.length > 0 ? (
             <details>

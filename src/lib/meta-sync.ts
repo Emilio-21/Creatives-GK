@@ -1,7 +1,7 @@
 import "server-only";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { adCodeFor, extractAdCode } from "@/lib/ad-code";
-import { fetchAccountInsights } from "@/lib/meta";
+import { fetchAccountAds, fetchAccountInsights } from "@/lib/meta";
 import { serverEnv } from "@/lib/env";
 import { publicEnv } from "@/lib/env";
 
@@ -9,6 +9,8 @@ export type SyncReport = {
   clientId: string;
   clientName: string;
   adsFound: number;
+  /** De los enlazados, cuantos traian metricas (los demas nunca han gastado). */
+  withMetrics: number;
   matched: number;
   launchesWritten: number;
   /** Anuncios sin el codigo [GK-xxxxxxxx] en el nombre. */
@@ -43,6 +45,7 @@ export async function syncClient(clientId: string): Promise<SyncReport> {
     clientId: client.id as string,
     clientName: client.name as string,
     adsFound: 0,
+    withMetrics: 0,
     matched: 0,
     launchesWritten: 0,
     adsWithoutCode: [],
@@ -65,21 +68,32 @@ export async function syncClient(clientId: string): Promise<SyncReport> {
     byCode.set(adCodeFor(row.id as string), row.id as string);
   }
 
+  let ads;
   let insights;
   try {
+    // Los anuncios primero: el endpoint de insights se salta los que no
+    // gastaron, y esos tambien hay que enlazar y reportar.
+    ads = await fetchAccountAds(client.meta_ad_account_id as string);
     insights = await fetchAccountInsights(client.meta_ad_account_id as string);
   } catch (error) {
     report.error = (error as Error).message;
     return report;
   }
 
-  report.adsFound = insights.length;
+  report.adsFound = ads.length;
+  if (ads.length === 0) {
+    report.error =
+      "La cuenta no devolvió anuncios. Revisa el ad account id y que el token tenga acceso a esa cuenta.";
+    return report;
+  }
+
+  const insightsByAd = new Map(insights.map((row) => [row.adId, row]));
 
   const rows = [];
-  for (const insight of insights) {
-    const code = extractAdCode(insight.adName);
+  for (const ad of ads) {
+    const code = extractAdCode(ad.adName);
     if (!code) {
-      if (insight.adName) report.adsWithoutCode.push(insight.adName);
+      if (ad.adName) report.adsWithoutCode.push(ad.adName);
       continue;
     }
 
@@ -90,22 +104,26 @@ export async function syncClient(clientId: string): Promise<SyncReport> {
     }
 
     report.matched += 1;
+    const insight = insightsByAd.get(ad.adId);
+    if (insight) report.withMetrics += 1;
+
     rows.push({
       creative_id: creativeId,
-      launched_at: insight.dateStart || new Date().toISOString().slice(0, 10),
-      ended_at: null,
+      launched_at:
+        insight?.dateStart ||
+        (ad.createdTime ? ad.createdTime.slice(0, 10) : new Date().toISOString().slice(0, 10)),
       platform: "meta",
-      campaign_name: insight.campaignName,
-      adset_name: insight.adsetName,
-      meta_campaign_id: insight.campaignId,
-      meta_adset_id: insight.adsetId,
-      meta_ad_id: insight.adId,
-      spend: insight.spend,
-      impressions: insight.impressions,
-      reach: insight.reach,
-      clicks: insight.clicks,
-      results: insight.results,
-      result_type: insight.resultType,
+      campaign_name: ad.campaignName,
+      adset_name: ad.adsetName,
+      meta_campaign_id: ad.campaignId,
+      meta_adset_id: ad.adsetId,
+      meta_ad_id: ad.adId,
+      spend: insight?.spend ?? null,
+      impressions: insight?.impressions ?? null,
+      reach: insight?.reach ?? null,
+      clicks: insight?.clicks ?? null,
+      results: insight?.results ?? null,
+      result_type: insight?.resultType ?? null,
       metrics_source: "meta_api" as const,
       metrics_updated_at: new Date().toISOString(),
       created_by: client.created_by as string,
@@ -155,6 +173,7 @@ export async function syncAllClients(): Promise<SyncReport[]> {
         clientId: client.id as string,
         clientName: "",
         adsFound: 0,
+        withMetrics: 0,
         matched: 0,
         launchesWritten: 0,
         adsWithoutCode: [],
