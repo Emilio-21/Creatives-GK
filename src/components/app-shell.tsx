@@ -35,7 +35,7 @@ export async function AppShell({
       <header className="glass sticky top-0 z-30 border-b">
         <div className="flex h-14 items-center gap-4 px-4 sm:px-6">
           <Link href="/" className="flex items-center gap-2 font-semibold">
-            <span className="flex size-7 items-center justify-center rounded-lg bg-primary font-mono text-xs text-primary-foreground">
+            <span className="brand-gradient flex size-7 items-center justify-center rounded-lg font-mono text-xs text-white">
               GK
             </span>
             Creativos

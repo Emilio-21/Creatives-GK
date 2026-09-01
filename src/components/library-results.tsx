@@ -24,8 +24,9 @@ import { adCodeFor } from "@/lib/ad-code";
 import type { CreativeCard as Card } from "@/lib/creatives";
 
 const STATUS_DOT: Record<ReturnType<typeof statusOf>, string> = {
-  "sin-lanzar": "bg-primary",
-  "en-circulacion": "bg-primary/60",
+  // Amarillo solo para "sin lanzar"; morado para lo que ya salio al aire.
+  "sin-lanzar": "bg-highlight",
+  "en-circulacion": "bg-primary",
   finalizado: "bg-muted-foreground/60",
 };
 
@@ -147,6 +148,7 @@ export function LibraryResults({
           <BoardColumn
             title="Sin lanzar"
             hint="Inventario que nunca salió al aire"
+            accent
             cards={cards.filter((card) => statusOf(card.stats) === "sin-lanzar")}
             selected={selected}
             onToggle={toggle}
@@ -262,6 +264,7 @@ export function LibraryResults({
 function BoardColumn({
   title,
   hint,
+  accent,
   cards,
   selected,
   onToggle,
@@ -272,6 +275,7 @@ function BoardColumn({
 }: {
   title: string;
   hint: string;
+  accent?: boolean;
   cards: Card[];
   selected: Set<string>;
   onToggle: (id: string) => void;
@@ -281,11 +285,17 @@ function BoardColumn({
   busy: boolean;
 }) {
   return (
-    <section className="rounded-xl border bg-muted/25 p-3">
+    <section
+      className={`rounded-xl border bg-muted/25 p-3 ${accent ? "border-highlight/30" : ""}`}
+    >
       <header className="mb-3 flex items-baseline justify-between gap-2 px-1">
         <h3 className="text-sm font-semibold">
           {title}
-          <span className="ml-2 font-mono text-xs font-normal text-muted-foreground">
+          <span
+            className={`ml-2 font-mono text-xs font-normal ${
+              accent ? "text-highlight" : "text-muted-foreground"
+            }`}
+          >
             {cards.length}
           </span>
         </h3>

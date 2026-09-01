@@ -1,0 +1,96 @@
+/* GK Creativos v2 — tokens oklch para globals.css (shadcn/ui + Tailwind v4).
+   Dirección: negro #131313, morado #723CEB como primario, amarillo #FFEF63 como
+   highlight de "sin lanzar", degradado naranja→morado para barras de progreso
+   y la marca. :root = light, .dark = dark. */
+
+:root {
+  --background: oklch(0.97 0 0);
+  --foreground: oklch(0.2 0.01 300);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.2 0.01 300);
+  --popover: oklch(0.99 0 0);
+  --popover-foreground: oklch(0.2 0.01 300);
+  --primary: oklch(0.5 0.23 293);
+  --primary-foreground: oklch(0.98 0 0);
+  --secondary: oklch(0.93 0.004 300);
+  --secondary-foreground: oklch(0.2 0.01 300);
+  --muted: oklch(0.925 0.004 300);
+  --muted-foreground: oklch(0.5 0.01 300);
+  --accent: oklch(0.9 0.01 300);
+  --accent-foreground: oklch(0.2 0.01 300);
+  --destructive: oklch(0.55 0.2 27);
+  --border: oklch(0.2 0.01 300 / 10%);
+  --input: oklch(0.2 0.01 300 / 14%);
+  --ring: oklch(0.5 0.23 293 / 50%);
+  --chart-1: oklch(0.5 0.23 293);
+  --chart-2: oklch(0.6 0.18 300);
+  --chart-3: oklch(0.66 0.16 55);
+  --chart-4: oklch(0.62 0.01 300);
+  --chart-5: oklch(0.75 0.008 300);
+  --radius: 1rem;
+  --sidebar: oklch(0.98 0 0);
+  --sidebar-foreground: oklch(0.2 0.01 300);
+  --sidebar-primary: oklch(0.5 0.23 293);
+  --sidebar-primary-foreground: oklch(0.98 0 0);
+  --sidebar-accent: oklch(0.9 0.01 300);
+  --sidebar-accent-foreground: oklch(0.2 0.01 300);
+  --sidebar-border: oklch(0.2 0.01 300 / 8%);
+  --sidebar-ring: oklch(0.5 0.23 293 / 50%);
+
+  /* Tokens nuevos (fuera del contrato shadcn — decláralos también en @theme) */
+  --highlight: oklch(0.82 0.16 100);            /* "sin lanzar" en light */
+  --highlight-foreground: oklch(0.32 0.08 105);
+  --gradient: linear-gradient(135deg, oklch(0.7 0.17 55), oklch(0.5 0.23 293) 62%, oklch(0.42 0.24 295));
+  --glass: oklch(0.99 0 0 / 55%);
+  --glass-border: oklch(0.2 0.01 300 / 8%);
+  --glass-highlight: oklch(1 0 0 / 60%);
+}
+
+.dark {
+  --background: oklch(0.19 0 0);                /* #131313 */
+  --foreground: oklch(0.95 0 0);
+  --card: oklch(0.235 0.004 300);
+  --card-foreground: oklch(0.95 0 0);
+  --popover: oklch(0.27 0.005 300);
+  --popover-foreground: oklch(0.95 0 0);
+  --primary: oklch(0.54 0.22 293);              /* #723CEB */
+  --primary-foreground: oklch(0.98 0 0);
+  --secondary: oklch(0.28 0.005 300);
+  --secondary-foreground: oklch(0.95 0 0);
+  --muted: oklch(0.26 0.004 300);
+  --muted-foreground: oklch(0.66 0.005 300);
+  --accent: oklch(0.3 0.006 300);
+  --accent-foreground: oklch(0.95 0 0);
+  --destructive: oklch(0.62 0.19 25);
+  --border: oklch(1 0 0 / 9%);
+  --input: oklch(1 0 0 / 14%);
+  --ring: oklch(0.6 0.2 293 / 70%);
+  --chart-1: oklch(0.54 0.22 293);
+  --chart-2: oklch(0.68 0.16 300);
+  --chart-3: oklch(0.72 0.15 55);
+  --chart-4: oklch(0.45 0.005 300);
+  --chart-5: oklch(0.33 0.004 300);
+  --sidebar: oklch(0.21 0.003 300);
+  --sidebar-foreground: oklch(0.95 0 0);
+  --sidebar-primary: oklch(0.54 0.22 293);
+  --sidebar-primary-foreground: oklch(0.98 0 0);
+  --sidebar-accent: oklch(0.3 0.006 300);
+  --sidebar-accent-foreground: oklch(0.95 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.6 0.2 293 / 70%);
+
+  --highlight: oklch(0.93 0.19 102);            /* #FFEF63 */
+  --highlight-foreground: oklch(0.32 0.08 105);
+  --gradient: linear-gradient(135deg, oklch(0.74 0.17 55), oklch(0.54 0.22 293) 62%, oklch(0.44 0.25 295));
+  --glass: oklch(0.23 0.004 300 / 62%);
+  --glass-border: oklch(1 0 0 / 10%);
+  --glass-hi: oklch(1 0 0 / 6%);
+}
+
+/* Uso:
+   - --primary (morado): acción primaria, nav activa, dots de "en circulación".
+   - --highlight (amarillo): SOLO el concepto "sin lanzar / sin movimiento"
+     (badge, KPI destacado, columnas, advertencia de duplicado). Nunca ambos
+     en el mismo elemento.
+   - --gradient: marca GK, barras de progreso y medidor R2 en estado normal.
+   - Glass igual que v1: máx 2–3 backdrop-filter simultáneos, nunca tras tablas. */

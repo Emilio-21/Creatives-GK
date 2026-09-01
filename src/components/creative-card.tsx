@@ -3,8 +3,9 @@ import { statusOf, STATUS_LABEL } from "@/lib/metrics";
 import type { CreativeCard as Card } from "@/lib/creatives";
 
 const STATUS_DOT: Record<ReturnType<typeof statusOf>, string> = {
-  "sin-lanzar": "bg-primary",
-  "en-circulacion": "bg-primary/60",
+  // Amarillo solo para "sin lanzar"; morado para lo que ya salio al aire.
+  "sin-lanzar": "bg-highlight",
+  "en-circulacion": "bg-primary",
   finalizado: "bg-muted-foreground/60",
 };
 

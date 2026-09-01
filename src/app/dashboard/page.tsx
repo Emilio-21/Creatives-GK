@@ -190,7 +190,7 @@ function StorageCard({ usage }: { usage: { bytes: number; objects: number } | nu
           aria-label="Uso del bucket de R2"
         >
           <div
-            className={`h-full ${warning ? "bg-destructive" : "bg-primary"}`}
+            className={`h-full ${warning ? "bg-destructive" : "brand-gradient"}`}
             style={{ width: `${Math.max(percent, 0.5)}%` }}
           />
         </div>

@@ -47,10 +47,12 @@ function Stat({
   emphasis?: boolean;
 }) {
   return (
-    <Card className={emphasis ? "border-foreground/25" : undefined}>
+    <Card className={emphasis ? "border-highlight/40" : undefined}>
       <CardContent className="px-4 py-3">
         <p className="text-[11px] uppercase tracking-wide text-muted-foreground">{label}</p>
-        <p className="mt-0.5 text-xl font-semibold tabular-nums">{value}</p>
+        <p className={`mt-0.5 text-xl font-semibold tabular-nums${emphasis ? " text-highlight" : ""}`}>
+          {value}
+        </p>
         <p className="mt-0.5 h-4 text-[11px] text-muted-foreground">{hint ?? ""}</p>
       </CardContent>
     </Card>

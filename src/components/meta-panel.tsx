@@ -107,7 +107,7 @@ export function MetaPanel({
 
           {report.adsWithoutCode.length > 0 ? (
             <details>
-              <summary className="cursor-pointer text-amber-600 dark:text-amber-500">
+              <summary className="cursor-pointer text-highlight">
                 {report.adsWithoutCode.length} anuncio
                 {report.adsWithoutCode.length === 1 ? "" : "s"} sin código en el nombre
               </summary>

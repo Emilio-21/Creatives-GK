@@ -390,7 +390,7 @@ function FileRow({
       </div>
 
       {item.duplicate && item.status !== "hecho" ? (
-        <p className="mt-2 text-xs text-amber-600 dark:text-amber-500">
+        <p className="mt-2 text-xs text-highlight">
           Ya existe un creativo con este nombre. ¿Es una versión nueva? Se sube igual.
         </p>
       ) : null}
