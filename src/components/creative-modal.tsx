@@ -17,6 +17,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { deleteLaunch } from "@/app/creative/launch-actions";
+import { deleteCreative } from "@/app/creative/creative-actions";
 import { getCreativeDetail, type CreativeDetail } from "@/app/creative/detail-actions";
 import { derive, formatMoney, formatPercent, statusOf, STATUS_LABEL } from "@/lib/metrics";
 import { formatCount } from "@/lib/metrics";
@@ -31,11 +32,13 @@ export function CreativeModal({
   open,
   onOpenChange,
   onDownload,
+  onDeleted,
 }: {
   creativeId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onDownload: (id: string) => void;
+  onDeleted: () => void;
 }) {
   const router = useRouter();
   const [detail, setDetail] = useState<CreativeDetail | null>(null);
@@ -152,6 +155,39 @@ export function CreativeModal({
                     creativeId={detail.creative.id}
                     archived={detail.creative.archived_at !== null}
                   />
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    disabled={pending}
+                    onClick={() => {
+                      const count = detail.launches.length;
+                      const warning =
+                        count > 0
+                          ? `\n\nOjo: también se borran sus ${count} lanzamiento${
+                              count === 1 ? "" : "s"
+                            } con sus métricas.`
+                          : "";
+                      if (
+                        !confirm(
+                          `¿Borrar "${detail.creative.display_name}"?\n\nSe borra el archivo de R2 y no se puede deshacer.${warning}\n\nSi solo quieres sacarlo de la biblioteca, archívalo.`,
+                        )
+                      ) {
+                        return;
+                      }
+                      startTransition(async () => {
+                        try {
+                          await deleteCreative(detail.creative.id);
+                          toast.success("Creativo borrado");
+                          onDeleted();
+                          router.refresh();
+                        } catch (error) {
+                          toast.error((error as Error).message);
+                        }
+                      });
+                    }}
+                  >
+                    Borrar
+                  </Button>
                 </div>
               </div>
 

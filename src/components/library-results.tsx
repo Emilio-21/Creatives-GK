@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/table";
 import { requestDownloads } from "@/app/creative/actions";
 import { quickLaunch } from "@/app/creative/detail-actions";
+import { deleteCreative } from "@/app/creative/creative-actions";
 import { downloadOne, downloadZip } from "@/lib/download";
 import { useRouter } from "next/navigation";
 import { formatMoney, formatPercent, statusOf, STATUS_LABEL } from "@/lib/metrics";
@@ -115,6 +116,39 @@ export function LibraryResults({
     }
   }
 
+  async function removeCreative(card: Card) {
+    const launched = statusOf(card.stats) !== "sin-lanzar";
+    const warning = launched
+      ? `\n\nOjo: también se borran sus ${card.stats?.launch_count} lanzamiento${
+          card.stats?.launch_count === 1 ? "" : "s"
+        } con sus métricas.`
+      : "";
+
+    if (
+      !confirm(
+        `¿Borrar "${card.display_name}"?\n\nSe borra el archivo de R2 y no se puede deshacer.${warning}\n\nSi solo quieres sacarlo de la biblioteca, archívalo desde el detalle.`,
+      )
+    ) {
+      return;
+    }
+
+    setBusy(true);
+    try {
+      await deleteCreative(card.id);
+      setSelected((prev) => {
+        const next = new Set(prev);
+        next.delete(card.id);
+        return next;
+      });
+      toast.success("Creativo borrado");
+      router.refresh();
+    } catch (error) {
+      toast.error((error as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function download() {
     const ids = [...selected];
     if (ids.length === 0) return;
@@ -155,6 +189,7 @@ export function LibraryResults({
             onOpen={setOpenId}
             onDownload={downloadOneById}
             onLaunch={markLaunched}
+            onDelete={removeCreative}
             busy={busy}
           />
           <BoardColumn
@@ -166,6 +201,7 @@ export function LibraryResults({
             onOpen={setOpenId}
             onDownload={downloadOneById}
             onLaunch={markLaunched}
+            onDelete={removeCreative}
             busy={busy}
           />
         </div>
@@ -241,6 +277,7 @@ export function LibraryResults({
           open
           onOpenChange={(next) => (next ? null : setOpenId(null))}
           onDownload={downloadOneById}
+          onDeleted={() => setOpenId(null)}
         />
       ) : null}
 
@@ -271,6 +308,7 @@ function BoardColumn({
   onOpen,
   onDownload,
   onLaunch,
+  onDelete,
   busy,
 }: {
   title: string;
@@ -282,6 +320,7 @@ function BoardColumn({
   onOpen: (id: string) => void;
   onDownload: (id: string) => void;
   onLaunch: (id: string) => void;
+  onDelete: (card: Card) => void;
   busy: boolean;
 }) {
   return (
@@ -317,6 +356,7 @@ function BoardColumn({
               onOpen={() => onOpen(card.id)}
               onDownload={() => onDownload(card.id)}
               onLaunch={() => onLaunch(card.id)}
+              onDelete={() => onDelete(card)}
               busy={busy}
             />
           ))}

@@ -15,6 +15,7 @@ export function CreativeTile({
   onOpen,
   onDownload,
   onLaunch,
+  onDelete,
   busy,
 }: {
   creative: CreativeCard;
@@ -23,6 +24,7 @@ export function CreativeTile({
   onOpen: () => void;
   onDownload: () => void;
   onLaunch: () => void;
+  onDelete: () => void;
   busy: boolean;
 }) {
   const status = statusOf(creative.stats);
@@ -68,6 +70,22 @@ export function CreativeTile({
                   strokeWidth="2"
                   fill="none"
                   strokeLinecap="round"
+                />
+              }
+            />
+            <TileAction
+              label="Borrar"
+              destructive
+              disabled={busy}
+              onClick={onDelete}
+              icon={
+                <path
+                  d="M4 7h16M9 7V5h6v2m-8 0 1 12h8l1-12"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  fill="none"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
                 />
               }
             />
@@ -142,11 +160,13 @@ function TileAction({
   icon,
   onClick,
   disabled,
+  destructive,
 }: {
   label: string;
   icon: React.ReactNode;
   onClick: () => void;
   disabled: boolean;
+  destructive?: boolean;
 }) {
   return (
     <button
@@ -160,7 +180,9 @@ function TileAction({
         event.preventDefault();
         onClick();
       }}
-      className="flex size-7 items-center justify-center rounded-md border border-white/20 bg-black/60 text-white backdrop-blur-sm transition-colors hover:bg-black/80 disabled:opacity-50"
+      className={`flex size-7 items-center justify-center rounded-md border border-white/20 bg-black/60 text-white backdrop-blur-sm transition-colors disabled:opacity-50 ${
+        destructive ? "hover:border-destructive hover:bg-destructive/80" : "hover:bg-black/80"
+      }`}
     >
       <svg viewBox="0 0 24 24" className="size-3.5" aria-hidden="true">
         {icon}

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { deleteFile } from "@/lib/storage";
 
 export type MetadataInput = {
   creativeId: string;
@@ -59,5 +60,40 @@ export async function setArchived(creativeId: string, archived: boolean): Promis
   if (!count) throw new Error("Solo quien lo subió o un admin puede archivarlo.");
 
   revalidatePath(`/creative/${creativeId}`);
+  revalidatePath("/", "layout");
+}
+
+/**
+ * Borrado definitivo: el registro, sus lanzamientos (cascade) y los archivos.
+ *
+ * Primero la fila y luego R2: si se cayera al reves, quedaria un creativo
+ * apuntando a archivos que ya no existen. Al hacerlo en este orden lo peor que
+ * pasa es un huerfano en R2, que es justo lo que barre cleanup-orphans.
+ */
+export async function deleteCreative(creativeId: string): Promise<void> {
+  await requireUser();
+  const supabase = await createClient();
+
+  const { data: creative } = await supabase
+    .from("creatives")
+    .select("storage_path, poster_path")
+    .eq("id", creativeId)
+    .maybeSingle();
+
+  if (!creative) throw new Error("No se encontró el creativo.");
+
+  const { error, count } = await supabase
+    .from("creatives")
+    .delete({ count: "exact" })
+    .eq("id", creativeId);
+
+  if (error) throw new Error(error.message);
+  if (!count) throw new Error("Solo quien lo subió o un admin puede borrarlo.");
+
+  await deleteFile(creative.storage_path as string).catch(() => {});
+  if (creative.poster_path) {
+    await deleteFile(creative.poster_path as string).catch(() => {});
+  }
+
   revalidatePath("/", "layout");
 }
