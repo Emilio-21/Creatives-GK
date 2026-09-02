@@ -31,9 +31,11 @@ export async function AppShell({
 
   return (
     <div className="min-h-svh p-3 sm:p-4">
+      <div className="app-aura" aria-hidden="true" />
+
       <div className="flex gap-4">
         <aside className="hidden w-56 shrink-0 flex-col gap-4 md:flex">
-          <div className="flex items-center gap-3 rounded-2xl border bg-card p-3">
+          <div className="glass flex items-center gap-3 rounded-2xl border p-3">
             <span className="brand-gradient flex size-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold text-white">
               {name.slice(0, 2).toUpperCase()}
             </span>
@@ -45,7 +47,7 @@ export async function AppShell({
             </div>
           </div>
 
-          <div className="flex min-h-0 flex-1 flex-col gap-4 rounded-2xl border bg-card p-3">
+          <div className="glass flex min-h-0 flex-1 flex-col gap-4 rounded-2xl border p-3">
             <NewBriefButton
               clients={clients.map((client) => ({ id: client.id, name: client.name }))}
               activeClientId={activeClientId}
@@ -100,7 +102,7 @@ export async function AppShell({
           </div>
         </aside>
 
-        <main className="min-w-0 flex-1 rounded-2xl border bg-card p-4 pb-20 sm:p-6 md:pb-6">
+        <main className="glass min-w-0 flex-1 rounded-2xl border p-4 pb-20 sm:p-6 md:pb-6">
           <div className="mb-4 flex items-center gap-2 md:hidden">
             <MobileNav
               clients={clients.map((client) => ({

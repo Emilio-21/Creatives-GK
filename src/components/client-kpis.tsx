@@ -42,7 +42,7 @@ function Kpi({
   highlight?: boolean;
 }) {
   return (
-    <div className="rounded-xl border bg-muted/25 px-5 py-4">
+    <div className="surface rounded-xl border px-5 py-4">
       <p className="text-sm text-muted-foreground">{label}</p>
       <p
         className={`mt-1 text-4xl font-semibold tabular-nums${

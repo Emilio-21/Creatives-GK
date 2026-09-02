@@ -172,3 +172,32 @@
 @utility brand-gradient {
   background-image: var(--gradient);
 }
+
+/* Aura del fondo: manchas de color muy difusas detras de todo, para que el
+   glass tenga algo que filtrar. Sin esto los paneles translucidos se ven grises.
+   Son gradientes radiales, no un blur sobre un elemento a pantalla completa:
+   desenfocar algo de este tamaño cuesta cada repintado. */
+@utility app-aura {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(70% 62% at 10% 6%, oklch(0.66 0.21 48 / 0.92), transparent 68%),
+    radial-gradient(62% 55% at 46% 2%, oklch(0.74 0.18 62 / 0.55), transparent 70%),
+    radial-gradient(55% 60% at 2% 55%, oklch(0.6 0.21 38 / 0.65), transparent 70%),
+    radial-gradient(50% 50% at 95% 42%, oklch(0.52 0.24 298 / 0.5), transparent 68%),
+    radial-gradient(45% 45% at 70% 95%, oklch(0.5 0.22 300 / 0.35), transparent 72%);
+}
+
+/* En claro el aura tapa el texto: se queda como un tinte apenas perceptible. */
+:root:not(.dark) .app-aura {
+  opacity: 0.35;
+}
+
+/* Superficie interior: translucida pero SIN blur. Las tarjetas viven dentro de
+   un panel que ya lo tiene, y apilar backdrop-filter cuesta caro. */
+@utility surface {
+  background: color-mix(in oklch, var(--card) 62%, transparent);
+  border-color: var(--glass-border);
+}

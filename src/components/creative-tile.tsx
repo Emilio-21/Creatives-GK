@@ -32,7 +32,7 @@ export function CreativeTile({
   const stats = creative.stats;
 
   return (
-    <div className="group relative overflow-hidden rounded-lg border bg-card transition-colors hover:border-primary/40">
+    <div className="group surface relative overflow-hidden rounded-lg border transition-colors hover:border-primary/40">
       {/* Un boton dentro de otro boton es HTML invalido y el parser lo saca de
           lugar: el area de abrir es una capa absoluta, no un wrapper. */}
       <div>
@@ -135,7 +135,7 @@ export function CreativeTile({
         />
       </div>
 
-      <label className="absolute left-2 top-2 z-20 flex cursor-pointer items-center rounded-md border border-white/15 bg-black/55 p-1 backdrop-blur-sm">
+      <label className="absolute left-2 top-2 z-20 flex cursor-pointer items-center rounded-md border border-white/15 bg-black/65 p-1">
         <Checkbox
           checked={selected}
           onCheckedChange={onToggle}
@@ -180,7 +180,7 @@ function TileAction({
         event.preventDefault();
         onClick();
       }}
-      className={`flex size-7 items-center justify-center rounded-md border border-white/20 bg-black/60 text-white backdrop-blur-sm transition-colors disabled:opacity-50 ${
+      className={`flex size-7 items-center justify-center rounded-md border border-white/20 bg-black/70 text-white transition-colors disabled:opacity-50 ${
         destructive ? "hover:border-destructive hover:bg-destructive/80" : "hover:bg-black/80"
       }`}
     >
