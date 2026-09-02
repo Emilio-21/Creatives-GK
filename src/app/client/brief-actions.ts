@@ -10,6 +10,7 @@ export type BriefRow = {
   batch_id: string | null;
   title: string;
   body: string;
+  brief_date: string;
   created_at: string;
   updated_at: string;
   updated_by: string | null;
@@ -17,6 +18,8 @@ export type BriefRow = {
 
 export type BriefWithMeta = BriefRow & {
   batchName: string | null;
+  batchCompletedAt: string | null;
+  creativeCount: number;
   authorName: string | null;
 };
 
@@ -42,19 +45,42 @@ export async function listBriefs(clientId: string): Promise<BriefWithMeta[]> {
 
   const [{ data: batches }, { data: profiles }] = await Promise.all([
     batchIds.length
-      ? supabase.from("batches").select("id, name").in("id", batchIds)
+      ? supabase.from("batches").select("id, name, completed_at").in("id", batchIds)
       : Promise.resolve({ data: [] }),
     supabase.from("profiles").select("id, full_name").in("id", authorIds),
   ]);
 
-  const batchNames = new Map((batches ?? []).map((b) => [b.id as string, b.name as string]));
+  const batchInfo = new Map(
+    (batches ?? []).map((b) => [
+      b.id as string,
+      { name: b.name as string, completedAt: (b.completed_at as string | null) ?? null },
+    ]),
+  );
+
+  // Cuantos diseños entrego cada brief.
+  const counts = new Map<string, number>();
+  if (batchIds.length > 0) {
+    const { data: creatives } = await supabase
+      .from("creatives")
+      .select("batch_id")
+      .in("batch_id", batchIds)
+      .is("archived_at", null);
+    for (const row of creatives ?? []) {
+      const key = row.batch_id as string;
+      counts.set(key, (counts.get(key) ?? 0) + 1);
+    }
+  }
   const authors = new Map(
     (profiles ?? []).map((p) => [p.id as string, (p.full_name as string | null) ?? null]),
   );
 
   return briefs.map((brief) => ({
     ...brief,
-    batchName: brief.batch_id ? (batchNames.get(brief.batch_id) ?? null) : null,
+    batchName: brief.batch_id ? (batchInfo.get(brief.batch_id)?.name ?? null) : null,
+    batchCompletedAt: brief.batch_id
+      ? (batchInfo.get(brief.batch_id)?.completedAt ?? null)
+      : null,
+    creativeCount: brief.batch_id ? (counts.get(brief.batch_id) ?? 0) : 0,
     authorName: authors.get(brief.updated_by ?? brief.created_by) ?? null,
   }));
 }
@@ -62,9 +88,10 @@ export async function listBriefs(clientId: string): Promise<BriefWithMeta[]> {
 export async function saveBrief(input: {
   id?: string;
   clientId: string;
-  batchId: string | null;
+  batchId?: string | null;
   title: string;
   body: string;
+  briefDate: string;
 }): Promise<string> {
   const user = await requireUser();
 
@@ -80,7 +107,8 @@ export async function saveBrief(input: {
         {
           title,
           body: input.body,
-          batch_id: input.batchId,
+          brief_date: input.briefDate,
+          ...(input.batchId !== undefined ? { batch_id: input.batchId } : {}),
           updated_by: user.id,
           updated_at: new Date().toISOString(),
         },
@@ -99,9 +127,10 @@ export async function saveBrief(input: {
     .from("briefs")
     .insert({
       client_id: input.clientId,
-      batch_id: input.batchId,
+      batch_id: input.batchId ?? null,
       title,
       body: input.body,
+      brief_date: input.briefDate,
       created_by: user.id,
       updated_by: user.id,
     })
@@ -124,5 +153,41 @@ export async function archiveBrief(briefId: string): Promise<void> {
     .eq("id", briefId);
 
   if (error) throw new Error(error.message);
+  revalidatePath("/", "layout");
+}
+
+/**
+ * Diseño publica: los creativos ya subidos quedan en "sin lanzar" con su batch,
+ * el brief queda ligado a ese batch y el batch se marca como completado.
+ *
+ * Publicar no mueve archivos: los creativos ya se subieron con ese batch_id.
+ * Lo que hace es cerrar el ciclo del brief.
+ */
+export async function publishBrief(briefId: string, batchId: string): Promise<void> {
+  await requireUser();
+  const supabase = await createClient();
+
+  const { count } = await supabase
+    .from("creatives")
+    .select("id", { count: "exact", head: true })
+    .eq("batch_id", batchId)
+    .is("archived_at", null);
+
+  if (!count) {
+    throw new Error("Sube al menos un diseño antes de publicar.");
+  }
+
+  const { error: batchError } = await supabase
+    .from("batches")
+    .update({ completed_at: new Date().toISOString() })
+    .eq("id", batchId);
+  if (batchError) throw new Error(batchError.message);
+
+  const { error } = await supabase
+    .from("briefs")
+    .update({ batch_id: batchId, updated_at: new Date().toISOString() })
+    .eq("id", briefId);
+  if (error) throw new Error(error.message);
+
   revalidatePath("/", "layout");
 }

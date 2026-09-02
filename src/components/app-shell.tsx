@@ -3,6 +3,7 @@ import { logout } from "@/app/login/actions";
 import { MobileNav } from "@/components/mobile-nav";
 import { MobileTabBar } from "@/components/mobile-tabbar";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { NewBriefButton } from "@/components/new-brief-button";
 import { NewClientForm } from "@/components/new-client-form";
 import { Button } from "@/components/ui/button";
 import { getClientsWithCounts } from "@/lib/clients";
@@ -71,6 +72,13 @@ export async function AppShell({
             <SidebarLink href="/dashboard" active={activeSection === "dashboard"}>
               Resumen
             </SidebarLink>
+
+            <div className="pt-2">
+              <NewBriefButton
+                clients={clients.map((client) => ({ id: client.id, name: client.name }))}
+                activeClientId={activeClientId}
+              />
+            </div>
           </nav>
 
           <div className="mt-5 space-y-1">

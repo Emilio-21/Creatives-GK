@@ -42,14 +42,22 @@ type ClientOption = { id: string; name: string };
 export function UploadDropzone({
   clients,
   defaultClientId,
+  lockedClientId,
+  lockedBatchId,
+  onUploaded,
 }: {
   clients: ClientOption[];
   defaultClientId?: string;
+  /** Cuando la subida ocurre dentro de un brief, el destino ya está decidido. */
+  lockedClientId?: string;
+  lockedBatchId?: string;
+  onUploaded?: () => void;
 }) {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const [items, setItems] = useState<Item[]>([]);
-  const [clientId, setClientId] = useState(defaultClientId ?? "");
+  const locked = Boolean(lockedClientId && lockedBatchId);
+  const [clientId, setClientId] = useState(lockedClientId ?? defaultClientId ?? "");
   const [batches, setBatches] = useState<ClientOption[]>([]);
   const [batchId, setBatchId] = useState("");
   const [newBatchName, setNewBatchName] = useState("");
@@ -168,7 +176,7 @@ export function UploadDropzone({
       height: metadata.height,
       durationSeconds: metadata.durationSeconds,
       clientId,
-      batchId: batchId || null,
+      batchId: lockedBatchId ?? (batchId || null),
       format: format || null,
       tags: parseTags(tagsText),
     });
@@ -216,6 +224,7 @@ export function UploadDropzone({
 
     if (done > 0) {
       toast.success(`${done} creativo${done === 1 ? "" : "s"} en la biblioteca.`);
+      onUploaded?.();
       router.refresh();
     }
   }
@@ -227,7 +236,7 @@ export function UploadDropzone({
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className={`grid gap-4 sm:grid-cols-2 lg:grid-cols-4${locked ? " hidden" : ""}`}>
         <div className="space-y-2">
           <Label htmlFor="client">
             Cliente <span className="text-destructive">*</span>

@@ -376,6 +376,11 @@ function BoardColumn({
                 <span className="font-mono text-[11px] text-muted-foreground">
                   {group.cards.length}
                 </span>
+                {group.completed ? (
+                  <span className="rounded-full border border-primary/40 px-1.5 py-0.5 text-[10px] text-primary">
+                    Completado
+                  </span>
+                ) : null}
               </p>
               <div className="grid grid-cols-2 gap-2.5 xl:grid-cols-3">
                 {group.cards.map((card) => (
@@ -401,8 +406,13 @@ function BoardColumn({
 }
 
 /** Agrupa por batch conservando el orden de la lista; lo suelto va al final. */
-function groupByBatch(cards: Card[]): { key: string; name: string; cards: Card[] }[] {
-  const groups = new Map<string, { key: string; name: string; cards: Card[] }>();
+function groupByBatch(
+  cards: Card[],
+): { key: string; name: string; completed: boolean; cards: Card[] }[] {
+  const groups = new Map<
+    string,
+    { key: string; name: string; completed: boolean; cards: Card[] }
+  >();
 
   for (const card of cards) {
     const key = card.batch_id ?? "__sin_batch__";
@@ -410,6 +420,7 @@ function groupByBatch(cards: Card[]): { key: string; name: string; cards: Card[]
       groups.set(key, {
         key,
         name: card.batchName ?? "Sin batch",
+        completed: card.batchCompletedAt !== null,
         cards: [],
       });
     }
