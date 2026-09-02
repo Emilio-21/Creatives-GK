@@ -52,8 +52,12 @@ export function BriefsSection({
           <h2 className="text-2xl font-semibold">Briefs</h2>
           {briefs ? (
             <p className="mt-1 flex flex-wrap gap-x-4 text-sm text-muted-foreground">
-              <span>{briefs.length} briefs</span>
-              <span>{pending} pendientes</span>
+              <span>
+                {briefs.length} brief{briefs.length === 1 ? "" : "s"}
+              </span>
+              <span>
+                {pending} pendiente{pending === 1 ? "" : "s"}
+              </span>
             </p>
           ) : null}
         </div>

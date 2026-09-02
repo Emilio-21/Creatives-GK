@@ -15,10 +15,10 @@ export function BriefCard({
     <button
       type="button"
       onClick={onOpen}
-      className="flex h-32 w-full flex-col gap-1.5 rounded-xl border bg-muted/25 p-4 text-left transition-colors hover:border-primary/40"
+      className="flex h-36 w-full flex-col gap-2 rounded-xl border bg-muted/25 p-4 text-left transition-colors hover:border-primary/40"
     >
       <div className="flex items-start justify-between gap-2">
-        <p className="min-w-0 flex-1 text-sm font-medium">{brief.title}</p>
+        <p className="line-clamp-2 min-w-0 flex-1 text-sm font-medium">{brief.title}</p>
         <span
           className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] ${
             completed
@@ -34,14 +34,18 @@ export function BriefCard({
         {brief.body || "Sin instrucciones todavía."}
       </p>
 
-      <div className="mt-auto flex items-baseline gap-2 font-mono text-[10px] text-muted-foreground">
-        <span>{brief.brief_date}</span>
-        {brief.batchName ? <span className="truncate">· {brief.batchName}</span> : null}
-        {brief.creativeCount > 0 ? (
-          <span className="ml-auto shrink-0">
-            {brief.creativeCount} diseño{brief.creativeCount === 1 ? "" : "s"}
-          </span>
+      <div className="mt-auto space-y-0.5 font-mono text-[10px] text-muted-foreground">
+        {brief.batchName ? (
+          <p className="truncate">{brief.batchName}</p>
         ) : null}
+        <p className="flex items-baseline justify-between gap-2">
+          <span>{brief.brief_date}</span>
+          {brief.creativeCount > 0 ? (
+            <span className="shrink-0">
+              {brief.creativeCount} diseño{brief.creativeCount === 1 ? "" : "s"}
+            </span>
+          ) : null}
+        </p>
       </div>
     </button>
   );

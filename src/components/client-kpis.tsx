@@ -20,7 +20,7 @@ export function ClientKpis({
       <div className="flex flex-wrap gap-x-8 gap-y-2 px-1 text-sm">
         <Inline label="Gasto" value={formatMoney(stats.totalSpend)} />
         {monthSpend !== undefined ? (
-          <Inline label="Este mes" value={formatMoney(monthSpend)} />
+          <Inline label="Este mes" value={formatMoney(monthSpend || null)} />
         ) : null}
         <Inline label="CTR" value={formatPercent(stats.ctr)} />
         <Inline label="CPA" value={formatMoney(stats.cpa)} />
