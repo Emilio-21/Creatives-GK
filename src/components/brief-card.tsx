@@ -15,7 +15,7 @@ export function BriefCard({
     <button
       type="button"
       onClick={onOpen}
-      className="flex flex-col gap-2 rounded-xl border bg-card p-3 text-left transition-colors hover:border-primary/40"
+      className="flex h-32 w-full flex-col gap-1.5 rounded-xl border bg-muted/25 p-4 text-left transition-colors hover:border-primary/40"
     >
       <div className="flex items-start justify-between gap-2">
         <p className="min-w-0 flex-1 text-sm font-medium">{brief.title}</p>

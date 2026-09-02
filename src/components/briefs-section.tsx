@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { BriefCard } from "@/components/brief-card";
@@ -39,17 +39,36 @@ export function BriefsSection({
   }, [clientId]);
 
   const open = briefs?.find((brief) => brief.id === openId) ?? null;
+  const pending = briefs?.filter((brief) => brief.batchCompletedAt === null).length ?? 0;
+  const rail = useRef<HTMLDivElement>(null);
+
+  const scrollBy = (amount: number) =>
+    rail.current?.scrollBy({ left: amount, behavior: "smooth" });
 
   return (
     <section className="space-y-3">
-      <h2 className="text-sm font-semibold">
-        Briefs
-        {briefs ? (
-          <span className="ml-2 font-mono text-xs font-normal text-muted-foreground">
-            {briefs.length}
-          </span>
+      <div className="flex items-end justify-between gap-4">
+        <div>
+          <h2 className="text-2xl font-semibold">Briefs</h2>
+          {briefs ? (
+            <p className="mt-1 flex flex-wrap gap-x-4 text-sm text-muted-foreground">
+              <span>{briefs.length} briefs</span>
+              <span>{pending} pendientes</span>
+            </p>
+          ) : null}
+        </div>
+
+        {briefs && briefs.length > 0 ? (
+          <div className="flex gap-1">
+            <RailButton label="Anterior" onClick={() => scrollBy(-480)}>
+              ←
+            </RailButton>
+            <RailButton label="Siguiente" onClick={() => scrollBy(480)}>
+              →
+            </RailButton>
+          </div>
         ) : null}
-      </h2>
+      </div>
 
       {briefs === null ? (
         <p className="text-sm text-muted-foreground">Cargando…</p>
@@ -58,9 +77,15 @@ export function BriefsSection({
           Sin briefs. Créalos desde &quot;Nuevo brief&quot; en el panel izquierdo.
         </p>
       ) : (
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        // Carrusel: los briefs se leen en orden, no se comparan en cuadricula.
+        <div
+          ref={rail}
+          className="-mx-1 flex snap-x snap-mandatory gap-3 overflow-x-auto px-1 pb-2"
+        >
           {briefs.map((brief) => (
-            <BriefCard key={brief.id} brief={brief} onOpen={() => setOpenId(brief.id)} />
+            <div key={brief.id} className="w-60 shrink-0 snap-start">
+              <BriefCard brief={brief} onOpen={() => setOpenId(brief.id)} />
+            </div>
           ))}
         </div>
       )}
@@ -78,6 +103,27 @@ export function BriefsSection({
         />
       ) : null}
     </section>
+  );
+}
+
+function RailButton({
+  label,
+  onClick,
+  children,
+}: {
+  label: string;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      onClick={onClick}
+      className="flex size-8 items-center justify-center rounded-lg border text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+    >
+      {children}
+    </button>
   );
 }
 

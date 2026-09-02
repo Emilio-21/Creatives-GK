@@ -345,10 +345,10 @@ function BoardColumn({
 }) {
   return (
     <section
-      className={`rounded-xl border bg-muted/25 p-3 ${accent ? "border-highlight/30" : ""}`}
+      className={`rounded-xl border p-4 ${accent ? "border-highlight/40" : "border-primary/25"}`}
     >
       <header className="mb-3 flex items-baseline justify-between gap-2 px-1">
-        <h3 className="text-sm font-semibold">
+        <h3 className="text-base font-medium">
           {title}
           <span
             className={`ml-2 font-mono text-xs font-normal ${

@@ -2,9 +2,9 @@ import { notFound, redirect } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { LibraryView, readViewParams } from "@/components/library-view";
 import { ClientMenu } from "@/components/client-menu";
-import { StatsStrip } from "@/components/stats-strip";
 import { ClientInsights } from "@/components/client-insights";
-import { MetaPanel } from "@/components/meta-panel";
+import { MetaButtons } from "@/components/meta-buttons";
+import { ClientKpis } from "@/components/client-kpis";
 import { BriefsSection } from "@/components/briefs-section";
 import { getClientOverview } from "@/lib/dashboard";
 import { getClient } from "@/lib/clients";
@@ -41,25 +41,27 @@ export default async function ClientPage({
       email={user.email ?? ""}
       activeClientId={client.id}
     >
-      <div className="space-y-6">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <h1 className="text-xl font-semibold">{client.name}</h1>
-            <p className="text-sm text-muted-foreground">
-              {overview.kpis.total} creativo{overview.kpis.total === 1 ? "" : "s"} ·{" "}
-              {overview.kpis.unlaunched} sin lanzar
+      <div className="space-y-8">
+        <header className="flex flex-wrap items-start justify-between gap-4">
+          <div className="min-w-0">
+            <h1 className="truncate text-3xl font-semibold">{client.name}</h1>
+            <p className="mt-1 flex flex-wrap gap-x-4 text-sm text-muted-foreground">
+              <span>{overview.kpis.total} creativos</span>
+              <span>{overview.kpis.unlaunched} sin lanzar</span>
             </p>
           </div>
-          <ClientMenu id={client.id} name={client.name} />
-        </div>
 
-        <StatsStrip stats={overview.kpis} monthSpend={overview.kpis.monthSpend} />
+          <div className="flex items-center gap-2">
+            <ClientMenu id={client.id} name={client.name} />
+            <MetaButtons
+              clientId={client.id}
+              adAccountId={client.meta_ad_account_id}
+              syncedAt={client.meta_synced_at}
+            />
+          </div>
+        </header>
 
-        <MetaPanel
-          clientId={client.id}
-          adAccountId={client.meta_ad_account_id}
-          syncedAt={client.meta_synced_at}
-        />
+        <ClientKpis stats={overview.kpis} monthSpend={overview.kpis.monthSpend} />
 
         <BriefsSection clientId={client.id} clientName={client.name} />
 

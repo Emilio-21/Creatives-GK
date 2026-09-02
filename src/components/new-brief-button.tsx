@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
 import { BriefDialog } from "@/components/brief-dialog";
 
 export function NewBriefButton({
@@ -15,14 +14,13 @@ export function NewBriefButton({
 
   return (
     <>
-      <Button
-        variant="outline"
-        size="sm"
-        className="w-full justify-start"
+      <button
+        type="button"
         onClick={() => setOpen(true)}
+        className="brand-gradient flex w-full items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90"
       >
-        + Nuevo brief
-      </Button>
+        <span aria-hidden="true">+</span> Nuevo brief
+      </button>
       {/* La clave remonta el formulario al abrir: hereda el cliente actual. */}
       <BriefDialog
         key={open ? `${activeClientId ?? "none"}-abierto` : "cerrado"}
