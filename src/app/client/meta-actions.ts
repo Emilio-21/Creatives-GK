@@ -27,9 +27,18 @@ export async function setMetaAdAccount(clientId: string, adAccountId: string): P
   revalidatePath("/", "layout");
 }
 
-export async function syncClientNow(clientId: string): Promise<SyncReport> {
+export async function syncClientNow(
+  clientId: string,
+  range?: { since: string; until: string },
+): Promise<SyncReport> {
   await requireUser();
-  const report = await syncClient(clientId);
+
+  if (range) {
+    if (!range.since || !range.until) throw new Error("Elige las dos fechas.");
+    if (range.until < range.since) throw new Error("La fecha final va después de la inicial.");
+  }
+
+  const report = await syncClient(clientId, range);
   revalidatePath("/", "layout");
   return report;
 }

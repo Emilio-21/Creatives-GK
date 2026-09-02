@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,7 @@ import { ALLOWED_MIME_TYPES, MAX_FILE_BYTES } from "@/lib/env";
 import { extractMetadata, type MediaMetadata } from "@/lib/media";
 import { uploadToR2 } from "@/lib/upload-xhr";
 import { confirmUpload, findDuplicateNames, requestUploadUrls } from "./actions";
+import { createBatch, listBatches } from "@/app/client/batch-actions";
 
 const FORMATS = ["reel", "story", "feed", "1x1", "9x16"];
 const ACCEPT = ALLOWED_MIME_TYPES.join(",");
@@ -49,10 +50,31 @@ export function UploadDropzone({
   const inputRef = useRef<HTMLInputElement>(null);
   const [items, setItems] = useState<Item[]>([]);
   const [clientId, setClientId] = useState(defaultClientId ?? "");
+  const [batches, setBatches] = useState<ClientOption[]>([]);
+  const [batchId, setBatchId] = useState("");
+  const [newBatchName, setNewBatchName] = useState("");
   const [format, setFormat] = useState<string>("");
   const [tagsText, setTagsText] = useState("");
   const [dragging, setDragging] = useState(false);
   const [running, setRunning] = useState(false);
+
+  // Los batches dependen del cliente elegido.
+  useEffect(() => {
+    setBatchId("");
+    if (!clientId) {
+      setBatches([]);
+      return;
+    }
+    let cancelled = false;
+    listBatches(clientId)
+      .then((rows) => {
+        if (!cancelled) setBatches(rows);
+      })
+      .catch(() => setBatches([]));
+    return () => {
+      cancelled = true;
+    };
+  }, [clientId]);
 
   const update = useCallback((key: string, patch: Partial<Item>) => {
     setItems((prev) => prev.map((item) => (item.key === key ? { ...item, ...patch } : item)));
@@ -146,6 +168,7 @@ export function UploadDropzone({
       height: metadata.height,
       durationSeconds: metadata.durationSeconds,
       clientId,
+      batchId: batchId || null,
       format: format || null,
       tags: parseTags(tagsText),
     });
@@ -204,7 +227,7 @@ export function UploadDropzone({
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="space-y-2">
           <Label htmlFor="client">
             Cliente <span className="text-destructive">*</span>
@@ -228,6 +251,55 @@ export function UploadDropzone({
               Crea un cliente primero desde el panel izquierdo.
             </p>
           ) : null}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="batch">Batch</Label>
+          {batchId === "__nuevo__" ? (
+            <div className="flex gap-2">
+              <Input
+                value={newBatchName}
+                onChange={(event) => setNewBatchName(event.target.value)}
+                placeholder="Nombre del batch"
+                maxLength={80}
+                autoFocus
+                disabled={running}
+              />
+              <Button
+                type="button"
+                size="sm"
+                disabled={running || !newBatchName.trim()}
+                onClick={async () => {
+                  try {
+                    const id = await createBatch(clientId, newBatchName);
+                    setBatches((prev) => [{ id, name: newBatchName.trim() }, ...prev]);
+                    setBatchId(id);
+                    setNewBatchName("");
+                  } catch (error) {
+                    toast.error((error as Error).message);
+                  }
+                }}
+              >
+                Crear
+              </Button>
+            </div>
+          ) : (
+            <select
+              id="batch"
+              value={batchId}
+              onChange={(event) => setBatchId(event.target.value)}
+              disabled={running || !clientId}
+              className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:opacity-50"
+            >
+              <option value="">Sin batch</option>
+              {batches.map((batch) => (
+                <option key={batch.id} value={batch.id}>
+                  {batch.name}
+                </option>
+              ))}
+              <option value="__nuevo__">+ Nuevo batch…</option>
+            </select>
+          )}
         </div>
 
         <div className="space-y-2">

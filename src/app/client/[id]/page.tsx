@@ -5,6 +5,8 @@ import { ClientMenu } from "@/components/client-menu";
 import { StatsStrip } from "@/components/stats-strip";
 import { ClientInsights } from "@/components/client-insights";
 import { MetaPanel } from "@/components/meta-panel";
+import { BriefsPanel } from "@/components/briefs-panel";
+import { getBatches } from "@/lib/batches";
 import { getClientOverview } from "@/lib/dashboard";
 import { getClient } from "@/lib/clients";
 import { createClient, type Profile } from "@/lib/supabase/server";
@@ -30,7 +32,10 @@ export default async function ClientPage({
 
   if (!client || client.archived_at) notFound();
 
-  const overview = await getClientOverview(client.id);
+  const [overview, batches] = await Promise.all([
+    getClientOverview(client.id),
+    getBatches(client.id),
+  ]);
 
   const view = readViewParams(await searchParams);
 
@@ -58,6 +63,11 @@ export default async function ClientPage({
           clientId={client.id}
           adAccountId={client.meta_ad_account_id}
           syncedAt={client.meta_synced_at}
+        />
+
+        <BriefsPanel
+          clientId={client.id}
+          batches={batches.map((batch) => ({ id: batch.id, name: batch.name }))}
         />
 
         <ClientInsights

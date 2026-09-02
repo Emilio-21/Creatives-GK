@@ -138,13 +138,14 @@ type RawInsight = {
  * Se pide asi y no ad por ad porque Vercel Hobby corta a los 60 s: una cuenta
  * con 200 anuncios serian 200 requests.
  */
+export type DateRange = { since: string; until: string };
+
 export async function fetchAccountInsights(
   adAccountId: string,
-  datePreset = "maximum",
+  range?: DateRange,
 ): Promise<MetaAdInsight[]> {
   const params = new URLSearchParams({
     level: "ad",
-    date_preset: datePreset,
     limit: "200",
     fields: [
       "ad_id",
@@ -163,6 +164,10 @@ export async function fetchAccountInsights(
     ].join(","),
     access_token: token(),
   });
+
+  // Sin rango, todo el historico disponible. Con rango, exactamente esos dias.
+  if (range) params.set("time_range", JSON.stringify(range));
+  else params.set("date_preset", "maximum");
 
   const results: MetaAdInsight[] = [];
   let url = `${BASE}/${accountPath(adAccountId)}/insights?${params.toString()}`;

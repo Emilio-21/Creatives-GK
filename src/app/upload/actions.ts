@@ -64,6 +64,7 @@ export type ConfirmUploadInput = {
   height: number | null;
   durationSeconds: number | null;
   clientId: string;
+  batchId: string | null;
   format: string | null;
   tags: string[];
 };
@@ -107,6 +108,7 @@ export async function confirmUpload(input: ConfirmUploadInput): Promise<{ id: st
       height: input.height,
       duration_seconds: input.durationSeconds,
       client_id: input.clientId,
+      batch_id: input.batchId,
       format: input.format,
       tags: input.tags,
       uploaded_by: user.id,

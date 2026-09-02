@@ -88,6 +88,8 @@ async function main() {
       "launches",
       "downloads",
       "creative_stats",
+      "batches",
+      "briefs",
     ]) {
       // select real, no head: un HEAD no falla si la tabla no esta en el cache.
       const { error } = await supabase.from(table).select("*").limit(1);
@@ -98,6 +100,7 @@ async function main() {
       ["creatives", "client_id", "0004_clients.sql"],
       ["creative_stats", "active_launch_count", "0005_creative_stats_status.sql"],
       ["clients", "meta_ad_account_id", "0006_meta_sync.sql"],
+      ["creatives", "batch_id", "0008_batches_and_briefs.sql"],
     ];
     for (const [table, column, migration] of columns) {
       const { error: columnError } = await supabase.from(table).select(column).limit(1);

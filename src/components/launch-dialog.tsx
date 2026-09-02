@@ -17,7 +17,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { createLaunch, updateLaunch, type LaunchInput } from "@/app/creative/launch-actions";
-import { derive, formatMoney, formatPercent } from "@/lib/metrics";
 import type { LaunchRow } from "@/lib/launches";
 
 type Draft = {
@@ -29,16 +28,8 @@ type Draft = {
   metaCampaignId: string;
   metaAdsetId: string;
   metaAdId: string;
-  spend: string;
-  impressions: string;
-  reach: string;
-  clicks: string;
-  results: string;
-  resultType: string;
   notes: string;
 };
-
-const RESULT_TYPES = ["lead", "purchase", "lpv", "message", "otro"];
 
 function emptyDraft(): Draft {
   return {
@@ -50,12 +41,6 @@ function emptyDraft(): Draft {
     metaCampaignId: "",
     metaAdsetId: "",
     metaAdId: "",
-    spend: "",
-    impressions: "",
-    reach: "",
-    clicks: "",
-    results: "",
-    resultType: "",
     notes: "",
   };
 }
@@ -71,22 +56,10 @@ function draftFrom(launch: LaunchRow): Draft {
     metaCampaignId: text(launch.meta_campaign_id),
     metaAdsetId: text(launch.meta_adset_id),
     metaAdId: text(launch.meta_ad_id),
-    spend: text(launch.spend),
-    impressions: text(launch.impressions),
-    reach: text(launch.reach),
-    clicks: text(launch.clicks),
-    results: text(launch.results),
-    resultType: text(launch.result_type),
     notes: text(launch.notes),
   };
 }
 
-const numberOrNull = (value: string): number | null => {
-  const trimmed = value.trim();
-  if (!trimmed) return null;
-  const parsed = Number(trimmed);
-  return Number.isFinite(parsed) ? parsed : null;
-};
 const textOrNull = (value: string): string | null => value.trim() || null;
 
 export function LaunchDialog({
@@ -106,14 +79,6 @@ export function LaunchDialog({
   const set = (key: keyof Draft) => (value: string) =>
     setDraft((prev) => ({ ...prev, [key]: value }));
 
-  // CTR/CPM/CPC/CPA en vivo, con las mismas formulas que la vista.
-  const derived = derive({
-    spend: numberOrNull(draft.spend),
-    impressions: numberOrNull(draft.impressions),
-    clicks: numberOrNull(draft.clicks),
-    results: numberOrNull(draft.results),
-  });
-
   function submit() {
     const input: LaunchInput = {
       creativeId,
@@ -125,12 +90,12 @@ export function LaunchDialog({
       metaCampaignId: textOrNull(draft.metaCampaignId),
       metaAdsetId: textOrNull(draft.metaAdsetId),
       metaAdId: textOrNull(draft.metaAdId),
-      spend: numberOrNull(draft.spend),
-      impressions: numberOrNull(draft.impressions),
-      reach: numberOrNull(draft.reach),
-      clicks: numberOrNull(draft.clicks),
-      results: numberOrNull(draft.results),
-      resultType: textOrNull(draft.resultType),
+      spend: null,
+      impressions: null,
+      reach: null,
+      clicks: null,
+      results: null,
+      resultType: null,
       notes: textOrNull(draft.notes),
     };
 
@@ -155,7 +120,7 @@ export function LaunchDialog({
         <DialogHeader>
           <DialogTitle>{launch ? "Editar lanzamiento" : "Registrar lanzamiento"}</DialogTitle>
           <DialogDescription>
-            Solo números base. CTR, CPM, CPC y CPA se calculan solos.
+            Solo el periodo y de qué campaña salió. Las métricas las jala el sync.
           </DialogDescription>
         </DialogHeader>
 
@@ -202,70 +167,10 @@ export function LaunchDialog({
             </Field>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-3">
-            <Field label="Gasto">
-              <Input
-                type="number"
-                min="0"
-                step="0.01"
-                value={draft.spend}
-                onChange={(event) => set("spend")(event.target.value)}
-              />
-            </Field>
-            <Field label="Impresiones">
-              <Input
-                type="number"
-                min="0"
-                value={draft.impressions}
-                onChange={(event) => set("impressions")(event.target.value)}
-              />
-            </Field>
-            <Field label="Alcance">
-              <Input
-                type="number"
-                min="0"
-                value={draft.reach}
-                onChange={(event) => set("reach")(event.target.value)}
-              />
-            </Field>
-            <Field label="Clics">
-              <Input
-                type="number"
-                min="0"
-                value={draft.clicks}
-                onChange={(event) => set("clicks")(event.target.value)}
-              />
-            </Field>
-            <Field label="Resultados">
-              <Input
-                type="number"
-                min="0"
-                value={draft.results}
-                onChange={(event) => set("results")(event.target.value)}
-              />
-            </Field>
-            <Field label="Tipo de resultado">
-              <select
-                value={draft.resultType}
-                onChange={(event) => set("resultType")(event.target.value)}
-                className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
-              >
-                <option value="">—</option>
-                {RESULT_TYPES.map((type) => (
-                  <option key={type} value={type}>
-                    {type}
-                  </option>
-                ))}
-              </select>
-            </Field>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3 rounded-md border bg-muted/40 p-3 text-sm text-muted-foreground sm:grid-cols-4">
-            <Derived label="CTR" value={formatPercent(derived.ctr)} />
-            <Derived label="CPM" value={formatMoney(derived.cpm)} />
-            <Derived label="CPC" value={formatMoney(derived.cpc)} />
-            <Derived label="CPA" value={formatMoney(derived.cpa)} />
-          </div>
+          <p className="rounded-md border bg-muted/40 p-3 text-xs text-muted-foreground">
+            Gasto, impresiones, clics y resultados los trae el sync de Meta. Solo hace
+            falta que el nombre del anuncio lleve el código del creativo.
+          </p>
 
           <Field label="Notas">
             <Textarea
@@ -298,11 +203,3 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-function Derived({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <p className="text-xs uppercase tracking-wide">{label}</p>
-      <p className="tabular-nums">{value}</p>
-    </div>
-  );
-}

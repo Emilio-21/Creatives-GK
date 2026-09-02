@@ -1,7 +1,7 @@
 import "server-only";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { adCodeFor, extractAdCode } from "@/lib/ad-code";
-import { fetchAccountAds, fetchAccountInsights } from "@/lib/meta";
+import { fetchAccountAds, fetchAccountInsights, type DateRange } from "@/lib/meta";
 import { serverEnv } from "@/lib/env";
 import { publicEnv } from "@/lib/env";
 
@@ -14,6 +14,8 @@ export type SyncReport = {
   matched: number;
   launchesWritten: number;
   /** Anuncios sin el codigo [GK-xxxxxxxx] en el nombre. */
+  /** Periodo consultado, para que el reporte diga de que fechas habla. */
+  range: DateRange | null;
   adsWithoutCode: string[];
   /** Codigos que no corresponden a ningun creativo (¿archivado? ¿borrado?). */
   unknownCodes: string[];
@@ -30,7 +32,7 @@ function serviceClient() {
   });
 }
 
-export async function syncClient(clientId: string): Promise<SyncReport> {
+export async function syncClient(clientId: string, range?: DateRange): Promise<SyncReport> {
   const supabase = serviceClient();
 
   const { data: client } = await supabase
@@ -48,6 +50,7 @@ export async function syncClient(clientId: string): Promise<SyncReport> {
     withMetrics: 0,
     matched: 0,
     launchesWritten: 0,
+    range: range ?? null,
     adsWithoutCode: [],
     unknownCodes: [],
   };
@@ -74,7 +77,7 @@ export async function syncClient(clientId: string): Promise<SyncReport> {
     // Los anuncios primero: el endpoint de insights se salta los que no
     // gastaron, y esos tambien hay que enlazar y reportar.
     ads = await fetchAccountAds(client.meta_ad_account_id as string);
-    insights = await fetchAccountInsights(client.meta_ad_account_id as string);
+    insights = await fetchAccountInsights(client.meta_ad_account_id as string, range);
   } catch (error) {
     report.error = (error as Error).message;
     return report;
@@ -109,9 +112,13 @@ export async function syncClient(clientId: string): Promise<SyncReport> {
 
     rows.push({
       creative_id: creativeId,
+      // El periodo es parte de la llave: dos pulls de rangos distintos son dos
+      // lanzamientos del mismo anuncio, no uno que pisa al otro.
       launched_at:
+        range?.since ||
         insight?.dateStart ||
         (ad.createdTime ? ad.createdTime.slice(0, 10) : new Date().toISOString().slice(0, 10)),
+      ended_at: range?.until ?? insight?.dateStop ?? null,
       platform: "meta",
       campaign_name: ad.campaignName,
       adset_name: ad.adsetName,
@@ -135,7 +142,7 @@ export async function syncClient(clientId: string): Promise<SyncReport> {
     // parcial de 0006). Volver a correr el sync actualiza, no duplica.
     const { error } = await supabase
       .from("launches")
-      .upsert(rows, { onConflict: "meta_ad_id" });
+      .upsert(rows, { onConflict: "creative_id,meta_ad_id,launched_at,ended_at" });
 
     if (error) {
       report.error = `No se pudieron escribir los lanzamientos: ${error.message}`;
@@ -156,7 +163,7 @@ export async function syncClient(clientId: string): Promise<SyncReport> {
   return report;
 }
 
-export async function syncAllClients(): Promise<SyncReport[]> {
+export async function syncAllClients(range?: DateRange): Promise<SyncReport[]> {
   const supabase = serviceClient();
   const { data: clients } = await supabase
     .from("clients")
@@ -167,7 +174,7 @@ export async function syncAllClients(): Promise<SyncReport[]> {
   const reports: SyncReport[] = [];
   for (const client of clients ?? []) {
     try {
-      reports.push(await syncClient(client.id as string));
+      reports.push(await syncClient(client.id as string, range));
     } catch (error) {
       reports.push({
         clientId: client.id as string,
@@ -176,6 +183,7 @@ export async function syncAllClients(): Promise<SyncReport[]> {
         withMetrics: 0,
         matched: 0,
         launchesWritten: 0,
+        range: range ?? null,
         adsWithoutCode: [],
         unknownCodes: [],
         error: (error as Error).message,

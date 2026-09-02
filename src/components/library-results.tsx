@@ -19,6 +19,7 @@ import { requestDownloads } from "@/app/creative/actions";
 import { quickLaunch } from "@/app/creative/detail-actions";
 import { deleteCreative } from "@/app/creative/creative-actions";
 import { downloadOne, downloadZip } from "@/lib/download";
+import { exportReportCsv } from "@/lib/export-report";
 import { useRouter } from "next/navigation";
 import { formatMoney, formatPercent, statusOf, STATUS_LABEL } from "@/lib/metrics";
 import { adCodeFor } from "@/lib/ad-code";
@@ -69,9 +70,11 @@ export function LibraryResults({
   cards,
   view,
   zipBaseName,
+  reportName,
 }: {
   cards: Card[];
   view: "tablero" | "tabla";
+  reportName: string;
   zipBaseName: string;
 }) {
   const router = useRouter();
@@ -271,6 +274,23 @@ export function LibraryResults({
       )}
 
 
+      <div className="flex justify-end">
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => {
+            const scope = selected.size > 0 ? cards.filter((c) => selected.has(c.id)) : cards;
+            exportReportCsv(
+              scope,
+              `${reportName}-${new Date().toISOString().slice(0, 10)}.csv`,
+            );
+            toast.success(`Informe de ${scope.length} creativos exportado`);
+          }}
+        >
+          Exportar informe
+        </Button>
+      </div>
+
       {openId ? (
         <CreativeModal
           creativeId={openId}
@@ -346,22 +366,58 @@ function BoardColumn({
           Nada aquí.
         </p>
       ) : (
-        <div className="grid grid-cols-2 gap-2.5 xl:grid-cols-3">
-          {cards.map((card) => (
-            <CreativeTile
-              key={card.id}
-              creative={card}
-              selected={selected.has(card.id)}
-              onToggle={() => onToggle(card.id)}
-              onOpen={() => onOpen(card.id)}
-              onDownload={() => onDownload(card.id)}
-              onLaunch={() => onLaunch(card.id)}
-              onDelete={() => onDelete(card)}
-              busy={busy}
-            />
+        <div className="space-y-4">
+          {groupByBatch(cards).map((group) => (
+            <div key={group.key} className="space-y-2">
+              {/* Los creativos se prueban por tandas: la agrupacion es la unidad
+                  con la que el equipo decide, no un adorno. */}
+              <p className="flex items-baseline gap-2 px-1 text-xs">
+                <span className="font-medium">{group.name}</span>
+                <span className="font-mono text-[11px] text-muted-foreground">
+                  {group.cards.length}
+                </span>
+              </p>
+              <div className="grid grid-cols-2 gap-2.5 xl:grid-cols-3">
+                {group.cards.map((card) => (
+                  <CreativeTile
+                    key={card.id}
+                    creative={card}
+                    selected={selected.has(card.id)}
+                    onToggle={() => onToggle(card.id)}
+                    onOpen={() => onOpen(card.id)}
+                    onDownload={() => onDownload(card.id)}
+                    onLaunch={() => onLaunch(card.id)}
+                    onDelete={() => onDelete(card)}
+                    busy={busy}
+                  />
+                ))}
+              </div>
+            </div>
           ))}
         </div>
       )}
     </section>
   );
+}
+
+/** Agrupa por batch conservando el orden de la lista; lo suelto va al final. */
+function groupByBatch(cards: Card[]): { key: string; name: string; cards: Card[] }[] {
+  const groups = new Map<string, { key: string; name: string; cards: Card[] }>();
+
+  for (const card of cards) {
+    const key = card.batch_id ?? "__sin_batch__";
+    if (!groups.has(key)) {
+      groups.set(key, {
+        key,
+        name: card.batchName ?? "Sin batch",
+        cards: [],
+      });
+    }
+    groups.get(key)!.cards.push(card);
+  }
+
+  const list = [...groups.values()];
+  const loose = list.findIndex((group) => group.key === "__sin_batch__");
+  if (loose >= 0) list.push(...list.splice(loose, 1));
+  return list;
 }

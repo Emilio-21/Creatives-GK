@@ -17,6 +17,7 @@ export type CreativeRow = {
   height: number | null;
   duration_seconds: number | null;
   client_id: string | null;
+  batch_id: string | null;
   concept: string | null;
   format: string | null;
   tags: string[];
@@ -44,6 +45,7 @@ export type CreativeStats = {
 };
 
 export type CreativeCard = CreativeRow & {
+  batchName: string | null;
   /** Poster para video, el archivo para imagen. Firmada 1 h. */
   previewUrl: string | null;
   stats: CreativeStats | null;
@@ -97,6 +99,13 @@ export async function getLibrary(filters: LibraryFilters) {
     for (const row of (stats ?? []) as CreativeStats[]) statsById.set(row.id, row);
   }
 
+  const batchNames = new Map<string, string>();
+  const batchIds = [...new Set(creatives.map((c) => c.batch_id).filter(Boolean))] as string[];
+  if (batchIds.length > 0) {
+    const { data: batches } = await supabase.from("batches").select("id, name").in("id", batchIds);
+    for (const row of batches ?? []) batchNames.set(row.id as string, row.name as string);
+  }
+
   const namesById = new Map<string, string | null>();
   const uploaderIds = [...new Set(creatives.map((creative) => creative.uploaded_by))];
   if (uploaderIds.length > 0) {
@@ -132,6 +141,7 @@ export async function getLibrary(filters: LibraryFilters) {
       return {
         ...creative,
         previewUrl: path ? await getPreviewUrl(path) : null,
+        batchName: creative.batch_id ? (batchNames.get(creative.batch_id) ?? null) : null,
         stats,
         uploaderName: namesById.get(creative.uploaded_by) ?? null,
       };

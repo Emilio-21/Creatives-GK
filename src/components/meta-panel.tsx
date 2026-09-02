@@ -20,6 +20,8 @@ export function MetaPanel({
   const router = useRouter();
   const [value, setValue] = useState(adAccountId ?? "");
   const [report, setReport] = useState<SyncReport | null>(null);
+  const [since, setSince] = useState("");
+  const [until, setUntil] = useState("");
   const [pending, startTransition] = useTransition();
 
   return (
@@ -57,13 +59,42 @@ export function MetaPanel({
           Guardar
         </Button>
 
+        <div className="space-y-1.5">
+          <label htmlFor="since" className="text-xs text-muted-foreground">
+            Desde
+          </label>
+          <Input
+            id="since"
+            type="date"
+            value={since}
+            onChange={(event) => setSince(event.target.value)}
+            className="w-40 text-sm"
+          />
+        </div>
+
+        <div className="space-y-1.5">
+          <label htmlFor="until" className="text-xs text-muted-foreground">
+            Hasta
+          </label>
+          <Input
+            id="until"
+            type="date"
+            value={until}
+            onChange={(event) => setUntil(event.target.value)}
+            className="w-40 text-sm"
+          />
+        </div>
+
         <Button
           size="sm"
           disabled={pending || !adAccountId}
           onClick={() =>
             startTransition(async () => {
               try {
-                const result = await syncClientNow(clientId);
+                const result = await syncClientNow(
+                  clientId,
+                  since && until ? { since, until } : undefined,
+                );
                 setReport(result);
                 if (result.error) toast.error(result.error);
                 else
@@ -84,6 +115,9 @@ export function MetaPanel({
       </div>
 
       <p className="mt-2 text-xs text-muted-foreground">
+        {since && until
+          ? `Va a jalar del ${since} al ${until}. `
+          : "Sin fechas jala todo el histórico. Cada rango queda como su propio periodo. "}
         {syncedAt
           ? `Último sync: ${new Date(syncedAt).toLocaleString("es-MX")}. `
           : "Nunca sincronizado. "}
@@ -93,6 +127,7 @@ export function MetaPanel({
       {report ? (
         <div className="mt-3 space-y-2 border-t pt-3 text-xs">
           <p className="text-muted-foreground">
+            {report.range ? `${report.range.since} → ${report.range.until} · ` : "Histórico · "}
             {report.adsFound} anuncios en la cuenta · {report.matched} enlazados ·{" "}
             {report.withMetrics} con métricas · {report.launchesWritten} lanzamientos
             escritos
