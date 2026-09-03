@@ -1,12 +1,10 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { syncAllClients } from "@/lib/meta-sync";
 
-/** Hobby permite hasta 60 s; el default de 10 s no alcanza con varias cuentas. */
-export const maxDuration = 60;
 export const dynamic = "force-dynamic";
 
 /**
- * Cron diario de Vercel. Protegido con CRON_SECRET: si la ruta quedara abierta,
+ * La dispara el Worker de cron (workers/cron-sync). Protegida con CRON_SECRET: si la ruta quedara abierta,
  * cualquiera podria dispararla y quemar el rate limit de la Graph API.
  */
 export async function GET(request: NextRequest) {

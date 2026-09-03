@@ -266,6 +266,61 @@ y quemar el rate limit de la Graph API.
 
 ---
 
+## Despliegue — Cloudflare Workers
+
+Corre sobre Workers con `@opennextjs/cloudflare`. R2 ya vive en Cloudflare, y el plan
+gratuito de Vercel prohíbe uso comercial, que es justo lo que es esta herramienta.
+
+```bash
+npm run cf:preview   # build + servidor local sobre workerd
+npm run cf:deploy    # build + deploy
+```
+
+El bundle pesa **1.8 MB comprimido**, muy por debajo del límite. El SDK de S3 cabe sin
+problema, así que `lib/storage.ts` sigue igual; el binding `CREATIVES_BUCKET` ya está
+declarado para cuando convenga cambiarlo por acceso directo a R2.
+
+### Secretos
+
+Las variables no van en un archivo: se suben como secretos.
+
+```bash
+npx wrangler secret put NEXT_PUBLIC_SUPABASE_URL
+npx wrangler secret put NEXT_PUBLIC_SUPABASE_ANON_KEY
+npx wrangler secret put SUPABASE_SERVICE_ROLE_KEY
+npx wrangler secret put R2_ACCOUNT_ID
+npx wrangler secret put R2_ACCESS_KEY_ID
+npx wrangler secret put R2_SECRET_ACCESS_KEY
+npx wrangler secret put R2_BUCKET_NAME
+npx wrangler secret put META_ACCESS_TOKEN
+npx wrangler secret put CRON_SECRET
+```
+
+### Cron
+
+El sync diario vive en un Worker aparte (`workers/cron-sync`), no dentro de la app: el
+worker que genera OpenNext exporta su propio `fetch`, y colgarle un `scheduled` encima
+ata el despliegue a los detalles internos del adaptador.
+
+```bash
+cd workers/cron-sync
+npx wrangler secret put CRON_SECRET
+npx wrangler deploy
+```
+
+Ajusta `APP_URL` en `workers/cron-sync/wrangler.jsonc` al dominio real.
+
+### Después de desplegar
+
+Agrega el dominio nuevo a `AllowedOrigins` en `infra/r2-cors.json` y pégalo en los dos
+buckets, o el upload desde el navegador falla.
+
+```bash
+npm run check:cors
+```
+
+---
+
 ## Desarrollo
 
 ```bash

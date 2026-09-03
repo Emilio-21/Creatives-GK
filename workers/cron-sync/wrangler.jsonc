@@ -1,0 +1,14 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "creativos-gk-cron",
+  "main": "index.ts",
+  "compatibility_date": "2026-09-01",
+  "observability": { "enabled": true },
+  "triggers": {
+    // Diario a las 13:00 UTC. Cloudflare de pago no limita a 2 al dia.
+    "crons": ["0 13 * * *"]
+  },
+  "vars": {
+    "APP_URL": "https://creativos-gk.workers.dev"
+  }
+}

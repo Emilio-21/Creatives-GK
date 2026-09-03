@@ -1,0 +1,22 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "creativos-gk",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-09-01",
+  // nodejs_compat: el SDK de S3 y node:crypto lo necesitan.
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "observability": { "enabled": true },
+  // R2 enlazado directo: sin credenciales de S3 en el entorno cuando migremos
+  // lib/storage.ts al binding. Por ahora sigue usando la API S3.
+  "r2_buckets": [
+    {
+      "binding": "CREATIVES_BUCKET",
+      "bucket_name": "creatives-prod",
+      "preview_bucket_name": "creatives-dev"
+    }
+  ]
+}

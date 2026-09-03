@@ -43,3 +43,8 @@ next-env.d.ts
 # permitir el template de env
 !.env.example
 backups/
+
+# Cloudflare
+.open-next/
+.wrangler/
+cloudflare-env.d.ts
