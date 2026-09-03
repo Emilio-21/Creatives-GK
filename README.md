@@ -72,8 +72,13 @@ Ya implementado:
 - `src/app/login/` — email + password, sin signup público.
 - `0003_auth_trigger.sql` — crea el `profile` al crear el usuario (con backfill).
 
-**Crear las cuentas a mano:** Supabase → Authentication → Users → *Add user* →
-*Create new user* con "Auto Confirm User" activado. Crear la tuya y una de prueba.
+**Alta del equipo:** `/signup`, solo correos `@growthkingdom.com`. El candado está en un
+trigger sobre `auth.users` (0010), no en la pantalla: la anon key es pública y cualquiera
+puede llamar al endpoint de registro de Supabase saltándose el formulario.
+
+Cada quien elige su área al registrarse — Media buying, Copywriting o Diseño. El rol
+`admin` no se puede auto-asignar: si alguien lo manda en el metadata, el trigger lo
+degrada a `member`.
 
 Para volverte admin:
 ```sql

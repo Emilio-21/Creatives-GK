@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { login, type LoginState } from "./actions";
@@ -55,7 +56,11 @@ export function LoginForm({ next }: { next: string }) {
       <SubmitButton />
 
       <p className="text-xs text-muted-foreground">
-        No hay registro público. Las cuentas se crean por invitación.
+        ¿Eres del equipo y no tienes cuenta?{" "}
+        <Link href="/signup" className="underline">
+          Créala aquí
+        </Link>
+        .
       </p>
     </form>
   );

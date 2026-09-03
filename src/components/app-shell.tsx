@@ -7,6 +7,7 @@ import { NewClientForm } from "@/components/new-client-form";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { getClientsWithCounts } from "@/lib/clients";
+import { roleLabel } from "@/lib/roles";
 import type { Profile } from "@/lib/supabase/server";
 
 /**
@@ -42,7 +43,7 @@ export async function AppShell({
             <div className="min-w-0">
               <p className="truncate text-sm font-semibold">{name}</p>
               <p className="truncate text-xs text-muted-foreground">
-                {profile?.role === "admin" ? "Admin" : "Media buying"}
+                {roleLabel(profile?.role)}
               </p>
             </div>
           </div>
