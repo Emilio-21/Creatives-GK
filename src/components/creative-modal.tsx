@@ -16,9 +16,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { deleteLaunch } from "@/app/creative/launch-actions";
-import { deleteCreative } from "@/app/creative/creative-actions";
-import { getCreativeDetail, type CreativeDetail } from "@/app/creative/detail-actions";
+import { deleteLaunch } from "@/app/(app)/creative/launch-actions";
+import { deleteCreative } from "@/app/(app)/creative/creative-actions";
+import { getCreativeDetail, type CreativeDetail } from "@/app/(app)/creative/detail-actions";
 import { derive, formatMoney, formatPercent, statusOf, STATUS_LABEL } from "@/lib/metrics";
 import { formatCount } from "@/lib/metrics";
 

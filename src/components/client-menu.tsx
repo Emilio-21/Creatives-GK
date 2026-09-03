@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { archiveClient, renameClient } from "@/app/client/actions";
+import { archiveClient, renameClient } from "@/app/(app)/client/actions";
 
 export function ClientMenu({ id, name }: { id: string; name: string }) {
   const [editing, setEditing] = useState(false);

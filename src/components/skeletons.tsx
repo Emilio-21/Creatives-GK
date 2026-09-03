@@ -1,31 +1,5 @@
 import { Skeleton } from "@/components/ui/skeleton";
 
-/**
- * El AppShell vive dentro de cada pagina, no en un layout, asi que un
- * loading.tsx reemplaza tambien el header y el sidebar. Este marco los imita
- * para que la carga no parezca una pantalla rota.
- */
-export function ShellSkeleton({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="min-h-svh">
-      <header className="glass sticky top-0 z-30 border-b">
-        <div className="flex h-14 items-center gap-4 px-4 sm:px-6">
-          <span className="font-semibold">Creativos</span>
-          <Skeleton className="ml-auto h-8 w-32" />
-        </div>
-      </header>
-      <div className="flex">
-        <aside className="glass sticky top-14 hidden h-[calc(100svh-3.5rem)] w-60 shrink-0 space-y-2 border-r p-3 md:block">
-          {Array.from({ length: 5 }).map((_, index) => (
-            <Skeleton key={index} className="h-7 w-full" />
-          ))}
-        </aside>
-        <main className="min-w-0 flex-1 p-4 sm:p-6">{children}</main>
-      </div>
-    </div>
-  );
-}
-
 export function LibrarySkeleton() {
   return (
     <div className="space-y-5">

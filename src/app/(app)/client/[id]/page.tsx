@@ -1,5 +1,4 @@
 import { notFound, redirect } from "next/navigation";
-import { AppShell } from "@/components/app-shell";
 import { LibraryView, readViewParams } from "@/components/library-view";
 import { ClientMenu } from "@/components/client-menu";
 import { ClientInsights } from "@/components/client-insights";
@@ -8,7 +7,7 @@ import { ClientKpis } from "@/components/client-kpis";
 import { BriefsSection } from "@/components/briefs-section";
 import { getClientOverview } from "@/lib/dashboard";
 import { getClient } from "@/lib/clients";
-import { createClient, type Profile } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/server";
 
 export default async function ClientPage({
   params,
@@ -24,10 +23,7 @@ export default async function ClientPage({
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const [{ data: profile }, client] = await Promise.all([
-    supabase.from("profiles").select("id, full_name, role, created_at").eq("id", user.id).single(),
-    getClient(id),
-  ]);
+  const client = await getClient(id);
 
   if (!client || client.archived_at) notFound();
 
@@ -36,11 +32,6 @@ export default async function ClientPage({
   const view = readViewParams(await searchParams);
 
   return (
-    <AppShell
-      profile={(profile as Profile) ?? null}
-      email={user.email ?? ""}
-      activeClientId={client.id}
-    >
       <div className="space-y-8">
         <header className="flex flex-wrap items-start justify-between gap-4">
           <div className="min-w-0">
@@ -80,6 +71,5 @@ export default async function ClientPage({
           headingLevel="h2"
         />
       </div>
-    </AppShell>
   );
 }

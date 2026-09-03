@@ -4,7 +4,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { requestDownloads } from "@/app/creative/actions";
+import { requestDownloads } from "@/app/(app)/creative/actions";
 import { downloadOne } from "@/lib/download";
 
 export function DownloadButton({ creativeId }: { creativeId: string }) {

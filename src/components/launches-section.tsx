@@ -14,7 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { deleteLaunch } from "@/app/creative/launch-actions";
+import { deleteLaunch } from "@/app/(app)/creative/launch-actions";
 import { derive, formatCount, formatMoney, formatPercent } from "@/lib/metrics";
 import type { LaunchRow } from "@/lib/launches";
 

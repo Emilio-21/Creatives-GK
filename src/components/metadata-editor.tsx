@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { updateMetadata } from "@/app/creative/creative-actions";
+import { updateMetadata } from "@/app/(app)/creative/creative-actions";
 
 const FORMATS = ["reel", "story", "feed", "1x1", "9x16"];
 

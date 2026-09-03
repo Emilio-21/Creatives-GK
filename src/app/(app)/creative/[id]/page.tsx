@@ -1,6 +1,5 @@
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
-import { AppShell } from "@/components/app-shell";
+import { notFound } from "next/navigation";
 import { CreativeDetails } from "@/components/creative-details";
 import { LaunchesSection } from "@/components/launches-section";
 import { Badge } from "@/components/ui/badge";
@@ -8,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getLaunches } from "@/lib/launches";
 import { formatMoney, formatPercent, statusOf, STATUS_LABEL } from "@/lib/metrics";
 import { getPreviewUrl } from "@/lib/storage";
-import { createClient, type Profile } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/server";
 import type { CreativeRow, CreativeStats } from "@/lib/creatives";
 
 export default async function CreativeDetailPage({
@@ -18,15 +17,12 @@ export default async function CreativeDetailPage({
 }) {
   const { id } = await params;
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
 
-  const [{ data: profile }, { data: row }] = await Promise.all([
-    supabase.from("profiles").select("id, full_name, role, created_at").eq("id", user.id).single(),
-    supabase.from("creatives").select("*, clients(id, name)").eq("id", id).maybeSingle(),
-  ]);
+  const { data: row } = await supabase
+    .from("creatives")
+    .select("*, clients(id, name)")
+    .eq("id", id)
+    .maybeSingle();
 
   if (!row) notFound();
   const creative = row as CreativeRow & { clients: { id: string; name: string } | null };
@@ -42,11 +38,6 @@ export default async function CreativeDetailPage({
   const status = statusOf(stats);
 
   return (
-    <AppShell
-      profile={(profile as Profile) ?? null}
-      email={user.email ?? ""}
-      activeClientId={creative.clients?.id}
-    >
       <div className="mx-auto max-w-3xl space-y-6">
         <div className="flex items-center justify-between gap-3">
           <Link
@@ -101,7 +92,6 @@ export default async function CreativeDetailPage({
         <LaunchesSection creativeId={creative.id} launches={launches} />
 
       </div>
-    </AppShell>
   );
 }
 

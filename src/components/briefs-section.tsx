@@ -7,14 +7,14 @@ import { BriefCard } from "@/components/brief-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { UploadDropzone } from "@/app/upload/upload-dropzone";
-import { createBatch } from "@/app/client/batch-actions";
+import { UploadDropzone } from "@/app/(app)/upload/upload-dropzone";
+import { createBatch } from "@/app/(app)/client/batch-actions";
 import {
   listBriefs,
   publishBrief,
   saveBrief,
   type BriefWithMeta,
-} from "@/app/client/brief-actions";
+} from "@/app/(app)/client/brief-actions";
 
 /**
  * El brief es el punto de partida: copy escribe, diseño sube ahi mismo, y al

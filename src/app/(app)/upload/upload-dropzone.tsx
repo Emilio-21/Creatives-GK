@@ -18,7 +18,7 @@ import { ALLOWED_MIME_TYPES, MAX_FILE_BYTES } from "@/lib/env";
 import { extractMetadata, type MediaMetadata } from "@/lib/media";
 import { uploadToR2 } from "@/lib/upload-xhr";
 import { confirmUpload, findDuplicateNames, requestUploadUrls } from "./actions";
-import { createBatch, listBatches } from "@/app/client/batch-actions";
+import { createBatch, listBatches } from "@/app/(app)/client/batch-actions";
 
 const FORMATS = ["reel", "story", "feed", "1x1", "9x16"];
 const ACCEPT = ALLOWED_MIME_TYPES.join(",");

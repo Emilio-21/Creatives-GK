@@ -1,6 +1,6 @@
 "use client";
 
-import type { BriefWithMeta } from "@/app/client/brief-actions";
+import type { BriefWithMeta } from "@/app/(app)/client/brief-actions";
 
 export function BriefCard({
   brief,

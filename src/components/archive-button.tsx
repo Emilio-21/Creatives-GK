@@ -4,7 +4,7 @@ import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { setArchived } from "@/app/creative/creative-actions";
+import { setArchived } from "@/app/(app)/creative/creative-actions";
 
 export function ArchiveButton({
   creativeId,

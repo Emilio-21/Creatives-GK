@@ -1,7 +1,7 @@
 "use client";
 
 import JSZip from "jszip";
-import type { DownloadTarget } from "@/app/creative/actions";
+import type { DownloadTarget } from "@/app/(app)/creative/actions";
 
 /** Descarga simple: el navegador se encarga, la URL ya trae Content-Disposition. */
 export function downloadOne(target: DownloadTarget) {

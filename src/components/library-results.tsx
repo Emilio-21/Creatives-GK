@@ -15,9 +15,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { requestDownloads } from "@/app/creative/actions";
-import { quickLaunch } from "@/app/creative/detail-actions";
-import { deleteCreative } from "@/app/creative/creative-actions";
+import { requestDownloads } from "@/app/(app)/creative/actions";
+import { quickLaunch } from "@/app/(app)/creative/detail-actions";
+import { deleteCreative } from "@/app/(app)/creative/creative-actions";
 import { downloadOne, downloadZip } from "@/lib/download";
 import { exportReportCsv } from "@/lib/export-report";
 import { useRouter } from "next/navigation";

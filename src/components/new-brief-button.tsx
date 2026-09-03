@@ -1,16 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import { usePathname } from "next/navigation";
 import { BriefDialog } from "@/components/brief-dialog";
 
-export function NewBriefButton({
-  clients,
-  activeClientId,
-}: {
-  clients: { id: string; name: string }[];
-  activeClientId?: string | null;
-}) {
+export function NewBriefButton({ clients }: { clients: { id: string; name: string }[] }) {
+  const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  // Si estas dentro de un cliente, el brief nace ahi.
+  const activeClientId = pathname.startsWith("/client/") ? pathname.split("/")[2] : null;
 
   return (
     <>

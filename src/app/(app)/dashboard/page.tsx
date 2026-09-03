@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { AppShell } from "@/components/app-shell";
 import { ProductionChart } from "@/components/production-chart";
 import { StatsStrip } from "@/components/stats-strip";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,7 +20,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { formatMoney, formatPercent } from "@/lib/metrics";
-import { createClient, type Profile } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/server";
 
 export const metadata = { title: "Resumen · Creativos" };
 
@@ -32,13 +31,9 @@ export default async function DashboardPage() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const [{ data: profile }, data] = await Promise.all([
-    supabase.from("profiles").select("id, full_name, role, created_at").eq("id", user.id).single(),
-    getDashboard(),
-  ]);
+  const data = await getDashboard();
 
   return (
-    <AppShell profile={(profile as Profile) ?? null} email={user.email ?? ""} activeSection="dashboard">
       <div className="space-y-6">
         <div>
           <h1 className="text-xl font-semibold">Resumen</h1>
@@ -82,7 +77,6 @@ export default async function DashboardPage() {
 
         <StaleCard entries={data.stale} />
       </div>
-    </AppShell>
   );
 }
 

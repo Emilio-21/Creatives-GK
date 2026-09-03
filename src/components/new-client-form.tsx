@@ -4,7 +4,7 @@ import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { createClientRecord, type ClientFormState } from "@/app/client/actions";
+import { createClientRecord, type ClientFormState } from "@/app/(app)/client/actions";
 
 function Submit() {
   const { pending } = useFormStatus();

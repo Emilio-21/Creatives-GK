@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 type Option = { id: string; name: string; count: number };
 
@@ -9,17 +10,10 @@ type Option = { id: string; name: string; count: number };
  * desplaza: se ve a que cliente estas entrando y cuantos creativos tiene sin
  * abrir nada.
  */
-export function MobileNav({
-  clients,
-  activeClientId,
-  activeSection,
-}: {
-  clients: Option[];
-  activeClientId?: string | null;
-  activeSection?: "biblioteca" | "dashboard";
-}) {
+export function MobileNav({ clients }: { clients: Option[] }) {
+  const pathname = usePathname();
   const total = clients.reduce((sum, client) => sum + client.count, 0);
-  const allActive = activeSection !== "dashboard" && !activeClientId;
+  const allActive = pathname === "/";
 
   return (
     <div className="-mx-4 overflow-x-auto px-4 pb-1 md:hidden">
@@ -31,7 +25,7 @@ export function MobileNav({
           <Chip
             key={client.id}
             href={`/client/${client.id}`}
-            active={activeClientId === client.id}
+            active={pathname === `/client/${client.id}`}
           >
             {client.name} {client.count}
           </Chip>
