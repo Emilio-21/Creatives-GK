@@ -2,8 +2,14 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { publicEnv } from "@/lib/env";
 
-/** Rutas accesibles sin sesion. Todo lo demas queda protegido. */
-const PUBLIC_PATHS = ["/login", "/auth"];
+/**
+ * Rutas accesibles sin sesion de usuario. Todo lo demas queda protegido.
+ *
+ * /api/cron no lleva sesion a proposito: lo llama un Worker programado y se
+ * autentica con CRON_SECRET dentro de la propia ruta. Sin esta excepcion el
+ * middleware lo redirige al login y el cron nunca corre.
+ */
+const PUBLIC_PATHS = ["/login", "/auth", "/api/cron"];
 
 function isPublic(pathname: string) {
   return PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`));

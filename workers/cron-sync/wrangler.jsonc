@@ -9,6 +9,6 @@
     "crons": ["0 13 * * *"]
   },
   "vars": {
-    "APP_URL": "https://creativos-gk.workers.dev"
+    "APP_URL": "https://creativos-gk.growth-kingdom.workers.dev"
   }
 }

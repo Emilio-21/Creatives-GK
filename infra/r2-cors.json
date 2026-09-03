@@ -2,7 +2,8 @@
   {
     "AllowedOrigins": [
       "http://localhost:3000",
-      "https://creativesgk.vercel.app"
+      "https://creativesgk.vercel.app",
+      "https://creativos-gk.growth-kingdom.workers.dev"
     ],
     "AllowedMethods": ["GET", "PUT", "HEAD"],
     "AllowedHeaders": ["content-type"],
