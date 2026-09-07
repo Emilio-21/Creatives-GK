@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
+import { BatchNamingPanel } from "@/components/batch-naming-panel";
 import { CreativeModal } from "@/components/creative-modal";
 import { CreativeTile } from "@/components/creative-tile";
 import { Button } from "@/components/ui/button";
@@ -81,6 +82,7 @@ export function LibraryResults({
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [busy, setBusy] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);
+  const [namingBatchId, setNamingBatchId] = useState<string | null>(null);
 
   const toggle = (id: string) =>
     setSelected((prev) => {
@@ -193,6 +195,7 @@ export function LibraryResults({
             onDownload={downloadOneById}
             onLaunch={markLaunched}
             onDelete={removeCreative}
+            onNaming={setNamingBatchId}
             busy={busy}
           />
           <BoardColumn
@@ -205,6 +208,7 @@ export function LibraryResults({
             onDownload={downloadOneById}
             onLaunch={markLaunched}
             onDelete={removeCreative}
+            onNaming={setNamingBatchId}
             busy={busy}
           />
         </div>
@@ -291,6 +295,13 @@ export function LibraryResults({
         </Button>
       </div>
 
+      {namingBatchId ? (
+        <BatchNamingPanel
+          batchId={namingBatchId}
+          onClose={() => setNamingBatchId(null)}
+        />
+      ) : null}
+
       {openId ? (
         <CreativeModal
           creativeId={openId}
@@ -329,6 +340,7 @@ function BoardColumn({
   onDownload,
   onLaunch,
   onDelete,
+  onNaming,
   busy,
 }: {
   title: string;
@@ -341,6 +353,7 @@ function BoardColumn({
   onDownload: (id: string) => void;
   onLaunch: (id: string) => void;
   onDelete: (card: Card) => void;
+  onNaming: (batchId: string) => void;
   busy: boolean;
 }) {
   return (
@@ -380,6 +393,15 @@ function BoardColumn({
                   <span className="rounded-full border border-primary/40 px-1.5 py-0.5 text-[10px] text-primary">
                     Completado
                   </span>
+                ) : null}
+                {group.key !== "__sin_batch__" ? (
+                  <button
+                    type="button"
+                    onClick={() => onNaming(group.key)}
+                    className="ml-auto rounded border px-1.5 py-0.5 text-[10px] text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground"
+                  >
+                    Nomenclatura
+                  </button>
                 ) : null}
               </p>
               <div className="grid grid-cols-2 gap-2.5 xl:grid-cols-3">

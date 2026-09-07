@@ -103,6 +103,7 @@ async function main() {
       ["creatives", "batch_id", "0008_batches_and_briefs.sql"],
       ["briefs", "brief_date", "0009_brief_flow.sql"],
       ["batches", "completed_at", "0009_brief_flow.sql"],
+      ["batches", "campaign_code", "0011_batch_naming.sql"],
     ];
     for (const [table, column, migration] of columns) {
       const { error: columnError } = await supabase.from(table).select(column).limit(1);
