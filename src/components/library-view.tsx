@@ -148,6 +148,7 @@ export async function LibraryView({
         <LibraryResults
           cards={library.cards}
           view={params.view}
+          clientId={clientId}
           zipBaseName={slug(title)}
           reportName={`informe-${slug(title)}`}
         />

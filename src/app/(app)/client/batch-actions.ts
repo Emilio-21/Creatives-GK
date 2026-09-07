@@ -158,3 +158,29 @@ export async function getBatchNaming(batchId: string): Promise<BatchNamingInput 
     adLabel: (data?.ad_label as string) ?? null,
   };
 }
+
+/**
+ * Mueve creativos ya subidos a un batch (o los saca, con batchId null).
+ *
+ * Pasa por la funcion assign_creatives_to_batch y no por un update directo
+ * porque la policy de creatives solo deja al que subio el archivo: sin esto,
+ * copy no podria agrupar lo que subio diseño.
+ */
+export async function assignCreativesToBatch(
+  creativeIds: string[],
+  batchId: string | null,
+): Promise<number> {
+  await requireUser();
+  if (creativeIds.length === 0) return 0;
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("assign_creatives_to_batch", {
+    p_ids: creativeIds,
+    p_batch: batchId,
+  });
+
+  if (error) throw new Error(error.message);
+
+  revalidatePath("/", "layout");
+  return (data as number) ?? 0;
+}

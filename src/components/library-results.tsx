@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
+import { BatchAssignPanel } from "@/components/batch-assign-panel";
 import { BatchNamingPanel } from "@/components/batch-naming-panel";
 import { CreativeModal } from "@/components/creative-modal";
 import { CreativeTile } from "@/components/creative-tile";
@@ -72,17 +73,21 @@ export function LibraryResults({
   view,
   zipBaseName,
   reportName,
+  clientId,
 }: {
   cards: Card[];
   view: "tablero" | "tabla";
   reportName: string;
   zipBaseName: string;
+  /** Sin cliente (biblioteca global) no se puede agrupar: el batch es de un cliente. */
+  clientId?: string;
 }) {
   const router = useRouter();
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [busy, setBusy] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);
   const [namingBatchId, setNamingBatchId] = useState<string | null>(null);
+  const [assigning, setAssigning] = useState(false);
 
   const toggle = (id: string) =>
     setSelected((prev) => {
@@ -295,6 +300,19 @@ export function LibraryResults({
         </Button>
       </div>
 
+      {assigning && clientId ? (
+        <BatchAssignPanel
+          clientId={clientId}
+          creativeIds={[...selected]}
+          onClose={() => setAssigning(false)}
+          onDone={() => {
+            setAssigning(false);
+            setSelected(new Set());
+            router.refresh();
+          }}
+        />
+      ) : null}
+
       {namingBatchId ? (
         <BatchNamingPanel
           batchId={namingBatchId}
@@ -320,6 +338,16 @@ export function LibraryResults({
           <Button size="sm" disabled={busy} onClick={download}>
             {busy ? "Preparando…" : selected.size === 1 ? "Descargar" : "Descargar zip"}
           </Button>
+          {clientId ? (
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={busy}
+              onClick={() => setAssigning(true)}
+            >
+              Mover a batch
+            </Button>
+          ) : null}
           <Button size="sm" variant="ghost" disabled={busy} onClick={() => setSelected(new Set())}>
             Limpiar
           </Button>

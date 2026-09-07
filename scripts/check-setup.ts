@@ -111,6 +111,16 @@ async function main() {
       else ok(`${table}.${column} existe`);
     }
 
+    // La funcion que mueve creativos a un batch: sin ella el boton "Mover a
+    // batch" truena en produccion.
+    const { error: rpcError } = await supabase.rpc("assign_creatives_to_batch", {
+      // Un uuid que no existe: la llamada es real pero no toca ninguna fila.
+      p_ids: ["00000000-0000-0000-0000-000000000000"],
+      p_batch: null,
+    });
+    if (rpcError) bad(`assign_creatives_to_batch no existe — falta correr 0012_assign_batch.sql`);
+    else ok("assign_creatives_to_batch existe");
+
     const { data, error } = await supabase.auth.admin.listUsers();
     if (error) bad(`auth: ${error.message}`);
     else ok(`auth responde (${data.users.length} usuario(s))`);
