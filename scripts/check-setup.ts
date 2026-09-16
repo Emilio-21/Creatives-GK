@@ -76,6 +76,8 @@ async function main() {
 
   console.log("\nSupabase");
   class SupabaseCaido extends Error {}
+  const esRpcAusente = (mensaje: string) =>
+    /could not find|does not exist|schema cache|404/i.test(mensaje);
   try {
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -129,16 +131,20 @@ async function main() {
       p_ids: ["00000000-0000-0000-0000-000000000000"],
       p_batch: null,
     });
-    if (rpcError) bad(`assign_creatives_to_batch no existe — falta correr 0012_assign_batch.sql`);
-    else ok("assign_creatives_to_batch existe");
+    // La funcion levanta "No hay sesión." con la service key, que no tiene
+    // auth.uid(): esa excepcion PRUEBA que existe. Lo unico que delata que
+    // falta es el 404 del RPC.
+    if (rpcError && esRpcAusente(rpcError.message)) {
+      bad("assign_creatives_to_batch no existe — falta correr 0012_assign_batch.sql");
+    } else {
+      ok("assign_creatives_to_batch existe");
+    }
 
     const { error: groupError } = await supabase.rpc("group_creatives_as_ad", {
       p_parent: "00000000-0000-0000-0000-000000000000",
       p_variantes: ["00000000-0000-0000-0000-000000000001"],
     });
-    // Con un padre inexistente la funcion levanta su propia excepcion: eso
-    // prueba que existe. Lo unico que delata que falta es el 404 del RPC.
-    if (groupError && /could not find|does not exist|404/i.test(groupError.message)) {
+    if (groupError && esRpcAusente(groupError.message)) {
       bad("group_creatives_as_ad no existe — falta correr 0013_variantes.sql");
     } else {
       ok("group_creatives_as_ad existe");

@@ -16,6 +16,16 @@ export function pairKey(filename: string): string {
   return (match ? match[1] : sinExtension).trim().toLowerCase();
 }
 
+/**
+ * El archivo sin sufijo es la pieza base ("AD-PM2-9.jpg" frente a
+ * "AD-PM2-9.2.jpg"). Es el nombre que el equipo usa para referirse al anuncio,
+ * asi que es el que conviene dejar en la tarjeta del tablero.
+ */
+export function isBaseName(filename: string): boolean {
+  const sinExtension = filename.replace(/\.[a-z0-9]+$/i, "");
+  return !/^(.*\d)\.\d+$/.test(sinExtension);
+}
+
 export type SugerenciaPar<T> = { key: string; items: T[] };
 
 /** Agrupa por clave y devuelve solo los grupos de 2 o mas. */

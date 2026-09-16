@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { groupAsAd } from "@/app/(app)/client/variant-actions";
-import { suggestPairs } from "@/lib/pairing";
+import { isBaseName, suggestPairs } from "@/lib/pairing";
 import type { CreativeCard } from "@/lib/creatives";
 
 /**
@@ -159,15 +159,17 @@ export function VariantGroupPanel({
 }
 
 /**
- * El principal por defecto es el cuadrado o el vertical-de-feed, no el de
- * historia: es el que el equipo trata como "la pieza" y el que ya trae
- * lanzamientos si alguno los tiene.
+ * El principal por defecto es el archivo sin sufijo: "AD-PM2-9" y no
+ * "AD-PM2-9.2". Es el nombre con el que el equipo llama al anuncio, y es el que
+ * va a quedar en la tarjeta del tablero y en el informe de copy.
+ *
+ * Un archivo que ya tiene lanzamientos gana sobre esa regla: sus metricas ya
+ * existen y convertirlo en variante las dejaria fuera del tablero.
  */
 function sugerirPrincipal(cards: CreativeCard[]): string {
   const conMetricas = cards.find((card) => (card.stats?.launch_count ?? 0) > 0);
   if (conMetricas) return conMetricas.id;
 
-  const preferido = ["1:1", "4:5"];
-  const feed = cards.find((card) => card.aspect && preferido.includes(card.aspect));
-  return (feed ?? cards[0]).id;
+  const base = cards.find((card) => isBaseName(card.original_filename));
+  return (base ?? cards[0]).id;
 }
