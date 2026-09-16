@@ -158,6 +158,9 @@ async function main() {
     if (!(e instanceof SupabaseCaido)) bad(`no se pudo conectar: ${(e as Error).message}`);
   }
 
+  console.log("\nMeta");
+  await revisarToken();
+
   console.log("\nCloudflare R2");
   try {
     const r2 = new S3Client({
@@ -181,3 +184,56 @@ async function main() {
 }
 
 void main();
+
+
+/**
+ * Avisa antes de que el token caduque.
+ *
+ * Un token de usuario dura ~60 dias y al vencer el cron deja de traer metricas
+ * sin fallar de forma visible: la tabla se congela y nadie se entera. El aviso
+ * llega con 15 dias para poder cambiarlo sin prisa.
+ */
+async function revisarToken() {
+  const token = process.env.META_ACCESS_TOKEN;
+  if (!token) {
+    // El token de produccion vive en el secreto del Worker, no aqui. No es una
+    // falla: solo que desde esta maquina no hay nada que revisar.
+    console.log("  --    META_ACCESS_TOKEN no esta en .env.local (produccion lo lee del Worker)");
+    console.log("        el sync de produccion avisa en su respuesta: /api/cron/sync-meta");
+    return;
+  }
+
+  try {
+    const params = new URLSearchParams({ input_token: token, access_token: token });
+    const version = process.env.META_API_VERSION ?? "v21.0";
+    const response = await fetch(`https://graph.facebook.com/${version}/debug_token?${params}`);
+    const body = (await response.json()) as {
+      data?: { type?: string; expires_at?: number; is_valid?: boolean };
+      error?: { message?: string };
+    };
+
+    if (body.error) {
+      bad(`token: ${body.error.message}`);
+      return;
+    }
+    if (!body.data?.is_valid) {
+      bad("el token de Meta ya no es valido");
+      return;
+    }
+
+    // expires_at = 0 significa que no caduca, no que caduco en 1970.
+    if (!body.data.expires_at) {
+      ok(`token valido y sin caducidad (${body.data.type ?? "?"})`);
+      return;
+    }
+
+    const dias = Math.floor((body.data.expires_at * 1000 - Date.now()) / 86_400_000);
+    const fecha = new Date(body.data.expires_at * 1000).toISOString().slice(0, 10);
+
+    if (dias <= 0) bad(`el token caduco el ${fecha}`);
+    else if (dias <= 15) bad(`el token caduca en ${dias} dia(s), el ${fecha} — genera uno de System User`);
+    else console.log(`  ok    token valido, caduca en ${dias} dias (${fecha}, tipo ${body.data.type})`);
+  } catch (error) {
+    bad(`no se pudo revisar el token: ${(error as Error).message}`);
+  }
+}

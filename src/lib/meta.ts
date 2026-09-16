@@ -257,3 +257,54 @@ function numberOrNull(value: string | undefined): number | null {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : null;
 }
+
+export type TokenInfo = {
+  type: string | null;
+  /** null = no expira. Es lo que se espera de un System User token. */
+  expiresAt: Date | null;
+  expiresInDays: number | null;
+  scopes: string[];
+  valid: boolean;
+};
+
+/**
+ * Cuando caduca el token.
+ *
+ * Un token de usuario dura ~60 dias y al vencer el cron deja de traer metricas
+ * sin fallar de forma visible: la tabla simplemente se congela. Saberlo con
+ * anticipacion es la diferencia entre cambiarlo un martes y descubrirlo tres
+ * semanas tarde.
+ */
+export async function getTokenInfo(): Promise<TokenInfo> {
+  const value = token();
+  const params = new URLSearchParams({ input_token: value, access_token: value });
+  const response = await fetch(`${BASE}/debug_token?${params.toString()}`, {
+    cache: "no-store",
+  });
+
+  const body = (await response.json()) as {
+    data?: {
+      type?: string;
+      expires_at?: number;
+      scopes?: string[];
+      is_valid?: boolean;
+    };
+    error?: { message?: string };
+  };
+
+  if (body.error) throw new Error(body.error.message ?? "No se pudo revisar el token.");
+
+  const data = body.data ?? {};
+  // expires_at = 0 significa que no caduca, no que caduco en 1970.
+  const expiresAt = data.expires_at ? new Date(data.expires_at * 1000) : null;
+
+  return {
+    type: data.type ?? null,
+    expiresAt,
+    expiresInDays: expiresAt
+      ? Math.floor((expiresAt.getTime() - Date.now()) / 86_400_000)
+      : null,
+    scopes: data.scopes ?? [],
+    valid: data.is_valid ?? false,
+  };
+}
