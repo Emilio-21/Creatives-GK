@@ -75,12 +75,22 @@ async function main() {
   }
 
   console.log("\nSupabase");
+  class SupabaseCaido extends Error {}
   try {
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!,
       { auth: { persistSession: false } },
     );
+    // Si el proyecto no responde, todo lo de abajo falla por la misma razon y
+    // "falta correr 0004" seria mentira: el diagnostico se corta aqui.
+    const { error: pingError } = await supabase.from("profiles").select("id").limit(1);
+    if (pingError && /fetch failed|ENOTFOUND|getaddrinfo|ECONNREFUSED/i.test(pingError.message)) {
+      bad(`no se pudo conectar a ${process.env.NEXT_PUBLIC_SUPABASE_URL}: ${pingError.message}`);
+      bad("el proyecto de Supabase no responde — revisa en el dashboard si esta pausado");
+      throw new SupabaseCaido();
+    }
+
     for (const table of [
       "profiles",
       "clients",
@@ -125,7 +135,8 @@ async function main() {
     if (error) bad(`auth: ${error.message}`);
     else ok(`auth responde (${data.users.length} usuario(s))`);
   } catch (e) {
-    bad(`no se pudo conectar: ${(e as Error).message}`);
+    // R2 es independiente de Supabase: vale la pena seguir y reportarlo.
+    if (!(e instanceof SupabaseCaido)) bad(`no se pudo conectar: ${(e as Error).message}`);
   }
 
   console.log("\nCloudflare R2");
