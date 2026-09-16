@@ -5,6 +5,7 @@ import Link from "next/link";
 import { toast } from "sonner";
 import { BatchAssignPanel } from "@/components/batch-assign-panel";
 import { BatchNamingPanel } from "@/components/batch-naming-panel";
+import { VariantGroupPanel } from "@/components/variant-group-panel";
 import { CreativeModal } from "@/components/creative-modal";
 import { CreativeTile } from "@/components/creative-tile";
 import { Button } from "@/components/ui/button";
@@ -88,6 +89,7 @@ export function LibraryResults({
   const [openId, setOpenId] = useState<string | null>(null);
   const [namingBatchId, setNamingBatchId] = useState<string | null>(null);
   const [assigning, setAssigning] = useState(false);
+  const [grouping, setGrouping] = useState(false);
 
   const toggle = (id: string) =>
     setSelected((prev) => {
@@ -300,6 +302,18 @@ export function LibraryResults({
         </Button>
       </div>
 
+      {grouping ? (
+        <VariantGroupPanel
+          cards={cards.filter((card) => selected.has(card.id))}
+          onClose={() => setGrouping(false)}
+          onDone={() => {
+            setGrouping(false);
+            setSelected(new Set());
+            router.refresh();
+          }}
+        />
+      ) : null}
+
       {assigning && clientId ? (
         <BatchAssignPanel
           clientId={clientId}
@@ -346,6 +360,16 @@ export function LibraryResults({
               onClick={() => setAssigning(true)}
             >
               Mover a batch
+            </Button>
+          ) : null}
+          {selected.size >= 2 ? (
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={busy}
+              onClick={() => setGrouping(true)}
+            >
+              Un solo anuncio
             </Button>
           ) : null}
           <Button size="sm" variant="ghost" disabled={busy} onClick={() => setSelected(new Set())}>

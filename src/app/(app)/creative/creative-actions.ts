@@ -82,6 +82,14 @@ export async function deleteCreative(creativeId: string): Promise<void> {
 
   if (!creative) throw new Error("No se encontró el creativo.");
 
+  // Las variantes se van con el padre por la FK (on delete cascade), pero la
+  // cascada es de la base: sus archivos en R2 hay que juntarlos ANTES de borrar
+  // la fila, o se quedan pagando espacio sin registro que los apunte.
+  const { data: variantRows } = await supabase
+    .from("creatives")
+    .select("storage_path, poster_path")
+    .eq("parent_id", creativeId);
+
   const { error, count } = await supabase
     .from("creatives")
     .delete({ count: "exact" })
@@ -90,9 +98,10 @@ export async function deleteCreative(creativeId: string): Promise<void> {
   if (error) throw new Error(error.message);
   if (!count) throw new Error("Solo quien lo subió o un admin puede borrarlo.");
 
-  await deleteFile(creative.storage_path as string).catch(() => {});
-  if (creative.poster_path) {
-    await deleteFile(creative.poster_path as string).catch(() => {});
+  const archivos = [creative, ...(variantRows ?? [])];
+  for (const fila of archivos) {
+    await deleteFile(fila.storage_path as string).catch(() => {});
+    if (fila.poster_path) await deleteFile(fila.poster_path as string).catch(() => {});
   }
 
   revalidatePath("/", "layout");

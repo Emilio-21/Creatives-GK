@@ -19,6 +19,8 @@ import {
 import { deleteLaunch } from "@/app/(app)/creative/launch-actions";
 import { deleteCreative } from "@/app/(app)/creative/creative-actions";
 import { getCreativeDetail, type CreativeDetail } from "@/app/(app)/creative/detail-actions";
+import { ungroup } from "@/app/(app)/client/variant-actions";
+import type { CreativeVariant } from "@/lib/creatives";
 import { derive, formatMoney, formatPercent, statusOf, STATUS_LABEL } from "@/lib/metrics";
 import { formatCount } from "@/lib/metrics";
 
@@ -201,6 +203,11 @@ export function CreativeModal({
                       {detail.clientName}
                     </span>
                   ) : null}
+                  {detail.aspect ? (
+                    <span className="rounded-full border px-2 py-0.5 font-mono text-muted-foreground">
+                      {detail.aspect}
+                    </span>
+                  ) : null}
                   {detail.creative.format ? (
                     <span className="rounded-full border px-2 py-0.5 font-mono text-muted-foreground">
                       {detail.creative.format}
@@ -215,6 +222,13 @@ export function CreativeModal({
                     </span>
                   ))}
                 </div>
+
+                {detail.variants.length > 0 ? (
+                  <VariantList
+                    variants={detail.variants}
+                    onUngrouped={reload}
+                  />
+                ) : null}
 
                 {editing ? (
                   <MetadataEditor
@@ -366,3 +380,85 @@ function Metric({ label, value }: { label: string; value: string }) {
 
 const formatDate = (value: string) =>
   new Date(`${value}T00:00:00`).toLocaleDateString("es-MX");
+
+/**
+ * Los otros formatos del mismo anuncio.
+ *
+ * Se listan aqui y no como tarjetas aparte porque en Meta son un solo anuncio:
+ * comparten codigo, lanzamientos y metricas.
+ */
+function VariantList({
+  variants,
+  onUngrouped,
+}: {
+  variants: CreativeVariant[];
+  onUngrouped: () => void;
+}) {
+  const router = useRouter();
+  const [pending, startTransition] = useTransition();
+
+  return (
+    <section className="rounded-lg border p-3">
+      <div className="mb-2 flex items-baseline justify-between gap-2">
+        <p className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground">
+          Otros formatos · {variants.length}
+        </p>
+        <Button
+          size="xs"
+          variant="ghost"
+          disabled={pending}
+          onClick={() =>
+            startTransition(async () => {
+              if (
+                !confirm(
+                  `¿Separar ${variants.length} formato${
+                    variants.length === 1 ? "" : "s"
+                  } de este anuncio?\n\nCada uno vuelve a ser un anuncio con su propio código.`,
+                )
+              ) {
+                return;
+              }
+              try {
+                await ungroup(variants.map((variant) => variant.id));
+                toast.success("Separados");
+                onUngrouped();
+                router.refresh();
+              } catch (error) {
+                toast.error((error as Error).message);
+              }
+            })
+          }
+        >
+          {pending ? "Separando…" : "Separar"}
+        </Button>
+      </div>
+
+      <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+        {variants.map((variant) => (
+          <li key={variant.id} className="space-y-1">
+            <div className="aspect-square overflow-hidden rounded bg-muted">
+              {variant.previewUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={variant.previewUrl}
+                  alt={variant.display_name}
+                  className="size-full object-cover"
+                />
+              ) : null}
+            </div>
+            <p className="truncate text-[11px]" title={variant.display_name}>
+              {variant.display_name}
+            </p>
+            <p className="font-mono text-[10px] text-muted-foreground">
+              {variant.aspect ?? "—"}
+            </p>
+          </li>
+        ))}
+      </ul>
+
+      <p className="mt-2.5 text-[11px] text-muted-foreground">
+        Al descargar este anuncio se bajan los {variants.length + 1} archivos.
+      </p>
+    </section>
+  );
+}

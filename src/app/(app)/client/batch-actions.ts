@@ -119,7 +119,13 @@ export async function setBatchNaming(
   revalidatePath("/", "layout");
 }
 
-/** Los creativos del batch en orden estable, para numerar los anuncios. */
+/**
+ * Los ANUNCIOS del batch en orden estable, para numerarlos.
+ *
+ * Excluye variantes a proposito: un par de estaticos (1:1 + 9:16) es un solo
+ * anuncio en Meta, y contarlo dos veces correria el consecutivo de todos los
+ * demas.
+ */
 export async function getBatchCreatives(
   batchId: string,
 ): Promise<{ id: string; displayName: string }[]> {
@@ -130,6 +136,7 @@ export async function getBatchCreatives(
     .from("creatives")
     .select("id, display_name")
     .eq("batch_id", batchId)
+    .is("parent_id", null)
     .is("archived_at", null)
     .order("created_at", { ascending: true });
 

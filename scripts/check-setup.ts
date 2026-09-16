@@ -114,6 +114,7 @@ async function main() {
       ["briefs", "brief_date", "0009_brief_flow.sql"],
       ["batches", "completed_at", "0009_brief_flow.sql"],
       ["batches", "campaign_code", "0011_batch_naming.sql"],
+      ["creatives", "parent_id", "0013_variantes.sql"],
     ];
     for (const [table, column, migration] of columns) {
       const { error: columnError } = await supabase.from(table).select(column).limit(1);
@@ -130,6 +131,18 @@ async function main() {
     });
     if (rpcError) bad(`assign_creatives_to_batch no existe — falta correr 0012_assign_batch.sql`);
     else ok("assign_creatives_to_batch existe");
+
+    const { error: groupError } = await supabase.rpc("group_creatives_as_ad", {
+      p_parent: "00000000-0000-0000-0000-000000000000",
+      p_variantes: ["00000000-0000-0000-0000-000000000001"],
+    });
+    // Con un padre inexistente la funcion levanta su propia excepcion: eso
+    // prueba que existe. Lo unico que delata que falta es el 404 del RPC.
+    if (groupError && /could not find|does not exist|404/i.test(groupError.message)) {
+      bad("group_creatives_as_ad no existe — falta correr 0013_variantes.sql");
+    } else {
+      ok("group_creatives_as_ad existe");
+    }
 
     const { data, error } = await supabase.auth.admin.listUsers();
     if (error) bad(`auth: ${error.message}`);

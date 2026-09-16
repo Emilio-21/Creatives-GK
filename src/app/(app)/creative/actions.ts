@@ -38,6 +38,25 @@ export async function requestDownloads(creativeIds: string[]): Promise<DownloadT
   const rows = data ?? [];
   if (rows.length === 0) throw new Error("No se encontraron los creativos.");
 
+  // Un anuncio con variantes se descarga completo: para armarlo en Meta hacen
+  // falta los dos archivos, y pedir la 9:16 aparte seria un paso de mas que se
+  // olvida justo cuando hay prisa.
+  const { data: variantRows } = await supabase
+    .from("creatives")
+    .select("id, storage_path, original_filename, display_name")
+    .in("parent_id", ids)
+    .is("archived_at", null);
+
+  for (const variant of variantRows ?? []) {
+    if (!rows.some((row) => row.id === variant.id)) rows.push(variant);
+  }
+
+  if (rows.length > MAX_BATCH) {
+    throw new Error(
+      `La selección son ${rows.length} archivos contando las variantes; el máximo es ${MAX_BATCH}.`,
+    );
+  }
+
   const targets = await Promise.all(
     rows.map(async (row) => ({
       id: row.id as string,

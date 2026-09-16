@@ -22,7 +22,12 @@ export async function getClientsWithCounts(): Promise<ClientWithCount[]> {
 
   const [{ data: clients }, { data: creatives }] = await Promise.all([
     supabase.from("clients").select("*").is("archived_at", null).order("name"),
-    supabase.from("creatives").select("id, client_id").is("archived_at", null),
+    // parent_id null = anuncios. Un par de estaticos es un anuncio, no dos.
+    supabase
+      .from("creatives")
+      .select("id, client_id")
+      .is("parent_id", null)
+      .is("archived_at", null),
   ]);
 
   const ids = (creatives ?? []).map((row) => row.id as string);

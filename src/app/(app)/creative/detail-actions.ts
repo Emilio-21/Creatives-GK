@@ -4,7 +4,8 @@ import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { getPreviewUrl } from "@/lib/storage";
-import type { CreativeRow, CreativeStats } from "@/lib/creatives";
+import { aspectLabel } from "@/lib/aspect";
+import type { CreativeRow, CreativeStats, CreativeVariant } from "@/lib/creatives";
 import type { LaunchRow } from "@/lib/launches";
 
 export type CreativeDetail = {
@@ -14,6 +15,9 @@ export type CreativeDetail = {
   posterUrl: string | null;
   launches: LaunchRow[];
   stats: CreativeStats | null;
+  /** Los otros formatos del mismo anuncio. */
+  variants: CreativeVariant[];
+  aspect: string | null;
 };
 
 /** Todo lo que necesita el modal, en una sola llamada. */
@@ -32,7 +36,8 @@ export async function getCreativeDetail(id: string): Promise<CreativeDetail> {
 
   const creative = data as CreativeRow & { clients: { id: string; name: string } | null };
 
-  const [mediaUrl, posterUrl, { data: launches }, { data: stats }] = await Promise.all([
+  const [mediaUrl, posterUrl, { data: launches }, { data: stats }, { data: variantRows }] =
+    await Promise.all([
     getPreviewUrl(creative.storage_path),
     creative.poster_path ? getPreviewUrl(creative.poster_path) : Promise.resolve(null),
     supabase
@@ -41,7 +46,29 @@ export async function getCreativeDetail(id: string): Promise<CreativeDetail> {
       .eq("creative_id", id)
       .order("launched_at", { ascending: false }),
     supabase.from("creative_stats").select("*").eq("id", id).maybeSingle(),
+    supabase
+      .from("creatives")
+      .select("id, display_name, original_filename, storage_path, poster_path, media_type, width, height")
+      .eq("parent_id", id)
+      .is("archived_at", null)
+      .order("created_at", { ascending: true }),
   ]);
+
+  const variants: CreativeVariant[] = await Promise.all(
+    (variantRows ?? []).map(async (row) => {
+      const path =
+        row.media_type === "video"
+          ? (row.poster_path as string | null)
+          : (row.storage_path as string);
+      return {
+        id: row.id as string,
+        display_name: row.display_name as string,
+        original_filename: row.original_filename as string,
+        aspect: aspectLabel(row.width as number | null, row.height as number | null),
+        previewUrl: path ? await getPreviewUrl(path) : null,
+      };
+    }),
+  );
 
   return {
     creative,
@@ -50,6 +77,8 @@ export async function getCreativeDetail(id: string): Promise<CreativeDetail> {
     posterUrl,
     launches: (launches ?? []) as LaunchRow[],
     stats: (stats as CreativeStats) ?? null,
+    variants,
+    aspect: aspectLabel(creative.width, creative.height),
   };
 }
 

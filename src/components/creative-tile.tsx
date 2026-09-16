@@ -51,6 +51,20 @@ export function CreativeTile({
             </div>
           )}
 
+          {/* Un anuncio con variantes es UN anuncio con varios archivos: el chip
+              lo dice para que nadie busque la version de historia como tarjeta
+              aparte. */}
+          {creative.variants.length > 0 ? (
+            <span
+              className="absolute right-1.5 top-1.5 rounded bg-black/70 px-1.5 py-0.5 font-mono text-[10px] text-white"
+              title={[creative.aspect, ...creative.variants.map((v) => v.aspect)]
+                .map((aspecto) => aspecto ?? "?")
+                .join(" + ")}
+            >
+              {creative.variants.length + 1} formatos
+            </span>
+          ) : null}
+
           {creative.media_type === "video" && creative.duration_seconds ? (
             <span className="absolute bottom-1.5 right-1.5 rounded bg-black/70 px-1 py-0.5 font-mono text-[10px] text-white">
               {formatDuration(creative.duration_seconds)}
@@ -122,7 +136,11 @@ export function CreativeTile({
             </dl>
           ) : (
             <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
-              {creative.format ?? STATUS_LABEL[status]}
+              {creative.variants.length > 0
+                ? [creative.aspect, ...creative.variants.map((v) => v.aspect)]
+                    .filter(Boolean)
+                    .join(" · ")
+                : (creative.aspect ?? creative.format ?? STATUS_LABEL[status])}
             </p>
           )}
         </div>

@@ -59,9 +59,11 @@ type Row = { creative: CreativeLite; stats: CreativeStats | null };
 async function loadRows(clientId?: string) {
   const supabase = await createClient();
 
+  // Los KPIs cuentan anuncios: las variantes de formato no son piezas aparte.
   let query = supabase
     .from("creatives")
     .select("id, display_name, client_id, created_at")
+    .is("parent_id", null)
     .is("archived_at", null);
   if (clientId) query = query.eq("client_id", clientId);
 

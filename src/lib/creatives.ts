@@ -1,6 +1,7 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
 import { getPreviewUrl } from "@/lib/storage";
+import { aspectLabel } from "@/lib/aspect";
 
 export const PAGE_SIZE = 48;
 
@@ -18,6 +19,8 @@ export type CreativeRow = {
   duration_seconds: number | null;
   client_id: string | null;
   batch_id: string | null;
+  /** Null = es un anuncio. Con valor = es otro formato del anuncio padre. */
+  parent_id: string | null;
   concept: string | null;
   format: string | null;
   tags: string[];
@@ -44,9 +47,21 @@ export type CreativeStats = {
   cpa: number | null;
 };
 
+/** Los otros formatos del mismo anuncio: la 9:16 de una 1:1, por ejemplo. */
+export type CreativeVariant = {
+  id: string;
+  display_name: string;
+  original_filename: string;
+  aspect: string | null;
+  previewUrl: string | null;
+};
+
 export type CreativeCard = CreativeRow & {
   batchName: string | null;
   batchCompletedAt: string | null;
+  /** Vacio cuando el anuncio es de un solo archivo. */
+  variants: CreativeVariant[];
+  aspect: string | null;
   /** Poster para video, el archivo para imagen. Firmada 1 h. */
   previewUrl: string | null;
   stats: CreativeStats | null;
@@ -79,7 +94,9 @@ export async function getLibrary(filters: LibraryFilters) {
   // El universo es de unos cientos de archivos, no millones: se traen todos los
   // que pasan el filtro y se ordena/pagina aqui. Asi se puede ordenar por
   // metricas, que viven en la vista y no en la tabla.
-  let query = supabase.from("creatives").select("*").limit(2000);
+  // Solo anuncios: las variantes (la 9:16 de un par de estaticos) cuelgan de su
+  // padre y se traen mas abajo, ya que el tablero cuenta anuncios, no archivos.
+  let query = supabase.from("creatives").select("*").is("parent_id", null).limit(2000);
   query = filters.onlyArchived
     ? query.not("archived_at", "is", null)
     : query.is("archived_at", null);
@@ -141,6 +158,36 @@ export async function getLibrary(filters: LibraryFilters) {
   const from = (page - 1) * PAGE_SIZE;
   const slice = sorted.slice(from, from + PAGE_SIZE);
 
+  // Las variantes tambien se traen solo de la pagina visible: firmarlas todas
+  // seria firmar el doble de URLs para mostrar las mismas 48 tarjetas.
+  const variantsByParent = new Map<string, CreativeVariant[]>();
+  const visibleIds = slice.map(({ creative }) => creative.id);
+  if (visibleIds.length > 0) {
+    const { data: variantRows } = await supabase
+      .from("creatives")
+      .select("id, parent_id, display_name, original_filename, storage_path, poster_path, media_type, width, height")
+      .in("parent_id", visibleIds)
+      .is("archived_at", null)
+      .order("created_at", { ascending: true });
+
+    for (const row of variantRows ?? []) {
+      const parent = row.parent_id as string;
+      const path =
+        row.media_type === "video"
+          ? (row.poster_path as string | null)
+          : (row.storage_path as string);
+      const list = variantsByParent.get(parent) ?? [];
+      list.push({
+        id: row.id as string,
+        display_name: row.display_name as string,
+        original_filename: row.original_filename as string,
+        aspect: aspectLabel(row.width as number | null, row.height as number | null),
+        previewUrl: path ? await getPreviewUrl(path) : null,
+      });
+      variantsByParent.set(parent, list);
+    }
+  }
+
   // Solo se firman las URLs de la pagina visible.
   const cards: CreativeCard[] = await Promise.all(
     slice.map(async ({ creative, stats }) => {
@@ -151,6 +198,8 @@ export async function getLibrary(filters: LibraryFilters) {
         previewUrl: path ? await getPreviewUrl(path) : null,
         batchName: creative.batch_id ? (batchNames.get(creative.batch_id) ?? null) : null,
         batchCompletedAt: creative.batch_id ? (batchDone.get(creative.batch_id) ?? null) : null,
+        variants: variantsByParent.get(creative.id) ?? [],
+        aspect: aspectLabel(creative.width, creative.height),
         stats,
         uploaderName: namesById.get(creative.uploaded_by) ?? null,
       };
