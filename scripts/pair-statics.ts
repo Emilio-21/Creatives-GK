@@ -68,7 +68,7 @@ async function main() {
     filas.filter((fila) => fila.parent_id).map((fila) => fila.parent_id as string),
   );
 
-  const planes: { principal: Fila; variantes: Fila[]; motivo: "metricas" | "nombre" }[] = [];
+  const planes: { principal: Fila; variantes: Fila[] }[] = [];
   const saltados: { clave: string; motivo: string; archivos: string[] }[] = [];
 
   for (const grupo of suggestPairs(sueltos, (fila) => fila.original_filename)) {
@@ -84,14 +84,12 @@ async function main() {
       saltar("hay video: los videos no van en par por placement");
       continue;
     }
-    // Si UNO del par ya corrio, no se salta: ese se vuelve el principal y se
-    // queda con sus metricas. Son justo los pares que mas importan, porque son
-    // los que ya estan al aire con la mitad del par huerfana. Solo se salta
-    // cuando los dos tienen lanzamientos, que seria decidir cuales metricas
-    // sobreviven.
-    const conMetricas = grupo.items.filter((fila) => lanzados.has(fila.id));
-    if (conMetricas.length === 2) {
-      saltar("los dos tienen lanzamientos: hay que decidir a mano cual es el anuncio");
+    // Lo que ya corrio no se toca. En JM esos pares resultaron ser dos anuncios
+    // distintos en Meta, con gasto propio cada uno, y ademas se lanzaron mal:
+    // agruparlos reescribiria un historial que el equipo prefiere dejar como
+    // esta. Este script es solo para el inventario que nunca salio al aire.
+    if (grupo.items.some((fila) => lanzados.has(fila.id))) {
+      saltar("ya tiene lanzamientos: el historial se deja como esta");
       continue;
     }
     if (grupo.items.some((fila) => yaEsPadre.has(fila.id))) {
@@ -112,13 +110,10 @@ async function main() {
     }
 
     const principal =
-      conMetricas[0] ??
-      grupo.items.find((fila) => isBaseName(fila.original_filename)) ??
-      grupo.items[0];
+      grupo.items.find((fila) => isBaseName(fila.original_filename)) ?? grupo.items[0];
     planes.push({
       principal,
       variantes: grupo.items.filter((fila) => fila.id !== principal.id),
-      motivo: conMetricas[0] ? "metricas" : "nombre",
     });
   }
 
@@ -128,8 +123,7 @@ async function main() {
 
   for (const plan of planes) {
     const cliente = nombreCliente.get(plan.principal.client_id!) ?? "sin cliente";
-    const porMetricas = plan.motivo === "metricas" ? "  ← ya lanzado" : "";
-    console.log(`  ${cliente.padEnd(18)} ${etiqueta(plan.principal)}${porMetricas}`);
+    console.log(`  ${cliente.padEnd(18)} ${etiqueta(plan.principal)}`);
     for (const variante of plan.variantes) console.log(`  ${"".padEnd(18)}   + ${etiqueta(variante)}`);
   }
 
