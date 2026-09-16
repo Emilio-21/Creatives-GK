@@ -42,3 +42,85 @@ export function suggestPairs<T>(
     .filter(([, lista]) => lista.length >= 2)
     .map(([key, lista]) => ({ key, items: lista }));
 }
+
+/** Lo minimo para decidir si dos archivos son el mismo anuncio. */
+export type Emparejable = {
+  id: string;
+  original_filename: string;
+  media_type: "image" | "video";
+  width: number | null;
+  height: number | null;
+  client_id: string | null;
+};
+
+export type ParElegido<T> = { principal: T; variantes: T[] };
+export type ParDescartado<T> = { clave: string; motivo: string; items: T[] };
+
+/**
+ * Decide que se agrupa y que no, con una sola definicion de las reglas.
+ *
+ * Vive aqui y no en el script ni en la accion porque las dos necesitan la
+ * MISMA respuesta: si se agrupa distinto al subir que al limpiar la biblioteca,
+ * el equipo deja de poder predecir lo que hace la app.
+ *
+ * Es deliberadamente conservador. Agrupar de mas obliga a separar a mano;
+ * agrupar de menos solo deja un par para el panel.
+ */
+export function selectAutoPairs<T extends Emparejable>(
+  items: T[],
+  opciones: {
+    aspectoDe: (item: T) => string | null;
+    tieneLanzamientos?: (item: T) => boolean;
+    tieneVariantes?: (item: T) => boolean;
+  },
+): { elegidos: ParElegido<T>[]; descartados: ParDescartado<T>[] } {
+  const elegidos: ParElegido<T>[] = [];
+  const descartados: ParDescartado<T>[] = [];
+
+  for (const grupo of suggestPairs(items, (item) => item.original_filename)) {
+    const descartar = (motivo: string) =>
+      descartados.push({ clave: grupo.key, motivo, items: grupo.items });
+
+    if (grupo.items.length !== 2) {
+      descartar(`son ${grupo.items.length} archivos, no un par`);
+      continue;
+    }
+    if (grupo.items.some((item) => item.media_type !== "image")) {
+      descartar("hay video: los videos no van en par por placement");
+      continue;
+    }
+    if (opciones.tieneLanzamientos && grupo.items.some(opciones.tieneLanzamientos)) {
+      descartar("ya tiene lanzamientos: el historial se deja como esta");
+      continue;
+    }
+    if (opciones.tieneVariantes && grupo.items.some(opciones.tieneVariantes)) {
+      descartar("alguno ya tiene variantes colgando");
+      continue;
+    }
+
+    const clientes = new Set(grupo.items.map((item) => item.client_id));
+    if (clientes.size !== 1 || grupo.items[0].client_id === null) {
+      descartar("no son del mismo cliente");
+      continue;
+    }
+
+    // Dos archivos del mismo aspecto no son feed + historia: se parecen de
+    // nombre pero probablemente son dos anuncios distintos.
+    const aspectos = new Set(grupo.items.map(opciones.aspectoDe));
+    if (aspectos.size !== 2 || aspectos.has(null)) {
+      descartar(
+        `aspectos ${[...aspectos].map((a) => a ?? "desconocido").join(" y ")}: no parece un par de placements`,
+      );
+      continue;
+    }
+
+    const principal =
+      grupo.items.find((item) => isBaseName(item.original_filename)) ?? grupo.items[0];
+    elegidos.push({
+      principal,
+      variantes: grupo.items.filter((item) => item.id !== principal.id),
+    });
+  }
+
+  return { elegidos, descartados };
+}

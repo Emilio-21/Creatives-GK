@@ -19,6 +19,7 @@ import { extractMetadata, type MediaMetadata } from "@/lib/media";
 import { uploadToR2 } from "@/lib/upload-xhr";
 import { confirmUpload, findDuplicateNames, requestUploadUrls } from "./actions";
 import { createBatch, listBatches } from "@/app/(app)/client/batch-actions";
+import { autoPairUploaded } from "@/app/(app)/client/variant-actions";
 
 const FORMATS = ["reel", "story", "feed", "1x1", "9x16"];
 const ACCEPT = ALLOWED_MIME_TYPES.join(",");
@@ -143,7 +144,7 @@ export function UploadDropzone({
     [update],
   );
 
-  async function uploadOne(item: Item) {
+  async function uploadOne(item: Item): Promise<string> {
     const metadata = item.metadata;
     if (!metadata) throw new Error("Sin metadata.");
 
@@ -166,7 +167,7 @@ export function UploadDropzone({
 
     update(item.key, { status: "guardando", progress: 100 });
 
-    await confirmUpload({
+    const { id } = await confirmUpload({
       storagePath: ticket.storagePath,
       posterPath,
       originalFilename: item.file.name,
@@ -182,6 +183,7 @@ export function UploadDropzone({
     });
 
     update(item.key, { status: "hecho" });
+    return id;
   }
 
   /** Reintento de un solo archivo, sin tocar el resto de la cola. */
@@ -211,22 +213,39 @@ export function UploadDropzone({
     if (pending.length === 0) return;
 
     setRunning(true);
-    let done = 0;
+    const subidos: string[] = [];
     for (const item of pending) {
       try {
-        await uploadOne(item);
-        done += 1;
+        subidos.push(await uploadOne(item));
       } catch (error) {
         update(item.key, { status: "error", error: (error as Error).message });
       }
     }
-    setRunning(false);
 
-    if (done > 0) {
-      toast.success(`${done} creativo${done === 1 ? "" : "s"} en la biblioteca.`);
+    if (subidos.length > 0) {
+      toast.success(`${subidos.length} creativo${subidos.length === 1 ? "" : "s"} en la biblioteca.`);
+
+      // El par 1:1 + 9:16 es un solo anuncio: se acomoda solo en vez de dejarle
+      // el trabajo a quien sube. Si falla, los archivos ya estan arriba.
+      try {
+        const pares = await autoPairUploaded(subidos);
+        if (pares.length > 0) {
+          toast.success(
+            pares.length === 1
+              ? `${pares[0].principal} quedó como un anuncio con su versión de historia.`
+              : `${pares.length} pares agrupados como un anuncio cada uno.`,
+            { description: pares.map((par) => `${par.principal} + ${par.variantes.join(", ")}`).join("\n") },
+          );
+        }
+      } catch {
+        // Agrupar es una comodidad, no parte de la subida.
+      }
+
       onUploaded?.();
       router.refresh();
     }
+
+    setRunning(false);
   }
 
   const pendingCount = items.filter(

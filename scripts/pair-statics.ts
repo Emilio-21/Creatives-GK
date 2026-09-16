@@ -15,7 +15,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { config } from "dotenv";
 import { aspectLabel } from "../src/lib/aspect";
-import { isBaseName, suggestPairs } from "../src/lib/pairing";
+import { selectAutoPairs } from "../src/lib/pairing";
 
 config({ path: ".env.local" });
 
@@ -68,54 +68,21 @@ async function main() {
     filas.filter((fila) => fila.parent_id).map((fila) => fila.parent_id as string),
   );
 
-  const planes: { principal: Fila; variantes: Fila[] }[] = [];
-  const saltados: { clave: string; motivo: string; archivos: string[] }[] = [];
+  // Las mismas reglas que al subir: si agrupara distinto aqui que alla, el
+  // equipo dejaria de poder predecir lo que hace la app.
+  const { elegidos, descartados } = selectAutoPairs(sueltos, {
+    aspectoDe: (fila) => aspectLabel(fila.width, fila.height),
+    tieneLanzamientos: (fila) => lanzados.has(fila.id),
+    tieneVariantes: (fila) => yaEsPadre.has(fila.id),
+  });
 
-  for (const grupo of suggestPairs(sueltos, (fila) => fila.original_filename)) {
-    const archivos = grupo.items.map(etiqueta);
-    const saltar = (motivo: string) =>
-      saltados.push({ clave: grupo.key, motivo, archivos });
+  const planes = elegidos;
+  const saltados = descartados.map((item) => ({
+    clave: item.clave,
+    motivo: item.motivo,
+    archivos: item.items.map(etiqueta),
+  }));
 
-    if (grupo.items.length !== 2) {
-      saltar(`son ${grupo.items.length} archivos, no un par`);
-      continue;
-    }
-    if (grupo.items.some((fila) => fila.media_type !== "image")) {
-      saltar("hay video: los videos no van en par por placement");
-      continue;
-    }
-    // Lo que ya corrio no se toca. En JM esos pares resultaron ser dos anuncios
-    // distintos en Meta, con gasto propio cada uno, y ademas se lanzaron mal:
-    // agruparlos reescribiria un historial que el equipo prefiere dejar como
-    // esta. Este script es solo para el inventario que nunca salio al aire.
-    if (grupo.items.some((fila) => lanzados.has(fila.id))) {
-      saltar("ya tiene lanzamientos: el historial se deja como esta");
-      continue;
-    }
-    if (grupo.items.some((fila) => yaEsPadre.has(fila.id))) {
-      saltar("alguno ya tiene variantes colgando");
-      continue;
-    }
-    const clientes = new Set(grupo.items.map((fila) => fila.client_id));
-    if (clientes.size !== 1 || grupo.items[0].client_id === null) {
-      saltar("no son del mismo cliente");
-      continue;
-    }
-    // Dos archivos del mismo aspecto no son feed + historia: se parecen de
-    // nombre pero probablemente son dos anuncios distintos.
-    const aspectos = new Set(grupo.items.map(aspectoDe));
-    if (aspectos.size !== 2 || aspectos.has("?")) {
-      saltar(`aspectos ${[...aspectos].join(" y ")}: no parece un par de placements`);
-      continue;
-    }
-
-    const principal =
-      grupo.items.find((fila) => isBaseName(fila.original_filename)) ?? grupo.items[0];
-    planes.push({
-      principal,
-      variantes: grupo.items.filter((fila) => fila.id !== principal.id),
-    });
-  }
 
   console.log(
     `\n${sueltos.length} anuncios sueltos · ${planes.length} pares para agrupar · ${saltados.length} a revisar\n`,
