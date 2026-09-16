@@ -13,10 +13,19 @@ export type SyncReport = {
   withMetrics: number;
   matched: number;
   launchesWritten: number;
-  /** Anuncios sin el codigo [GK-xxxxxxxx] en el nombre. */
   /** Periodo consultado, para que el reporte diga de que fechas habla. */
   range: DateRange | null;
+  /**
+   * Anuncios sin el codigo [GK-xxxxxxxx] en el nombre: una MUESTRA de nombres
+   * distintos, no la lista completa.
+   */
   adsWithoutCode: string[];
+  /**
+   * Cuantos son en realidad. Va aparte porque la muestra va deduplicada y
+   * cortada a 20: sin este numero, una cuenta con 19 anuncios sin codigo
+   * reportaba 12 y parecia que 7 se habian enlazado.
+   */
+  adsWithoutCodeCount: number;
   /** Codigos que no corresponden a ningun creativo (¿archivado? ¿borrado?). */
   unknownCodes: string[];
   error?: string;
@@ -52,6 +61,7 @@ export async function syncClient(clientId: string, range?: DateRange): Promise<S
     launchesWritten: 0,
     range: range ?? null,
     adsWithoutCode: [],
+    adsWithoutCodeCount: 0,
     unknownCodes: [],
   };
 
@@ -96,6 +106,7 @@ export async function syncClient(clientId: string, range?: DateRange): Promise<S
   for (const ad of ads) {
     const code = extractAdCode(ad.adName);
     if (!code) {
+      report.adsWithoutCodeCount += 1;
       if (ad.adName) report.adsWithoutCode.push(ad.adName);
       continue;
     }
@@ -185,6 +196,7 @@ export async function syncAllClients(range?: DateRange): Promise<SyncReport[]> {
         launchesWritten: 0,
         range: range ?? null,
         adsWithoutCode: [],
+        adsWithoutCodeCount: 0,
         unknownCodes: [],
         error: (error as Error).message,
       });
