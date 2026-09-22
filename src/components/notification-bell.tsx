@@ -24,7 +24,16 @@ const KIND_DOT: Record<string, string> = {
  * constantemente, y un poll cada 30 s seria una consulta por persona por
  * minuto todo el dia para enterarse de algo que pasa tres veces al dia.
  */
-export function NotificationBell() {
+export function NotificationBell({
+  variant = "icon",
+}: {
+  /**
+   * "row" es la fila ancha de la barra lateral; "icon" el boton suelto del
+   * header movil. El panel se abre hacia abajo o hacia arriba segun eso: en la
+   * barra vive arriba, en el header movil no hay espacio debajo.
+   */
+  variant?: "icon" | "row";
+} = {}) {
   const pathname = usePathname();
   const [items, setItems] = useState<Notification[]>([]);
   const [abierto, setAbierto] = useState(false);
@@ -49,30 +58,56 @@ export function NotificationBell() {
 
   const sinLeer = items.filter((item) => item.read_at === null);
 
+  const campana = (
+    <svg viewBox="0 0 24 24" className="size-4 shrink-0" aria-hidden="true">
+      <path
+        d="M18 8a6 6 0 1 0-12 0c0 7-3 8-3 8h18s-3-1-3-8M13.7 21a2 2 0 0 1-3.4 0"
+        stroke="currentColor"
+        strokeWidth="2"
+        fill="none"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+  const etiqueta = `Avisos${sinLeer.length ? `: ${sinLeer.length} sin leer` : ""}`;
+
   return (
     <div className="relative">
-      <button
-        type="button"
-        aria-label={`Avisos${sinLeer.length ? `: ${sinLeer.length} sin leer` : ""}`}
-        onClick={() => setAbierto((v) => !v)}
-        className="relative flex size-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-      >
-        <svg viewBox="0 0 24 24" className="size-4" aria-hidden="true">
-          <path
-            d="M18 8a6 6 0 1 0-12 0c0 7-3 8-3 8h18s-3-1-3-8M13.7 21a2 2 0 0 1-3.4 0"
-            stroke="currentColor"
-            strokeWidth="2"
-            fill="none"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-        {sinLeer.length > 0 ? (
-          <span className="absolute -right-0.5 -top-0.5 flex min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[9px] font-medium text-white">
-            {sinLeer.length > 9 ? "9+" : sinLeer.length}
-          </span>
-        ) : null}
-      </button>
+      {variant === "row" ? (
+        <button
+          type="button"
+          aria-label={etiqueta}
+          onClick={() => setAbierto((v) => !v)}
+          className={`flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors ${
+            sinLeer.length > 0
+              ? "text-foreground hover:bg-muted"
+              : "text-muted-foreground hover:bg-muted hover:text-foreground"
+          }`}
+        >
+          {campana}
+          <span className="flex-1 text-left">Avisos</span>
+          {sinLeer.length > 0 ? (
+            <span className="flex min-w-5 items-center justify-center rounded-full bg-destructive px-1.5 text-[10px] font-medium text-white">
+              {sinLeer.length > 9 ? "9+" : sinLeer.length}
+            </span>
+          ) : null}
+        </button>
+      ) : (
+        <button
+          type="button"
+          aria-label={etiqueta}
+          onClick={() => setAbierto((v) => !v)}
+          className="relative flex size-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+        >
+          {campana}
+          {sinLeer.length > 0 ? (
+            <span className="absolute -right-0.5 -top-0.5 flex min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[9px] font-medium text-white">
+              {sinLeer.length > 9 ? "9+" : sinLeer.length}
+            </span>
+          ) : null}
+        </button>
+      )}
 
       {abierto ? (
         <>
@@ -81,7 +116,11 @@ export function NotificationBell() {
             onClick={() => setAbierto(false)}
             aria-hidden="true"
           />
-          <div className="absolute bottom-full left-0 z-50 mb-2 w-80 rounded-xl border bg-card p-2 shadow-2xl">
+          <div
+            className={`absolute left-0 z-50 w-80 rounded-xl border bg-card p-2 shadow-2xl ${
+              variant === "row" ? "top-full mt-2" : "bottom-full mb-2"
+            }`}
+          >
             <div className="flex items-center justify-between px-1.5 pb-1.5">
               <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
                 Avisos

@@ -83,6 +83,11 @@ export function AppShell({
           <div className="glass flex min-h-0 flex-1 flex-col gap-4 rounded-2xl border p-3">
             <NewBriefButton clients={clients.map(({ id, name }) => ({ id, name }))} />
 
+            {/* Debajo del boton principal y encima de los clientes: es lo
+                primero que alguien quiere saber al entrar, y ahi se ve sin
+                bajar la vista. */}
+            <NotificationBell variant="row" />
+
             <SidebarNav clients={clients} />
 
             {filtrandoClientes ? (
@@ -100,7 +105,6 @@ export function AppShell({
 
             <div className="flex items-center gap-2 border-t pt-3">
               <ThemeToggle />
-              <NotificationBell />
               <form action={logout} className="flex-1">
                 <Button type="submit" variant="ghost" size="sm" className="w-full">
                   Salir
