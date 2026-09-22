@@ -73,12 +73,17 @@ export async function syncClient(clientId: string, range?: DateRange): Promise<S
   // Codigo -> creativo. Se calcula aqui, no se guarda: sale del uuid.
   const { data: creatives } = await supabase
     .from("creatives")
-    .select("id")
+    .select("id, parent_id")
     .eq("client_id", clientId);
 
   const byCode = new Map<string, string>();
   for (const row of creatives ?? []) {
-    byCode.set(adCodeFor(row.id as string), row.id as string);
+    // El codigo de una variante resuelve al PADRE. Un par 1:1 + 9:16 es un solo
+    // anuncio: si las metricas cayeran en la variante quedarian invisibles,
+    // porque el tablero solo dibuja anuncios. Ademas pasa con los anuncios
+    // viejos, que traen pegado el codigo de la mitad que hoy es variante.
+    const anuncio = (row.parent_id as string | null) ?? (row.id as string);
+    byCode.set(adCodeFor(row.id as string), anuncio);
   }
 
   let ads;
