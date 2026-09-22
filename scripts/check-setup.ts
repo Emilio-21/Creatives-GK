@@ -102,6 +102,7 @@ async function main() {
       "creative_stats",
       "batches",
       "briefs",
+      "orgs",
     ]) {
       // select real, no head: un HEAD no falla si la tabla no esta en el cache.
       const { error } = await supabase.from(table).select("*").limit(1);
@@ -118,6 +119,8 @@ async function main() {
       ["batches", "campaign_code", "0011_batch_naming.sql"],
       ["creatives", "parent_id", "0013_variantes.sql"],
       ["launches", "ad_status", "0014_pausados.sql"],
+      ["profiles", "org_id", "0015_orgs.sql"],
+      ["clients", "org_id", "0015_orgs.sql"],
       ["creative_stats", "paused_launch_count", "0014_pausados.sql"],
     ];
     for (const [table, column, migration] of columns) {
@@ -141,6 +144,14 @@ async function main() {
     } else {
       ok("assign_creatives_to_batch existe");
     }
+
+    // Nadie puede quedar sin organizacion: sus policies no le dejarian ver nada.
+    const { count: huerfanos } = await supabase
+      .from("profiles")
+      .select("id", { count: "exact", head: true })
+      .is("org_id", null);
+    if (huerfanos) bad(`${huerfanos} perfil(es) sin organizacion — no verian nada`);
+    else ok("todos los perfiles tienen organizacion");
 
     const { error: groupError } = await supabase.rpc("group_creatives_as_ad", {
       p_parent: "00000000-0000-0000-0000-000000000000",
