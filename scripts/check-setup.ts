@@ -104,6 +104,7 @@ async function main() {
       "briefs",
       "orgs",
       "brief_events",
+      "notifications",
       "client_members",
     ]) {
       // select real, no head: un HEAD no falla si la tabla no esta en el cache.

@@ -6,6 +6,7 @@ import { NewBriefButton } from "@/components/new-brief-button";
 import { NewClientForm } from "@/components/new-client-form";
 import { SidebarNav, type ClientOption } from "@/components/sidebar-nav";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { NotificationBell } from "@/components/notification-bell";
 import { Button } from "@/components/ui/button";
 import { roleLabel } from "@/lib/roles";
 import type { Profile } from "@/lib/supabase/server";
@@ -53,6 +54,7 @@ export function AppShell({
 
             <div className="flex items-center gap-2 border-t pt-3">
               <ThemeToggle />
+              <NotificationBell />
               <form action={logout} className="flex-1">
                 <Button type="submit" variant="ghost" size="sm" className="w-full">
                   Salir
@@ -66,6 +68,7 @@ export function AppShell({
           <div className="mb-4 flex items-center gap-2 md:hidden">
             <MobileNav clients={clients} />
             <ThemeToggle />
+            <NotificationBell />
           </div>
           {children}
         </main>
