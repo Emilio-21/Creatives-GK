@@ -1,7 +1,12 @@
 import "server-only";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { adCodeFor, extractAdCode } from "@/lib/ad-code";
-import { fetchAccountAds, fetchAccountInsights, type DateRange } from "@/lib/meta";
+import {
+  fetchAccountAds,
+  fetchAccountCurrency,
+  fetchAccountInsights,
+  type DateRange,
+} from "@/lib/meta";
 import { serverEnv } from "@/lib/env";
 import { publicEnv } from "@/lib/env";
 
@@ -88,11 +93,13 @@ export async function syncClient(clientId: string, range?: DateRange): Promise<S
 
   let ads;
   let insights;
+  let moneda: string | null = null;
   try {
     // Los anuncios primero: el endpoint de insights se salta los que no
     // gastaron, y esos tambien hay que enlazar y reportar.
     ads = await fetchAccountAds(client.meta_ad_account_id as string);
     insights = await fetchAccountInsights(client.meta_ad_account_id as string, range);
+    moneda = await fetchAccountCurrency(client.meta_ad_account_id as string);
   } catch (error) {
     report.error = (error as Error).message;
     return report;
@@ -149,6 +156,8 @@ export async function syncClient(clientId: string, range?: DateRange): Promise<S
       result_type: insight?.resultType ?? null,
       // Lo que Meta dice del anuncio hoy: de aqui sale la columna de pausados.
       ad_status: ad.status,
+      // El gasto sin moneda es un numero sin unidad.
+      currency: moneda,
       metrics_source: "meta_api" as const,
       metrics_updated_at: new Date().toISOString(),
       created_by: client.created_by as string,
@@ -171,7 +180,10 @@ export async function syncClient(clientId: string, range?: DateRange): Promise<S
 
   await supabase
     .from("clients")
-    .update({ meta_synced_at: new Date().toISOString() })
+    .update({
+      meta_synced_at: new Date().toISOString(),
+      ...(moneda ? { meta_currency: moneda } : {}),
+    })
     .eq("id", clientId);
 
   // Listas largas no sirven de nada en la UI.

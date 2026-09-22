@@ -45,6 +45,17 @@ function token(): string {
   return value;
 }
 
+/** La moneda en la que factura la cuenta. Sin esto el gasto es un numero sin unidad. */
+export async function fetchAccountCurrency(adAccountId: string): Promise<string | null> {
+  const params = new URLSearchParams({ fields: "currency", access_token: token() });
+  const response = await fetch(
+    `${BASE}/${accountPath(adAccountId)}?${params.toString()}`,
+    { cache: "no-store" },
+  );
+  const body = (await response.json()) as { currency?: string; error?: unknown };
+  return body.currency ?? null;
+}
+
 /** Meta pide el prefijo act_ en el id de la cuenta publicitaria. */
 function accountPath(adAccountId: string): string {
   const clean = adAccountId.trim();

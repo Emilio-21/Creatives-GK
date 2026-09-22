@@ -30,12 +30,20 @@ export function formatPercent(value: number | null): string {
   return value === null ? "—" : `${value.toFixed(2)}%`;
 }
 
-export function formatMoney(value: number | null): string {
+/**
+ * El dinero SIEMPRE se formatea con la moneda de la cuenta que lo gasto.
+ *
+ * Antes esto decia MXN fijo y las tres cuentas de Meta facturan en USD: el
+ * gasto real se mostraba con la etiqueta equivocada, y con el los CPA y CPM que
+ * se usan para decidir si un creativo sigue al aire. El default es USD porque
+ * es lo que hay; cuando entre una cuenta en otra moneda, viene en los datos.
+ */
+export function formatMoney(value: number | null, currency = "USD"): string {
   return value === null
     ? "—"
     : new Intl.NumberFormat("es-MX", {
         style: "currency",
-        currency: "MXN",
+        currency,
         maximumFractionDigits: 2,
       }).format(value);
 }
