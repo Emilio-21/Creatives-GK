@@ -17,11 +17,16 @@ export function AppShell({
   email,
   clients,
   children,
+  filtrandoClientes,
+  totalClientes,
 }: {
   profile: Profile | null;
   email: string;
   clients: ClientOption[];
   children: React.ReactNode;
+  /** Se está mostrando solo una parte de los clientes de la organización. */
+  filtrandoClientes?: boolean;
+  totalClientes?: number;
 }) {
   const name = profile?.full_name ?? email.split("@")[0];
 
@@ -48,9 +53,25 @@ export function AppShell({
 
             <SidebarNav clients={clients} />
 
+            {filtrandoClientes ? (
+              <p className="px-1 text-[10px] text-muted-foreground">
+                Tus clientes ({clients.length} de {totalClientes}).{" "}
+                <Link href="/equipo" className="underline hover:text-foreground">
+                  Cambiar
+                </Link>
+              </p>
+            ) : null}
+
             <div className="pt-1">
               <NewClientForm />
             </div>
+
+            <Link
+              href="/equipo"
+              className="px-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
+            >
+              Equipo
+            </Link>
 
             <div className="flex items-center gap-2 border-t pt-3">
               <ThemeToggle />

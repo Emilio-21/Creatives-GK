@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { getClientsWithCounts } from "@/lib/clients";
+import { myClientIds } from "@/app/(app)/team-actions";
 import { createClient, type Profile } from "@/lib/supabase/server";
 
 /**
@@ -17,20 +18,30 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const [{ data: profile }, clients] = await Promise.all([
+  const [{ data: profile }, clients, misClientes] = await Promise.all([
     supabase.from("profiles").select("id, full_name, role, created_at").eq("id", user.id).single(),
     getClientsWithCounts(),
+    myClientIds(),
   ]);
+
+  // Filtro de vista, no permiso: sin clientes asignados se ven todos. Asi la
+  // app sigue sirviendo aunque nadie se acuerde de repartir.
+  const visibles =
+    misClientes.length > 0
+      ? clients.filter((client) => misClientes.includes(client.id))
+      : clients;
 
   return (
     <AppShell
       profile={(profile as Profile) ?? null}
       email={user.email ?? ""}
-      clients={clients.map((client) => ({
+      clients={visibles.map((client) => ({
         id: client.id,
         name: client.name,
         count: client.creativeCount,
       }))}
+      filtrandoClientes={misClientes.length > 0 && visibles.length < clients.length}
+      totalClientes={clients.length}
     >
       {children}
     </AppShell>
