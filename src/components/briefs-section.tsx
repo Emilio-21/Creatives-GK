@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { BriefCard } from "@/components/brief-card";
+import { BriefWorkflow } from "@/components/brief-workflow";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -241,6 +242,16 @@ function BriefModal({
                 {clientName} · {brief.brief_date} · {brief.authorName ?? "—"}
                 {completed ? " · batch completado" : ""}
               </p>
+            </div>
+
+            <div className="mb-3">
+              <BriefWorkflow
+                briefId={brief.id}
+                status={brief.status}
+                assigneeName={brief.assigneeName}
+                dueDate={brief.due_date}
+                onChanged={onChanged}
+              />
             </div>
 
             <p className="whitespace-pre-wrap rounded-md border bg-muted/30 p-3 text-sm">

@@ -11,6 +11,9 @@ export type BriefRow = {
   title: string;
   body: string;
   brief_date: string;
+  status: "borrador" | "asignado" | "en_diseno" | "listo";
+  assigned_to: string | null;
+  due_date: string | null;
   created_at: string;
   updated_at: string;
   updated_by: string | null;
@@ -21,6 +24,7 @@ export type BriefWithMeta = BriefRow & {
   batchCompletedAt: string | null;
   creativeCount: number;
   authorName: string | null;
+  assigneeName: string | null;
 };
 
 /** Instrucciones de copy para diseño. Reemplaza el Google Doc suelto. */
@@ -40,7 +44,11 @@ export async function listBriefs(clientId: string): Promise<BriefWithMeta[]> {
 
   const batchIds = [...new Set(briefs.map((b) => b.batch_id).filter(Boolean))] as string[];
   const authorIds = [
-    ...new Set(briefs.map((b) => b.updated_by ?? b.created_by).filter(Boolean)),
+    ...new Set(
+      briefs
+        .flatMap((b) => [b.updated_by ?? b.created_by, b.assigned_to])
+        .filter(Boolean),
+    ),
   ] as string[];
 
   const [{ data: batches }, { data: profiles }] = await Promise.all([
@@ -64,6 +72,8 @@ export async function listBriefs(clientId: string): Promise<BriefWithMeta[]> {
       .from("creatives")
       .select("batch_id")
       .in("batch_id", batchIds)
+      // Anuncios, no archivos: un par 1:1 + 9:16 es un diseño, no dos.
+      .is("parent_id", null)
       .is("archived_at", null);
     for (const row of creatives ?? []) {
       const key = row.batch_id as string;
@@ -82,6 +92,7 @@ export async function listBriefs(clientId: string): Promise<BriefWithMeta[]> {
       : null,
     creativeCount: brief.batch_id ? (counts.get(brief.batch_id) ?? 0) : 0,
     authorName: authors.get(brief.updated_by ?? brief.created_by) ?? null,
+    assigneeName: brief.assigned_to ? (authors.get(brief.assigned_to) ?? null) : null,
   }));
 }
 
@@ -188,6 +199,23 @@ export async function publishBrief(briefId: string, batchId: string): Promise<vo
     .update({ batch_id: batchId, updated_at: new Date().toISOString() })
     .eq("id", briefId);
   if (error) throw new Error(error.message);
+
+  // Publicar ES diseño diciendo "ya está": mover el estado aparte dejaria dos
+  // nociones de terminado que tarde o temprano se contradicen. Va por la misma
+  // funcion que el resto para que quede en el historial.
+  //
+  // Solo desde en_diseno: publicar un brief en borrador seria saltarse el
+  // relevo, y la funcion lo rechazaria de todos modos. El fallo no tumba la
+  // publicacion — los diseños ya estan arriba.
+  const { error: pasoError } = await supabase.rpc("transition_brief", {
+    p_brief: briefId,
+    p_to: "listo",
+    p_assigned: null,
+    p_note: null,
+  });
+  if (pasoError && !/No se puede pasar/.test(pasoError.message)) {
+    console.error("No se pudo mover el brief a listo:", pasoError.message);
+  }
 
   revalidatePath("/", "layout");
 }

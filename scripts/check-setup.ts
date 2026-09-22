@@ -103,6 +103,8 @@ async function main() {
       "batches",
       "briefs",
       "orgs",
+      "brief_events",
+      "client_members",
     ]) {
       // select real, no head: un HEAD no falla si la tabla no esta en el cache.
       const { error } = await supabase.from(table).select("*").limit(1);
@@ -121,6 +123,8 @@ async function main() {
       ["launches", "ad_status", "0014_pausados.sql"],
       ["profiles", "org_id", "0015_orgs.sql"],
       ["clients", "org_id", "0015_orgs.sql"],
+      ["briefs", "status", "0016_asignacion.sql"],
+      ["briefs", "assigned_to", "0016_asignacion.sql"],
       ["creative_stats", "paused_launch_count", "0014_pausados.sql"],
     ];
     for (const [table, column, migration] of columns) {
