@@ -44,18 +44,34 @@ export function formatCount(value: number | null): string {
   return value === null ? "—" : new Intl.NumberFormat("es-MX").format(value);
 }
 
-export type CreativeStatus = "sin-lanzar" | "en-circulacion" | "finalizado";
+export type CreativeStatus =
+  | "sin-lanzar"
+  | "en-circulacion"
+  | "pausado"
+  | "finalizado";
 
+/**
+ * Pausado va antes que finalizado, y en circulacion antes que pausado.
+ *
+ * Un creativo puede tener varios lanzamientos a la vez: si alguno sigue
+ * gastando, el creativo esta en circulacion aunque otro este apagado. Solo
+ * cuando NINGUNO gasta y queda al menos uno pausado, el creativo es "pausado":
+ * dejo de entregar pero no termino, y se puede reanudar.
+ */
 export function statusOf(stats: {
   launch_count?: number | null;
   active_launch_count?: number | null;
+  paused_launch_count?: number | null;
 } | null): CreativeStatus {
   if (!stats || !stats.launch_count) return "sin-lanzar";
-  return (stats.active_launch_count ?? 0) > 0 ? "en-circulacion" : "finalizado";
+  if ((stats.active_launch_count ?? 0) > 0) return "en-circulacion";
+  if ((stats.paused_launch_count ?? 0) > 0) return "pausado";
+  return "finalizado";
 }
 
 export const STATUS_LABEL: Record<CreativeStatus, string> = {
   "sin-lanzar": "Sin lanzar",
   "en-circulacion": "En circulación",
+  pausado: "Pausado",
   finalizado: "Finalizado",
 };

@@ -16,6 +16,7 @@ export function CreativeTile({
   onDownload,
   onLaunch,
   onDelete,
+  onTogglePaused,
   busy,
 }: {
   creative: CreativeCard;
@@ -25,6 +26,7 @@ export function CreativeTile({
   onDownload: () => void;
   onLaunch: () => void;
   onDelete: () => void;
+  onTogglePaused: (paused: boolean) => void;
   busy: boolean;
 }) {
   const status = statusOf(creative.stats);
@@ -103,6 +105,20 @@ export function CreativeTile({
                 />
               }
             />
+            {launched ? (
+              <TileAction
+                label={status === "pausado" ? "Reanudar" : "Pausar"}
+                disabled={busy}
+                onClick={() => onTogglePaused(status !== "pausado")}
+                icon={
+                  status === "pausado" ? (
+                    <path d="M8 5v14l11-7z" fill="currentColor" />
+                  ) : (
+                    <path d="M9 5v14M15 5v14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                  )
+                }
+              />
+            ) : null}
             {!launched ? (
               <TileAction
                 label="Marcar como lanzado"

@@ -106,3 +106,29 @@ export async function deleteCreative(creativeId: string): Promise<void> {
 
   revalidatePath("/", "layout");
 }
+
+/**
+ * Pausar o reanudar a mano.
+ *
+ * Lo que viene de Meta se actualiza solo en cada sync; esto es para los
+ * lanzamientos manuales, que no tienen un anuncio que consultar. Afecta a los
+ * lanzamientos del creativo que siguen abiertos.
+ */
+export async function setCreativePaused(
+  creativeId: string,
+  paused: boolean,
+): Promise<number> {
+  await requireUser();
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("set_creative_paused", {
+    p_creative: creativeId,
+    p_paused: paused,
+  });
+
+  if (error) throw new Error(error.message);
+
+  revalidatePath(`/creative/${creativeId}`);
+  revalidatePath("/", "layout");
+  return (data as number) ?? 0;
+}

@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/table";
 import { requestDownloads } from "@/app/(app)/creative/actions";
 import { quickLaunch } from "@/app/(app)/creative/detail-actions";
-import { deleteCreative } from "@/app/(app)/creative/creative-actions";
+import { deleteCreative, setCreativePaused } from "@/app/(app)/creative/creative-actions";
 import { downloadOne, downloadZip } from "@/lib/download";
 import { exportReportCsv } from "@/lib/export-report";
 import { useRouter } from "next/navigation";
@@ -32,6 +32,9 @@ const STATUS_DOT: Record<ReturnType<typeof statusOf>, string> = {
   // Amarillo solo para "sin lanzar"; morado para lo que ya salio al aire.
   "sin-lanzar": "bg-highlight",
   "en-circulacion": "bg-primary",
+  // Pausado no es finalizado: sigue vivo, solo dejo de entregar. Hueco a
+  // proposito — el relleno lo llevan los estados que si estan pasando algo.
+  pausado: "bg-transparent ring-1 ring-inset ring-muted-foreground",
   finalizado: "bg-muted-foreground/60",
 };
 
@@ -128,6 +131,23 @@ export function LibraryResults({
     }
   }
 
+  async function togglePaused(card: Card, paused: boolean) {
+    setBusy(true);
+    try {
+      const tocados = await setCreativePaused(card.id, paused);
+      if (tocados === 0) {
+        toast.error("No tiene lanzamientos abiertos que pausar.");
+        return;
+      }
+      toast.success(paused ? "Pausado" : "Reanudado");
+      router.refresh();
+    } catch (error) {
+      toast.error((error as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function removeCreative(card: Card) {
     const launched = statusOf(card.stats) !== "sin-lanzar";
     const warning = launched
@@ -187,36 +207,48 @@ export function LibraryResults({
     }
   }
 
+  // Las tres columnas reciben lo mismo: repetir doce props por columna es
+  // donde se cuela el que se te olvida pasar.
+  const columnProps = {
+    selected,
+    onToggle: toggle,
+    onOpen: setOpenId,
+    onDownload: downloadOneById,
+    onLaunch: markLaunched,
+    onDelete: removeCreative,
+    onNaming: setNamingBatchId,
+    onTogglePaused: togglePaused,
+    busy,
+  };
+
   return (
     <>
       {view === "tablero" ? (
-        <div className="grid gap-4 lg:grid-cols-2">
+        <div className="grid gap-4 lg:grid-cols-2 2xl:grid-cols-3">
           <BoardColumn
             title="Sin lanzar"
             hint="Inventario que nunca salió al aire"
             accent
             cards={cards.filter((card) => statusOf(card.stats) === "sin-lanzar")}
-            selected={selected}
-            onToggle={toggle}
-            onOpen={setOpenId}
-            onDownload={downloadOneById}
-            onLaunch={markLaunched}
-            onDelete={removeCreative}
-            onNaming={setNamingBatchId}
-            busy={busy}
+            {...columnProps}
           />
           <BoardColumn
             title="Lanzados"
-            hint="En circulación o ya finalizados"
-            cards={cards.filter((card) => statusOf(card.stats) !== "sin-lanzar")}
-            selected={selected}
-            onToggle={toggle}
-            onOpen={setOpenId}
-            onDownload={downloadOneById}
-            onLaunch={markLaunched}
-            onDelete={removeCreative}
-            onNaming={setNamingBatchId}
-            busy={busy}
+            hint="Gastando ahora mismo"
+            cards={cards.filter((card) => statusOf(card.stats) === "en-circulacion")}
+            {...columnProps}
+          />
+          {/* Pausados y finalizados juntos: los dos dejaron de gastar, y
+              separarlos en cuatro columnas parte el tablero sin que nadie gane
+              nada. El punto era sacarlos de "Lanzados". */}
+          <BoardColumn
+            title="Pausados"
+            hint="Se apagaron sin terminar, o ya finalizaron"
+            cards={cards.filter((card) => {
+              const estado = statusOf(card.stats);
+              return estado === "pausado" || estado === "finalizado";
+            })}
+            {...columnProps}
           />
         </div>
       ) : (
@@ -393,6 +425,7 @@ function BoardColumn({
   onLaunch,
   onDelete,
   onNaming,
+  onTogglePaused,
   busy,
 }: {
   title: string;
@@ -406,6 +439,7 @@ function BoardColumn({
   onLaunch: (id: string) => void;
   onDelete: (card: Card) => void;
   onNaming: (batchId: string) => void;
+  onTogglePaused: (card: Card, paused: boolean) => void;
   busy: boolean;
 }) {
   return (
@@ -467,6 +501,7 @@ function BoardColumn({
                     onDownload={() => onDownload(card.id)}
                     onLaunch={() => onLaunch(card.id)}
                     onDelete={() => onDelete(card)}
+                    onTogglePaused={(paused) => onTogglePaused(card, paused)}
                     busy={busy}
                   />
                 ))}

@@ -35,6 +35,8 @@ export type CreativeStats = {
   launch_count: number;
   is_published: boolean;
   active_launch_count: number;
+  /** Lanzamientos que no terminaron pero dejaron de entregar. */
+  paused_launch_count: number;
   first_launched_at: string | null;
   last_launched_at: string | null;
   total_spend: number | null;

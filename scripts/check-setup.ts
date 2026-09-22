@@ -117,6 +117,8 @@ async function main() {
       ["batches", "completed_at", "0009_brief_flow.sql"],
       ["batches", "campaign_code", "0011_batch_naming.sql"],
       ["creatives", "parent_id", "0013_variantes.sql"],
+      ["launches", "ad_status", "0014_pausados.sql"],
+      ["creative_stats", "paused_launch_count", "0014_pausados.sql"],
     ];
     for (const [table, column, migration] of columns) {
       const { error: columnError } = await supabase.from(table).select(column).limit(1);

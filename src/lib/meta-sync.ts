@@ -142,6 +142,8 @@ export async function syncClient(clientId: string, range?: DateRange): Promise<S
       clicks: insight?.clicks ?? null,
       results: insight?.results ?? null,
       result_type: insight?.resultType ?? null,
+      // Lo que Meta dice del anuncio hoy: de aqui sale la columna de pausados.
+      ad_status: ad.status,
       metrics_source: "meta_api" as const,
       metrics_updated_at: new Date().toISOString(),
       created_by: client.created_by as string,

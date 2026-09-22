@@ -6,6 +6,9 @@ const STATUS_DOT: Record<ReturnType<typeof statusOf>, string> = {
   // Amarillo solo para "sin lanzar"; morado para lo que ya salio al aire.
   "sin-lanzar": "bg-highlight",
   "en-circulacion": "bg-primary",
+  // Pausado no es finalizado: sigue vivo, solo dejo de entregar. Hueco a
+  // proposito — el relleno lo llevan los estados que si estan pasando algo.
+  pausado: "bg-transparent ring-1 ring-inset ring-muted-foreground",
   finalizado: "bg-muted-foreground/60",
 };
 
