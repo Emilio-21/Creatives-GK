@@ -17,12 +17,16 @@ export default async function EquipoPage() {
     .eq("id", user.id)
     .maybeSingle();
 
-  const [members, clients] = await Promise.all([listMembers(), getClientsWithCounts()]);
+  const [members, clients, { data: org }] = await Promise.all([
+    listMembers(),
+    getClientsWithCounts(),
+    supabase.from("orgs").select("name").maybeSingle(),
+  ]);
 
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="text-xl font-semibold">Equipo</h1>
+        <h1 className="text-xl font-semibold">{(org?.name as string) ?? "Equipo"}</h1>
         <p className="text-sm text-muted-foreground">
           {members.length} persona{members.length === 1 ? "" : "s"} · el rol decide a quién
           le llegan los avisos

@@ -126,6 +126,7 @@ async function main() {
       ["clients", "org_id", "0015_orgs.sql"],
       ["briefs", "status", "0016_asignacion.sql"],
       ["briefs", "assigned_to", "0016_asignacion.sql"],
+      ["orgs", "domain", "0015_orgs.sql"],
       ["creative_stats", "paused_launch_count", "0014_pausados.sql"],
     ];
     for (const [table, column, migration] of columns) {

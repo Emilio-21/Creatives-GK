@@ -19,9 +19,13 @@ export function AppShell({
   children,
   filtrandoClientes,
   totalClientes,
+  orgName,
+  teamSize,
 }: {
   profile: Profile | null;
   email: string;
+  orgName?: string | null;
+  teamSize?: number;
   clients: ClientOption[];
   children: React.ReactNode;
   /** Se está mostrando solo una parte de los clientes de la organización. */
@@ -36,17 +40,45 @@ export function AppShell({
 
       <div className="flex gap-4">
         <aside className="hidden w-56 shrink-0 flex-col gap-4 md:flex">
-          <div className="glass flex items-center gap-3 rounded-2xl border p-3">
+          {/* La tarjeta ES la entrada al equipo. Antes el enlace vivia hasta
+              abajo de la barra, detras de la lista de clientes: para llegar
+              habia que hacer scroll por algo que no tiene nada que ver. */}
+          <Link
+            href="/equipo"
+            className="glass group flex items-center gap-3 rounded-2xl border p-3 transition-colors hover:border-primary/40"
+          >
             <span className="brand-gradient flex size-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold text-white">
               {name.slice(0, 2).toUpperCase()}
             </span>
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-semibold">{name}</p>
               <p className="truncate text-xs text-muted-foreground">
                 {roleLabel(profile?.role)}
               </p>
+              {orgName ? (
+                <p className="mt-0.5 flex items-center gap-1 truncate text-[11px] text-muted-foreground">
+                  <span className="truncate">{orgName}</span>
+                  {teamSize ? (
+                    <span className="shrink-0 opacity-70">· {teamSize}</span>
+                  ) : null}
+                </p>
+              ) : null}
             </div>
-          </div>
+            <svg
+              viewBox="0 0 24 24"
+              className="size-3.5 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100"
+              aria-hidden="true"
+            >
+              <path
+                d="m9 6 6 6-6 6"
+                stroke="currentColor"
+                strokeWidth="2"
+                fill="none"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </Link>
 
           <div className="glass flex min-h-0 flex-1 flex-col gap-4 rounded-2xl border p-3">
             <NewBriefButton clients={clients.map(({ id, name }) => ({ id, name }))} />
@@ -65,13 +97,6 @@ export function AppShell({
             <div className="pt-1">
               <NewClientForm />
             </div>
-
-            <Link
-              href="/equipo"
-              className="px-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
-            >
-              Equipo
-            </Link>
 
             <div className="flex items-center gap-2 border-t pt-3">
               <ThemeToggle />

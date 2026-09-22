@@ -11,6 +11,7 @@ export function MobileTabBar() {
     { href: "/", label: "Biblioteca", match: (p: string) => p === "/" || p.startsWith("/client") },
     { href: "/dashboard", label: "Resumen", match: (p: string) => p.startsWith("/dashboard") },
     { href: "/upload", label: "Subir", match: (p: string) => p.startsWith("/upload") },
+    { href: "/equipo", label: "Equipo", match: (p: string) => p.startsWith("/equipo") },
   ];
 
   return (
