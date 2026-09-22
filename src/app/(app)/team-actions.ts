@@ -3,34 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-
-export const ROLES = ["admin", "media", "copy", "design", "member"] as const;
-export type Role = (typeof ROLES)[number];
-
-export const ROLE_LABEL: Record<Role, string> = {
-  admin: "Admin",
-  media: "Media buying",
-  copy: "Copy",
-  design: "Diseño",
-  member: "Equipo",
-};
-
-export const ROLE_HINT: Record<Role, string> = {
-  admin: "Puede borrar y administrar el equipo",
-  media: "Recibe los avisos de «listo para lanzar»",
-  copy: "Escribe los briefs y los asigna",
-  design: "Sube los diseños",
-  member: "Sin área asignada",
-};
-
-export type Member = {
-  id: string;
-  name: string;
-  role: Role;
-  clientIds: string[];
-  isMe: boolean;
-  openBriefs: number;
-};
+import type { Member, Role } from "@/lib/team";
 
 /** El equipo con sus clientes y cuánto tiene encima. */
 export async function listMembers(): Promise<Member[]> {

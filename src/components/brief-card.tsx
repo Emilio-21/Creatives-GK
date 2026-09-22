@@ -1,6 +1,6 @@
 "use client";
 
-import { STATUS_LABEL, type BriefStatus } from "@/app/(app)/client/assignment-actions";
+import { STATUS_LABEL, type BriefStatus } from "@/lib/brief-flow";
 import type { BriefWithMeta } from "@/app/(app)/client/brief-actions";
 
 /**

@@ -10,12 +10,10 @@ import {
   listTeam,
   moveBrief,
   setBriefDueDate,
-  NEXT_STEPS,
-  STATUS_LABEL,
   type BriefEvent,
-  type BriefStatus,
   type TeamMember,
 } from "@/app/(app)/client/assignment-actions";
+import { NEXT_STEPS, STATUS_LABEL, type BriefStatus } from "@/lib/brief-flow";
 
 const ROLE_LABEL: Record<string, string> = {
   admin: "admin",

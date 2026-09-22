@@ -3,30 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-
-export const BRIEF_STATUSES = ["borrador", "asignado", "en_diseno", "listo"] as const;
-export type BriefStatus = (typeof BRIEF_STATUSES)[number];
-
-export const STATUS_LABEL: Record<BriefStatus, string> = {
-  borrador: "Borrador",
-  asignado: "Asignado",
-  en_diseno: "En diseño",
-  listo: "Listo para lanzar",
-};
-
-/** Lo que sigue desde cada estado, en el orden en que se ofrece. */
-export const NEXT_STEPS: Record<BriefStatus, { to: BriefStatus; label: string }[]> = {
-  borrador: [{ to: "asignado", label: "Asignar a diseño" }],
-  asignado: [
-    { to: "en_diseno", label: "Empezar diseño" },
-    { to: "borrador", label: "Volver a borrador" },
-  ],
-  en_diseno: [
-    { to: "listo", label: "Marcar listo para lanzar" },
-    { to: "asignado", label: "Reasignar" },
-  ],
-  listo: [{ to: "en_diseno", label: "Devolver a diseño" }],
-};
+import type { BriefStatus } from "@/lib/brief-flow";
 
 export type TeamMember = { id: string; name: string; role: string };
 

@@ -4,15 +4,8 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import {
-  ROLES,
-  ROLE_HINT,
-  ROLE_LABEL,
-  setClientMember,
-  setRole,
-  type Member,
-  type Role,
-} from "@/app/(app)/team-actions";
+import { setClientMember, setRole } from "@/app/(app)/team-actions";
+import { ROLES, ROLE_HINT, ROLE_LABEL, type Member, type Role } from "@/lib/team";
 
 /**
  * El equipo, sus roles y sus clientes.
