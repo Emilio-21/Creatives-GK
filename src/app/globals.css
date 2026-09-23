@@ -56,84 +56,88 @@
   --font-sans: var(--font-geist-sans, ui-sans-serif), system-ui, sans-serif;
 
   --background: oklch(0.97 0 0);
-  --foreground: oklch(0.2 0.01 300);
+  --foreground: oklch(0.2 0.01 55);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.2 0.01 300);
+  --card-foreground: oklch(0.2 0.01 55);
   --popover: oklch(0.99 0 0);
-  --popover-foreground: oklch(0.2 0.01 300);
-  --primary: oklch(0.5 0.23 293);
+  --popover-foreground: oklch(0.2 0.01 55);
+  /* Naranja quemado: sale del fondo (cutting mat). El morado de antes venia del
+     aura naranja-morada; con el fondo nuevo quedaba sin de donde salir. */
+  --primary: oklch(0.56 0.17 45);
   --primary-foreground: oklch(0.98 0 0);
-  --secondary: oklch(0.93 0.004 300);
-  --secondary-foreground: oklch(0.2 0.01 300);
-  --muted: oklch(0.925 0.004 300);
-  --muted-foreground: oklch(0.5 0.01 300);
-  --accent: oklch(0.9 0.01 300);
-  --accent-foreground: oklch(0.2 0.01 300);
+  --secondary: oklch(0.93 0.004 55);
+  --secondary-foreground: oklch(0.2 0.01 55);
+  --muted: oklch(0.925 0.004 55);
+  --muted-foreground: oklch(0.5 0.01 55);
+  --accent: oklch(0.9 0.01 55);
+  --accent-foreground: oklch(0.2 0.01 55);
   --destructive: oklch(0.55 0.2 27);
-  --border: oklch(0.2 0.01 300 / 10%);
-  --input: oklch(0.2 0.01 300 / 14%);
-  --ring: oklch(0.5 0.23 293 / 50%);
-  --chart-1: oklch(0.5 0.23 293);
-  --chart-2: oklch(0.6 0.18 300);
-  --chart-3: oklch(0.66 0.16 55);
-  --chart-4: oklch(0.62 0.01 300);
-  --chart-5: oklch(0.75 0.008 300);
+  --border: oklch(0.2 0.01 55 / 10%);
+  --input: oklch(0.2 0.01 55 / 14%);
+  --ring: oklch(0.56 0.17 45 / 50%);
+  --chart-1: oklch(0.56 0.17 45);
+  --chart-2: oklch(0.72 0.14 65);
+  --chart-3: oklch(0.55 0.08 230);
+  --chart-4: oklch(0.62 0.01 55);
+  --chart-5: oklch(0.75 0.008 55);
   --radius: 1rem;
   --sidebar: oklch(0.98 0 0);
-  --sidebar-foreground: oklch(0.2 0.01 300);
-  --sidebar-primary: oklch(0.5 0.23 293);
+  --sidebar-foreground: oklch(0.2 0.01 55);
+  --sidebar-primary: oklch(0.56 0.17 45);
   --sidebar-primary-foreground: oklch(0.98 0 0);
-  --sidebar-accent: oklch(0.9 0.01 300);
-  --sidebar-accent-foreground: oklch(0.2 0.01 300);
-  --sidebar-border: oklch(0.2 0.01 300 / 8%);
-  --sidebar-ring: oklch(0.5 0.23 293 / 50%);
+  --sidebar-accent: oklch(0.9 0.01 55);
+  --sidebar-accent-foreground: oklch(0.2 0.01 55);
+  --sidebar-border: oklch(0.2 0.01 55 / 8%);
+  --sidebar-ring: oklch(0.56 0.17 45 / 50%);
 
   /* Tokens nuevos (fuera del contrato shadcn — decláralos también en @theme) */
   --highlight: oklch(0.82 0.16 100);            /* "sin lanzar" en light */
   --highlight-foreground: oklch(0.32 0.08 105);
-  --gradient: linear-gradient(135deg, oklch(0.7 0.17 55), oklch(0.5 0.23 293) 62%, oklch(0.42 0.24 295));
-  --glass: oklch(0.99 0 0 / 55%);
-  --glass-border: oklch(0.2 0.01 300 / 8%);
+  --gradient: linear-gradient(135deg, oklch(0.7 0.17 58), oklch(0.58 0.19 42) 55%, oklch(0.45 0.17 30));
+  --glass: oklch(0.985 0.004 60 / 90%);
+  --glass-border: oklch(0.2 0.01 55 / 8%);
   --glass-hi: oklch(1 0 0 / 60%);
 }
 
 .dark {
   --background: oklch(0.19 0 0);                /* #131313 */
   --foreground: oklch(0.95 0 0);
-  --card: oklch(0.235 0.004 300);
+  --card: oklch(0.22 0.008 50);
   --card-foreground: oklch(0.95 0 0);
-  --popover: oklch(0.27 0.005 300);
+  --popover: oklch(0.27 0.005 55);
   --popover-foreground: oklch(0.95 0 0);
-  --primary: oklch(0.54 0.22 293);              /* #723CEB */
-  --primary-foreground: oklch(0.98 0 0);
-  --secondary: oklch(0.28 0.005 300);
+  --primary: oklch(0.78 0.15 62);              /* ambar: texto oscuro encima */
+  --primary-foreground: oklch(0.2 0.04 45);
+  --secondary: oklch(0.28 0.005 55);
   --secondary-foreground: oklch(0.95 0 0);
-  --muted: oklch(0.26 0.004 300);
-  --muted-foreground: oklch(0.66 0.005 300);
-  --accent: oklch(0.3 0.006 300);
+  --muted: oklch(0.26 0.004 55);
+  --muted-foreground: oklch(0.66 0.005 55);
+  --accent: oklch(0.3 0.006 55);
   --accent-foreground: oklch(0.95 0 0);
   --destructive: oklch(0.62 0.19 25);
   --border: oklch(1 0 0 / 9%);
   --input: oklch(1 0 0 / 14%);
-  --ring: oklch(0.6 0.2 293 / 70%);
-  --chart-1: oklch(0.54 0.22 293);
-  --chart-2: oklch(0.68 0.16 300);
-  --chart-3: oklch(0.72 0.15 55);
-  --chart-4: oklch(0.45 0.005 300);
-  --chart-5: oklch(0.33 0.004 300);
-  --sidebar: oklch(0.21 0.003 300);
+  --ring: oklch(0.78 0.15 62 / 70%);
+  --chart-1: oklch(0.78 0.15 62);
+  --chart-2: oklch(0.64 0.17 40);
+  --chart-3: oklch(0.72 0.09 220);
+  --chart-4: oklch(0.45 0.005 55);
+  --chart-5: oklch(0.33 0.004 55);
+  --sidebar: oklch(0.21 0.003 55);
   --sidebar-foreground: oklch(0.95 0 0);
-  --sidebar-primary: oklch(0.54 0.22 293);
-  --sidebar-primary-foreground: oklch(0.98 0 0);
-  --sidebar-accent: oklch(0.3 0.006 300);
+  --sidebar-primary: oklch(0.78 0.15 62);
+  --sidebar-primary-foreground: oklch(0.2 0.04 45);
+  --sidebar-accent: oklch(0.3 0.006 55);
   --sidebar-accent-foreground: oklch(0.95 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.6 0.2 293 / 70%);
+  --sidebar-ring: oklch(0.78 0.15 62 / 70%);
 
   --highlight: oklch(0.93 0.19 102);            /* #FFEF63 */
   --highlight-foreground: oklch(0.32 0.08 105);
-  --gradient: linear-gradient(135deg, oklch(0.74 0.17 55), oklch(0.54 0.22 293) 62%, oklch(0.44 0.25 295));
-  --glass: oklch(0.23 0.004 300 / 62%);
+  --gradient: linear-gradient(135deg, oklch(0.72 0.17 58), oklch(0.6 0.19 42) 55%, oklch(0.47 0.18 30));
+  /* Casi solido: el fondo es saturado y un vidrio muy translucido teñia de cafe
+     todo el texto. El fondo se luce en los bordes y entre paneles. */
+  --glass: oklch(0.17 0.008 45 / 88%);
   --glass-border: oklch(1 0 0 / 10%);
   --glass-hi: oklch(1 0 0 / 6%);
 }
@@ -188,9 +192,10 @@
   background: oklch(0.5 0.17 38) url("/fondo-cutting-mat.webp") center / cover no-repeat;
 }
 
-/* En claro el aura tapa el texto: se queda como un tinte apenas perceptible. */
+/* En claro se aclara: los paneles ya son casi solidos, pero el naranja a toda
+   intensidad alrededor de un panel blanco cansa la vista. */
 :root:not(.dark) .app-aura {
-  opacity: 0.35;
+  opacity: 0.6;
 }
 
 /* Superficie interior: translucida pero SIN blur. Las tarjetas viven dentro de
