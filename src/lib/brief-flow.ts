@@ -61,3 +61,26 @@ export function docLabel(docUrl: string): string {
   if (hostname === "drive.google.com") return "Google Drive";
   return hostname.replace(/^www\./, "");
 }
+
+/**
+ * Version para incrustar. Google sirve `/preview` sin bloquear iframes; `/edit`
+ * no esta pensado para eso. Solo Docs, Sheets, Slides y archivos de Drive: de
+ * otros sitios no sabemos si se dejan incrustar, asi que se abren aparte.
+ */
+export function docEmbedUrl(docUrl: string): string | null {
+  const { hostname, pathname } = new URL(docUrl);
+  if (hostname === "docs.google.com") {
+    // `/u/1/` elige la cuenta de Google con la que se abre; se conserva.
+    const match = pathname.match(
+      /^\/(document|spreadsheets|presentation)(\/u\/\d+)?\/d\/([\w-]+)/,
+    );
+    if (match) {
+      return `https://docs.google.com/${match[1]}${match[2] ?? ""}/d/${match[3]}/preview`;
+    }
+  }
+  if (hostname === "drive.google.com") {
+    const match = pathname.match(/^\/file\/d\/([\w-]+)/);
+    if (match) return `https://drive.google.com/file/d/${match[1]}/preview`;
+  }
+  return null;
+}

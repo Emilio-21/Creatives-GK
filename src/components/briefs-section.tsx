@@ -7,7 +7,7 @@ import { BriefCard } from "@/components/brief-card";
 import { BriefWorkflow } from "@/components/brief-workflow";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { docLabel } from "@/lib/brief-flow";
+import { docEmbedUrl, docLabel } from "@/lib/brief-flow";
 import { UploadDropzone } from "@/app/(app)/upload/upload-dropzone";
 import { createBatch } from "@/app/(app)/client/batch-actions";
 import {
@@ -175,7 +175,9 @@ function BriefModal({
         if (event.target === event.currentTarget) onClose();
       }}
     >
-      <div className="relative w-full max-w-3xl rounded-xl border bg-card p-5 shadow-2xl">
+      <div
+        className={`relative w-full ${brief.doc_url ? "max-w-5xl" : "max-w-3xl"} rounded-xl border bg-card p-5 shadow-2xl`}
+      >
         <button
           type="button"
           aria-label="Cerrar"
@@ -256,20 +258,7 @@ function BriefModal({
             </div>
 
             {brief.doc_url ? (
-              <a
-                href={brief.doc_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-between gap-3 rounded-md border bg-muted/30 p-3 text-sm transition-colors hover:border-primary/40"
-              >
-                <span className="min-w-0">
-                  <span className="block font-medium">Abrir {docLabel(brief.doc_url)}</span>
-                  <span className="block truncate font-mono text-[11px] text-muted-foreground">
-                    {brief.doc_url}
-                  </span>
-                </span>
-                <span aria-hidden className="shrink-0 text-primary">↗</span>
-              </a>
+              <DocPanel docUrl={brief.doc_url} />
             ) : brief.body ? (
               // Briefs de antes del Doc: el texto se queda, solo ya no se escribe aqui.
               <p className="whitespace-pre-wrap rounded-md border bg-muted/30 p-3 text-sm">
@@ -378,6 +367,39 @@ function BriefModal({
           </>
         )}
       </div>
+    </div>
+  );
+}
+
+/**
+ * El Doc dentro del brief, para leerlo sin cambiar de pestaña. Google decide
+ * quien lo ve con la sesion del navegador: si no hay acceso (o Safari bloquea
+ * las cookies de Google dentro del iframe), el marco muestra el aviso de Google,
+ * por eso el link para abrirlo aparte siempre esta a la vista.
+ */
+function DocPanel({ docUrl }: { docUrl: string }) {
+  const embedUrl = docEmbedUrl(docUrl);
+  return (
+    <div className="overflow-hidden rounded-md border">
+      <a
+        href={docUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex items-center justify-between gap-3 bg-muted/30 px-3 py-2 text-sm transition-colors hover:bg-muted/60"
+      >
+        <span className="min-w-0 truncate font-medium">
+          {embedUrl ? `${docLabel(docUrl)} · abrir en otra pestaña` : `Abrir ${docLabel(docUrl)}`}
+        </span>
+        <span aria-hidden className="shrink-0 text-primary">↗</span>
+      </a>
+      {embedUrl ? (
+        <iframe
+          src={embedUrl}
+          title={docLabel(docUrl)}
+          loading="lazy"
+          className="block h-[70vh] w-full border-t bg-white"
+        />
+      ) : null}
     </div>
   );
 }
