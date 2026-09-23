@@ -18,8 +18,8 @@ export const ROLE_LABEL: Record<Role, string> = {
 
 export const ROLE_HINT: Record<Role, string> = {
   admin: "Puede borrar y administrar el equipo",
-  media: "Recibe los avisos de «listo para lanzar»",
-  copy: "Escribe los briefs y los asigna",
+  media: "Lanza las campañas",
+  copy: "Escribe los briefs y elige quién sigue",
   design: "Sube los diseños",
   member: "Sin área asignada",
 };

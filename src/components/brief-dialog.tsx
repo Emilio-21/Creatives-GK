@@ -1,12 +1,16 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { saveBrief } from "@/app/(app)/client/brief-actions";
+import { listTeam, type TeamMember } from "@/app/(app)/client/assignment-actions";
+import { CHANNELS, CHANNEL_LABEL, STAGES, type Channel, type OwnerField } from "@/lib/brief-flow";
+import { ROLE_LABEL, type Role } from "@/lib/team";
 
 type ClientOption = { id: string; name: string };
 
@@ -28,12 +32,25 @@ export function BriefDialog({
     clientId: defaultClientId ?? "",
     briefDate: new Date().toISOString().slice(0, 10),
     docUrl: "",
+    channel: "ads" as Channel,
   });
+  const [owners, setOwners] = useState<Record<OwnerField, string>>({
+    reviewer_id: "",
+    producer_id: "",
+    launcher_id: "",
+  });
+  const [team, setTeam] = useState<TeamMember[]>([]);
   const [pending, startTransition] = useTransition();
+
+  useEffect(() => {
+    if (open) listTeam().then(setTeam).catch(() => setTeam([]));
+  }, [open]);
 
   if (!open) return null;
 
-  return (
+  // Portal: el sidebar tiene backdrop-blur, y un ancestro con filtro se vuelve
+  // el marco de los `fixed`. Sin esto el dialogo se abre metido en el sidebar.
+  return createPortal(
     <div
       role="dialog"
       aria-modal="true"
@@ -91,6 +108,28 @@ export function BriefDialog({
           </div>
 
           <div className="space-y-1.5">
+            <Label>Canal</Label>
+            <div role="radiogroup" className="flex gap-1.5">
+              {CHANNELS.map((channel) => (
+                <button
+                  key={channel}
+                  type="button"
+                  role="radio"
+                  aria-checked={draft.channel === channel}
+                  onClick={() => setDraft({ ...draft, channel })}
+                  className={`h-8 flex-1 rounded-md border text-sm transition-colors ${
+                    draft.channel === channel
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "text-muted-foreground hover:bg-muted"
+                  }`}
+                >
+                  {CHANNEL_LABEL[channel]}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
             <Label htmlFor="brief-doc">Link al Google Doc</Label>
             <Input
               id="brief-doc"
@@ -103,6 +142,36 @@ export function BriefDialog({
             <p className="text-xs text-muted-foreground">
               Las instrucciones viven en el Doc, con tu plantilla. Revisa que diseño
               tenga acceso para verlo.
+            </p>
+          </div>
+
+          {/* Quien sigue se dice de entrada: asi cada relevo avisa solo, sin
+              que nadie tenga que acordarse de etiquetar a la siguiente persona. */}
+          <div className="space-y-1.5">
+            <Label>¿Quién se encarga?</Label>
+            <div className="grid gap-2 sm:grid-cols-3">
+              {STAGES.map((stage) => (
+                <label key={stage.field} className="space-y-1">
+                  <span className="block text-xs text-muted-foreground">{stage.label}</span>
+                  <select
+                    value={owners[stage.field]}
+                    onChange={(event) =>
+                      setOwners({ ...owners, [stage.field]: event.target.value })
+                    }
+                    className="h-9 w-full rounded-md border border-input bg-transparent px-2 text-sm"
+                  >
+                    <option value="">Sin asignar</option>
+                    {team.map((member) => (
+                      <option key={member.id} value={member.id}>
+                        {member.name} · {ROLE_LABEL[member.role as Role] ?? member.role}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              El brief nace en borrador. Cuando lo mandes a revisión, le avisa a quien revisa.
             </p>
           </div>
         </div>
@@ -125,6 +194,12 @@ export function BriefDialog({
                     title: draft.title,
                     docUrl: draft.docUrl,
                     briefDate: draft.briefDate,
+                    channel: draft.channel,
+                    owners: {
+                      reviewer_id: owners.reviewer_id || null,
+                      producer_id: owners.producer_id || null,
+                      launcher_id: owners.launcher_id || null,
+                    },
                   });
                   toast.success("Brief creado");
                   onOpenChange(false);
@@ -140,6 +215,7 @@ export function BriefDialog({
           </Button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

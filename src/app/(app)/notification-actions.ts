@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 
 export type Notification = {
   id: string;
-  kind: "asignado" | "listo" | "devuelto" | string;
+  kind: string;
   brief_id: string | null;
   client_id: string | null;
   title: string;

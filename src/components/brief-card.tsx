@@ -1,17 +1,18 @@
 "use client";
 
-import { docLabel, STATUS_LABEL, type BriefStatus } from "@/lib/brief-flow";
+import { CHANNEL_LABEL, docLabel, STATUS_LABEL, type BriefStatus } from "@/lib/brief-flow";
 import type { BriefWithMeta } from "@/app/(app)/client/brief-actions";
 
 /**
- * "Listo" es el unico estado que le pide algo a alguien que no sea quien lo
- * tiene asignado, asi que es el unico que grita. Los demas informan.
+ * "Por lanzar" es lo que ya costo trabajo y todavia no produce nada, asi que es
+ * el que grita. Lanzado ya no le debe nada a nadie: se apaga.
  */
 const STATUS_STYLE: Record<BriefStatus, string> = {
   borrador: "border-muted-foreground/30 text-muted-foreground",
-  asignado: "border-highlight/40 text-highlight",
-  en_diseno: "border-primary/40 text-primary",
-  listo: "border-primary bg-primary/10 text-primary font-medium",
+  en_revision: "border-highlight/40 text-highlight",
+  en_produccion: "border-primary/40 text-primary",
+  en_lanzamiento: "border-primary bg-primary/10 text-primary font-medium",
+  lanzado: "border-muted-foreground/30 text-muted-foreground",
 };
 
 export function BriefCard({
@@ -31,7 +32,12 @@ export function BriefCard({
       className="surface flex h-40 w-full flex-col gap-2 rounded-xl border p-4 text-left transition-colors hover:border-primary/40"
     >
       <div className="flex items-start justify-between gap-2">
-        <p className="line-clamp-2 min-w-0 flex-1 text-sm font-medium">{brief.title}</p>
+        <p className="line-clamp-2 min-w-0 flex-1 text-sm font-medium">
+          <span className="mr-1.5 rounded border px-1 py-px align-middle font-mono text-[9px] uppercase tracking-wider text-muted-foreground">
+            {CHANNEL_LABEL[brief.channel]}
+          </span>
+          {brief.title}
+        </p>
         <span
           className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] ${STATUS_STYLE[status]}`}
         >
@@ -56,7 +62,9 @@ export function BriefCard({
               <span className="truncate">{brief.assigneeName}</span>
             </>
           ) : (
-            <span className="italic">Sin responsable</span>
+            <span className="italic">
+              {brief.status === "lanzado" ? "Terminado" : "Sin responsable"}
+            </span>
           )}
         </p>
 
@@ -75,9 +83,9 @@ export function BriefCard({
   );
 }
 
-/** Solo lo que sigue pendiente puede ir tarde: un brief listo ya no debe nada. */
+/** Solo lo que sigue pendiente puede ir tarde: un brief lanzado ya no debe nada. */
 function isLate(dueDate: string | null, status: BriefStatus): boolean {
-  if (!dueDate || status === "listo") return false;
+  if (!dueDate || status === "lanzado") return false;
   return dueDate < new Date().toISOString().slice(0, 10);
 }
 

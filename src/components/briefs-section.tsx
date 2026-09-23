@@ -32,7 +32,10 @@ export function BriefsSection({
   const [briefs, setBriefs] = useState<BriefWithMeta[] | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
 
-  const reload = () => listBriefs(clientId).then(setBriefs).catch(() => setBriefs([]));
+  const reload = () =>
+    listBriefs(clientId)
+      .then(setBriefs)
+      .catch(() => setBriefs([]));
 
   useEffect(() => {
     void reload();
@@ -40,7 +43,8 @@ export function BriefsSection({
   }, [clientId]);
 
   const open = briefs?.find((brief) => brief.id === openId) ?? null;
-  const pending = briefs?.filter((brief) => brief.batchCompletedAt === null).length ?? 0;
+  const pending =
+    briefs?.filter((brief) => brief.status !== "lanzado").length ?? 0;
   const rail = useRef<HTMLDivElement>(null);
 
   const scrollBy = (amount: number) =>
@@ -79,7 +83,8 @@ export function BriefsSection({
         <p className="text-sm text-muted-foreground">Cargando…</p>
       ) : briefs.length === 0 ? (
         <p className="rounded-xl border border-dashed p-6 text-center text-sm text-muted-foreground">
-          Sin briefs. Créalos desde &quot;Nuevo brief&quot; en el panel izquierdo.
+          Sin briefs. Créalos desde &quot;Nuevo brief&quot; en el panel
+          izquierdo.
         </p>
       ) : (
         // Carrusel: los briefs se leen en orden, no se comparan en cuadricula.
@@ -191,20 +196,26 @@ function BriefModal({
           <div className="space-y-3">
             <Input
               value={draft.title}
-              onChange={(event) => setDraft({ ...draft, title: event.target.value })}
+              onChange={(event) =>
+                setDraft({ ...draft, title: event.target.value })
+              }
               maxLength={140}
             />
             <Input
               type="date"
               value={draft.briefDate}
-              onChange={(event) => setDraft({ ...draft, briefDate: event.target.value })}
+              onChange={(event) =>
+                setDraft({ ...draft, briefDate: event.target.value })
+              }
               className="w-44"
             />
             <Input
               type="url"
               inputMode="url"
               value={draft.docUrl}
-              onChange={(event) => setDraft({ ...draft, docUrl: event.target.value })}
+              onChange={(event) =>
+                setDraft({ ...draft, docUrl: event.target.value })
+              }
               placeholder="Link al Google Doc"
             />
             <div className="flex gap-2">
@@ -232,7 +243,11 @@ function BriefModal({
               >
                 Guardar
               </Button>
-              <Button size="sm" variant="ghost" onClick={() => setEditing(false)}>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => setEditing(false)}
+              >
                 Cancelar
               </Button>
             </div>
@@ -248,13 +263,7 @@ function BriefModal({
             </div>
 
             <div className="mb-3">
-              <BriefWorkflow
-                briefId={brief.id}
-                status={brief.status}
-                assigneeName={brief.assigneeName}
-                dueDate={brief.due_date}
-                onChanged={onChanged}
-              />
+              <BriefWorkflow brief={brief} onChanged={onChanged} />
             </div>
 
             {brief.doc_url ? (
@@ -279,91 +288,106 @@ function BriefModal({
               {brief.doc_url ? "Editar" : "Pegar link del Doc"}
             </Button>
 
-            <div className="mt-5 border-t pt-4">
-              <h3 className="text-sm font-semibold">Diseños de este brief</h3>
+            {/* Solo Ads sube a la biblioteca: es la que se mide contra Meta. Un
+                email o un SMS se produce y se lanza fuera; aqui solo se sigue. */}
+            {brief.channel === "ads" ? (
+              <div className="mt-5 border-t pt-4">
+                <h3 className="text-sm font-semibold">Diseños de este brief</h3>
 
-              {!batchId ? (
-                <div className="mt-2 space-y-2">
-                  <p className="text-xs text-muted-foreground">
-                    Ponle nombre al batch para empezar a subir. Es la tanda con la que se
-                    va a probar.
-                  </p>
-                  <div className="flex gap-2">
-                    <Input
-                      value={batchName}
-                      onChange={(event) => setBatchName(event.target.value)}
-                      placeholder="Nombre del batch"
-                      maxLength={80}
-                    />
-                    <Button
-                      size="sm"
-                      disabled={pending || !batchName.trim()}
-                      onClick={() =>
-                        startTransition(async () => {
-                          try {
-                            const id = await createBatch(clientId, batchName);
-                            setBatchId(id);
-                            await saveBrief({
-                              id: brief.id,
-                              clientId,
-                              batchId: id,
-                              title: brief.title,
-                              docUrl: brief.doc_url,
-                              briefDate: brief.brief_date,
-                            });
-                            await onChanged();
-                          } catch (error) {
-                            toast.error((error as Error).message);
-                          }
-                        })
-                      }
-                    >
-                      Crear batch
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <div className="mt-3 space-y-4">
-                  <p className="font-mono text-[11px] text-muted-foreground">
-                    Batch: {brief.batchName ?? batchName} · {brief.creativeCount} diseño
-                    {brief.creativeCount === 1 ? "" : "s"}
-                  </p>
-
-                  <UploadDropzone
-                    clients={[{ id: clientId, name: clientName }]}
-                    lockedClientId={clientId}
-                    lockedBatchId={batchId}
-                    onUploaded={onChanged}
-                  />
-
-                  <div className="flex items-center gap-3">
-                    <Button
-                      size="sm"
-                      disabled={pending || completed}
-                      onClick={() =>
-                        startTransition(async () => {
-                          try {
-                            await publishBrief(brief.id, batchId);
-                            toast.success(
-                              "Publicado. Los diseños están en Sin lanzar con su batch.",
-                            );
-                            await onChanged();
-                            onClose();
-                          } catch (error) {
-                            toast.error((error as Error).message);
-                          }
-                        })
-                      }
-                    >
-                      {completed ? "Ya publicado" : "Publicar diseños"}
-                    </Button>
+                {!batchId ? (
+                  <div className="mt-2 space-y-2">
                     <p className="text-xs text-muted-foreground">
-                      Publicar marca el batch como completado.
+                      Ponle nombre al batch para empezar a subir. Es la tanda
+                      con la que se va a probar.
                     </p>
+                    <div className="flex gap-2">
+                      <Input
+                        value={batchName}
+                        onChange={(event) => setBatchName(event.target.value)}
+                        placeholder="Nombre del batch"
+                        maxLength={80}
+                      />
+                      <Button
+                        size="sm"
+                        disabled={pending || !batchName.trim()}
+                        onClick={() =>
+                          startTransition(async () => {
+                            try {
+                              const id = await createBatch(clientId, batchName);
+                              setBatchId(id);
+                              await saveBrief({
+                                id: brief.id,
+                                clientId,
+                                batchId: id,
+                                title: brief.title,
+                                docUrl: brief.doc_url,
+                                briefDate: brief.brief_date,
+                              });
+                              await onChanged();
+                            } catch (error) {
+                              toast.error((error as Error).message);
+                            }
+                          })
+                        }
+                      >
+                        Crear batch
+                      </Button>
+                    </div>
                   </div>
-                </div>
-              )}
-            </div>
+                ) : (
+                  <div className="mt-3 space-y-4">
+                    <p className="font-mono text-[11px] text-muted-foreground">
+                      Batch: {brief.batchName ?? batchName} ·{" "}
+                      {brief.creativeCount} diseño
+                      {brief.creativeCount === 1 ? "" : "s"}
+                    </p>
+
+                    <UploadDropzone
+                      clients={[{ id: clientId, name: clientName }]}
+                      lockedClientId={clientId}
+                      lockedBatchId={batchId}
+                      onUploaded={onChanged}
+                    />
+
+                    <div className="flex items-center gap-3">
+                      <Button
+                        size="sm"
+                        disabled={pending || completed}
+                        onClick={() =>
+                          startTransition(async () => {
+                            try {
+                              const result = await publishBrief(
+                                brief.id,
+                                batchId,
+                              );
+                              if (result.handedOff) {
+                                toast.success(
+                                  "Publicado y mandado a lanzamiento.",
+                                );
+                              } else {
+                                // Los diseños ya estan arriba; solo falta el relevo.
+                                toast.warning(
+                                  `Diseños publicados, pero no pasó a lanzamiento: ${result.reason}`,
+                                );
+                              }
+                              await onChanged();
+                              onClose();
+                            } catch (error) {
+                              toast.error((error as Error).message);
+                            }
+                          })
+                        }
+                      >
+                        {completed ? "Ya publicado" : "Publicar diseños"}
+                      </Button>
+                      <p className="text-xs text-muted-foreground">
+                        Publicar cierra el batch y le avisa a quien lanza.
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : null}
           </>
         )}
       </div>
@@ -388,9 +412,13 @@ function DocPanel({ docUrl }: { docUrl: string }) {
         className="flex items-center justify-between gap-3 bg-muted/30 px-3 py-2 text-sm transition-colors hover:bg-muted/60"
       >
         <span className="min-w-0 truncate font-medium">
-          {embedUrl ? `${docLabel(docUrl)} · abrir en otra pestaña` : `Abrir ${docLabel(docUrl)}`}
+          {embedUrl
+            ? `${docLabel(docUrl)} · abrir en otra pestaña`
+            : `Abrir ${docLabel(docUrl)}`}
         </span>
-        <span aria-hidden className="shrink-0 text-primary">↗</span>
+        <span aria-hidden className="shrink-0 text-primary">
+          ↗
+        </span>
       </a>
       {embedUrl ? (
         <iframe

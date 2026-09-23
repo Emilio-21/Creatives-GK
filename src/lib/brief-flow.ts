@@ -8,27 +8,61 @@
  * Las transiciones validas de verdad las decide transition_brief en la base.
  * Esto es el orden en que se ofrecen en pantalla.
  */
-export const BRIEF_STATUSES = ["borrador", "asignado", "en_diseno", "listo"] as const;
+export const BRIEF_STATUSES = [
+  "borrador",
+  "en_revision",
+  "en_produccion",
+  "en_lanzamiento",
+  "lanzado",
+] as const;
 export type BriefStatus = (typeof BRIEF_STATUSES)[number];
 
 export const STATUS_LABEL: Record<BriefStatus, string> = {
   borrador: "Borrador",
-  asignado: "Asignado",
-  en_diseno: "En diseño",
-  listo: "Listo para lanzar",
+  en_revision: "En revisión",
+  en_produccion: "En producción",
+  en_lanzamiento: "Por lanzar",
+  lanzado: "Lanzado",
 };
 
-export const NEXT_STEPS: Record<BriefStatus, { to: BriefStatus; label: string }[]> = {
-  borrador: [{ to: "asignado", label: "Asignar a diseño" }],
-  asignado: [
-    { to: "en_diseno", label: "Empezar diseño" },
-    { to: "borrador", label: "Volver a borrador" },
+/** Las tres manos por las que pasa un brief, en orden. */
+export type StageStatus = "en_revision" | "en_produccion" | "en_lanzamiento";
+export type OwnerField = "reviewer_id" | "producer_id" | "launcher_id";
+
+export const STAGES: { status: StageStatus; field: OwnerField; label: string; hint: string }[] = [
+  { status: "en_revision", field: "reviewer_id", label: "Revisión", hint: "Aprueba el copy" },
+  { status: "en_produccion", field: "producer_id", label: "Producción", hint: "Diseña o arma la pieza" },
+  { status: "en_lanzamiento", field: "launcher_id", label: "Lanzamiento", hint: "Sube la campaña" },
+];
+
+/** `back`: regresar trabajo pide motivo, y la base lo exige. */
+export const NEXT_STEPS: Record<BriefStatus, { to: BriefStatus; label: string; back?: boolean }[]> = {
+  borrador: [
+    { to: "en_revision", label: "Mandar a revisión" },
+    { to: "en_produccion", label: "Saltar a producción" },
   ],
-  en_diseno: [
-    { to: "listo", label: "Marcar listo para lanzar" },
-    { to: "asignado", label: "Reasignar" },
+  en_revision: [
+    { to: "en_produccion", label: "Aprobar y mandar a producción" },
+    { to: "borrador", label: "Regresar a copy", back: true },
   ],
-  listo: [{ to: "en_diseno", label: "Devolver a diseño" }],
+  en_produccion: [
+    { to: "en_lanzamiento", label: "Listo, mandar a lanzamiento" },
+    { to: "en_revision", label: "Regresar a revisión", back: true },
+  ],
+  en_lanzamiento: [
+    { to: "lanzado", label: "Marcar como lanzado" },
+    { to: "en_produccion", label: "Regresar a producción", back: true },
+  ],
+  lanzado: [{ to: "en_lanzamiento", label: "Reabrir", back: true }],
+};
+
+export const CHANNELS = ["ads", "email", "sms"] as const;
+export type Channel = (typeof CHANNELS)[number];
+
+export const CHANNEL_LABEL: Record<Channel, string> = {
+  ads: "Ads",
+  email: "Email",
+  sms: "SMS",
 };
 
 /**

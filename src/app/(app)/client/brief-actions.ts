@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
-import { normalizeDocUrl } from "@/lib/brief-flow";
+import { normalizeDocUrl, type BriefStatus, type Channel } from "@/lib/brief-flow";
 import { createClient } from "@/lib/supabase/server";
 
 export type BriefRow = {
@@ -14,8 +14,13 @@ export type BriefRow = {
   body: string;
   doc_url: string | null;
   brief_date: string;
-  status: "borrador" | "asignado" | "en_diseno" | "listo";
+  status: BriefStatus;
+  channel: Channel;
+  /** Quien tiene la pelota ahora: el responsable de la etapa en curso. */
   assigned_to: string | null;
+  reviewer_id: string | null;
+  producer_id: string | null;
+  launcher_id: string | null;
   due_date: string | null;
   created_at: string;
   updated_at: string;
@@ -49,7 +54,13 @@ export async function listBriefs(clientId: string): Promise<BriefWithMeta[]> {
   const authorIds = [
     ...new Set(
       briefs
-        .flatMap((b) => [b.updated_by ?? b.created_by, b.assigned_to])
+        .flatMap((b) => [
+          b.updated_by ?? b.created_by,
+          b.assigned_to,
+          b.reviewer_id,
+          b.producer_id,
+          b.launcher_id,
+        ])
         .filter(Boolean),
     ),
   ] as string[];
@@ -106,6 +117,9 @@ export async function saveBrief(input: {
   title: string;
   docUrl: string | null;
   briefDate: string;
+  channel?: Channel;
+  /** Solo al crear. Despues se cambian con setBriefOwner, que avisa y deja historial. */
+  owners?: { reviewer_id: string | null; producer_id: string | null; launcher_id: string | null };
 }): Promise<string> {
   const user = await requireUser();
 
@@ -123,6 +137,7 @@ export async function saveBrief(input: {
           title,
           doc_url: docUrl,
           brief_date: input.briefDate,
+          ...(input.channel ? { channel: input.channel } : {}),
           ...(input.batchId !== undefined ? { batch_id: input.batchId } : {}),
           updated_by: user.id,
           updated_at: new Date().toISOString(),
@@ -146,6 +161,8 @@ export async function saveBrief(input: {
       title,
       doc_url: docUrl,
       brief_date: input.briefDate,
+      channel: input.channel ?? "ads",
+      ...(input.owners ?? {}),
       created_by: user.id,
       updated_by: user.id,
     })
@@ -178,7 +195,10 @@ export async function archiveBrief(briefId: string): Promise<void> {
  * Publicar no mueve archivos: los creativos ya se subieron con ese batch_id.
  * Lo que hace es cerrar el ciclo del brief.
  */
-export async function publishBrief(briefId: string, batchId: string): Promise<void> {
+export async function publishBrief(
+  briefId: string,
+  batchId: string,
+): Promise<{ handedOff: boolean; reason: string | null }> {
   await requireUser();
   const supabase = await createClient();
 
@@ -204,22 +224,18 @@ export async function publishBrief(briefId: string, batchId: string): Promise<vo
     .eq("id", briefId);
   if (error) throw new Error(error.message);
 
-  // Publicar ES diseño diciendo "ya está": mover el estado aparte dejaria dos
-  // nociones de terminado que tarde o temprano se contradicen. Va por la misma
-  // funcion que el resto para que quede en el historial.
+  // Publicar ES producción diciendo "ya está": pasa a lanzamiento por la misma
+  // funcion que el resto, para que quede en el historial y avise a quien lanza.
   //
-  // Solo desde en_diseno: publicar un brief en borrador seria saltarse el
-  // relevo, y la funcion lo rechazaria de todos modos. El fallo no tumba la
-  // publicacion — los diseños ya estan arriba.
+  // Si no se puede (el brief no estaba en producción, o nadie tiene el
+  // lanzamiento) los diseños ya estan arriba: no se deshace, se dice por que.
   const { error: pasoError } = await supabase.rpc("transition_brief", {
     p_brief: briefId,
-    p_to: "listo",
+    p_to: "en_lanzamiento",
     p_assigned: null,
     p_note: null,
   });
-  if (pasoError && !/No se puede pasar/.test(pasoError.message)) {
-    console.error("No se pudo mover el brief a listo:", pasoError.message);
-  }
 
   revalidatePath("/", "layout");
+  return { handedOff: !pasoError, reason: pasoError?.message ?? null };
 }

@@ -12,9 +12,14 @@ import {
 } from "@/app/(app)/notification-actions";
 
 const KIND_DOT: Record<string, string> = {
+  en_revision: "bg-highlight",
+  en_produccion: "bg-highlight",
+  en_lanzamiento: "bg-primary",
+  lanzado: "bg-primary",
+  devuelto: "bg-destructive",
+  // Avisos de antes de las etapas.
   asignado: "bg-highlight",
   listo: "bg-primary",
-  devuelto: "bg-destructive",
 };
 
 /**

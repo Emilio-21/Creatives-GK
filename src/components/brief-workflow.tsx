@@ -10,64 +10,69 @@ import {
   listTeam,
   moveBrief,
   setBriefDueDate,
+  setBriefOwner,
   type BriefEvent,
   type TeamMember,
 } from "@/app/(app)/client/assignment-actions";
-import { NEXT_STEPS, STATUS_LABEL, type BriefStatus } from "@/lib/brief-flow";
-
-const ROLE_LABEL: Record<string, string> = {
-  admin: "admin",
-  copy: "copy",
-  design: "diseño",
-  media: "media buying",
-  member: "equipo",
-};
+import type { BriefWithMeta } from "@/app/(app)/client/brief-actions";
+import {
+  BRIEF_STATUSES,
+  CHANNEL_LABEL,
+  NEXT_STEPS,
+  STAGES,
+  STATUS_LABEL,
+  type BriefStatus,
+} from "@/lib/brief-flow";
+import { ROLE_LABEL, type Role } from "@/lib/team";
 
 /**
- * El relevo: quien tiene la pelota, hasta cuando, y que sigue.
+ * El relevo: las tres etapas con su responsable, en que etapa va y que sigue.
  *
  * Las transiciones se ofrecen segun el estado actual y las valida la base. Si
  * la pantalla ofreciera una que la funcion rechaza, el error se ve aqui — es
  * preferible a repetir el criterio en dos lados y que se separen.
  */
 export function BriefWorkflow({
-  briefId,
-  status,
-  assigneeName,
-  dueDate,
+  brief,
   onChanged,
 }: {
-  briefId: string;
-  status: BriefStatus;
-  assigneeName: string | null;
-  dueDate: string | null;
+  brief: BriefWithMeta;
   onChanged: () => Promise<void> | void;
 }) {
   const [team, setTeam] = useState<TeamMember[]>([]);
   const [history, setHistory] = useState<BriefEvent[]>([]);
-  const [pendiente, setPendiente] = useState<BriefStatus | null>(null);
+  const [pendiente, setPendiente] = useState<{ to: BriefStatus; back: boolean } | null>(null);
   const [persona, setPersona] = useState("");
   const [motivo, setMotivo] = useState("");
   const [pending, startTransition] = useTransition();
 
+  const status = brief.status;
+
   useEffect(() => {
     listTeam().then(setTeam).catch(() => setTeam([]));
-    getBriefHistory(briefId).then(setHistory).catch(() => setHistory([]));
-  }, [briefId]);
+    getBriefHistory(brief.id).then(setHistory).catch(() => setHistory([]));
+  }, [brief.id]);
 
-  // Asignar pide persona; devolver trabajo terminado pide motivo.
-  const pidePersona = pendiente === "asignado";
-  const pideMotivo = pendiente !== null && status === "listo";
+  const ownerOf = (to: BriefStatus) => {
+    const stage = STAGES.find((s) => s.status === to);
+    return stage ? brief[stage.field] : null;
+  };
 
-  function ejecutar(to: BriefStatus) {
+  // Entrar a una etapa sin responsable pide persona; regresar pide motivo.
+  const pidePersona =
+    pendiente !== null && !pendiente.back && STAGES.some((s) => s.status === pendiente.to) &&
+    !ownerOf(pendiente.to);
+  const pideMotivo = pendiente?.back ?? false;
+
+  function run(action: () => Promise<unknown>, done?: string) {
     startTransition(async () => {
       try {
-        await moveBrief(briefId, to, pidePersona ? persona || null : null, motivo || null);
-        toast.success(`Brief en "${STATUS_LABEL[to]}"`);
+        await action();
+        if (done) toast.success(done);
         setPendiente(null);
         setPersona("");
         setMotivo("");
-        setHistory(await getBriefHistory(briefId));
+        setHistory(await getBriefHistory(brief.id));
         await onChanged();
       } catch (error) {
         toast.error((error as Error).message);
@@ -75,19 +80,23 @@ export function BriefWorkflow({
     });
   }
 
+  const mover = (to: BriefStatus) =>
+    run(
+      () => moveBrief(brief.id, to, pidePersona ? persona || null : null, motivo || null),
+      `Brief en "${STATUS_LABEL[to]}"`,
+    );
+
+  const posicion = BRIEF_STATUSES.indexOf(status);
+
   return (
     <section className="rounded-lg border p-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2 text-sm">
-          <span className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground">
-            Estado
+          <span className="rounded-full border px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+            {CHANNEL_LABEL[brief.channel]}
           </span>
           <span className="rounded-full border border-primary/40 px-2 py-0.5 text-xs text-primary">
             {STATUS_LABEL[status]}
-          </span>
-          <span className="text-muted-foreground">·</span>
-          <span className="text-xs">
-            {assigneeName ?? <span className="italic text-muted-foreground">sin responsable</span>}
           </span>
         </div>
 
@@ -97,36 +106,75 @@ export function BriefWorkflow({
           </label>
           <Input
             type="date"
-            defaultValue={dueDate ?? ""}
+            defaultValue={brief.due_date ?? ""}
             disabled={pending}
-            onChange={(event) =>
-              startTransition(async () => {
-                try {
-                  await setBriefDueDate(briefId, event.target.value || null);
-                  await onChanged();
-                } catch (error) {
-                  toast.error((error as Error).message);
-                }
-              })
-            }
+            onChange={(event) => {
+              const value = event.target.value || null;
+              run(() => setBriefDueDate(brief.id, value));
+            }}
             className="h-8 w-36 text-xs"
           />
         </div>
       </div>
+
+      {/* Las tres manos, de entrada: quien sigue ya esta dicho antes de que le toque. */}
+      <ol className="mt-3 grid gap-2 sm:grid-cols-3">
+        {STAGES.map((stage, index) => {
+          const actual = stage.status === status;
+          const pasada = posicion > BRIEF_STATUSES.indexOf(stage.status);
+          return (
+            <li
+              key={stage.status}
+              className={`rounded-md border p-2 ${
+                actual ? "border-primary bg-primary/5" : pasada ? "opacity-70" : ""
+              }`}
+            >
+              <p className="flex items-baseline justify-between gap-2">
+                <span className="text-xs font-medium">
+                  <span className="mr-1 font-mono text-muted-foreground">{index + 1}</span>
+                  {stage.label}
+                </span>
+                <span className="font-mono text-[10px] text-muted-foreground">
+                  {actual ? "ahora" : pasada ? "✓" : ""}
+                </span>
+              </p>
+              <select
+                aria-label={`Responsable de ${stage.label}`}
+                value={brief[stage.field] ?? ""}
+                disabled={pending}
+                onChange={(event) => {
+                  const value = event.target.value || null;
+                  run(() => setBriefOwner(brief.id, stage.status, value), "Responsable cambiado");
+                }}
+                className="mt-1.5 h-8 w-full rounded-md border border-input bg-transparent px-2 text-xs"
+              >
+                <option value="">Sin asignar</option>
+                {team.map((member) => (
+                  <option key={member.id} value={member.id}>
+                    {member.name} · {ROLE_LABEL[member.role as Role] ?? member.role}
+                  </option>
+                ))}
+              </select>
+              <p className="mt-1 text-[10px] text-muted-foreground">{stage.hint}</p>
+            </li>
+          );
+        })}
+      </ol>
 
       <div className="mt-3 flex flex-wrap gap-2">
         {NEXT_STEPS[status].map((step) => (
           <Button
             key={step.to}
             size="sm"
-            variant={step.to === "listo" || step.to === "asignado" ? "default" : "outline"}
+            variant={step.back ? "outline" : "default"}
             disabled={pending}
             onClick={() => {
               // Si no hace falta nada mas, se mueve de una: un paso extra para
               // confirmar lo que ya se decidio solo estorba.
-              const necesitaDatos = step.to === "asignado" || status === "listo";
-              if (necesitaDatos) setPendiente(step.to);
-              else ejecutar(step.to);
+              const faltaPersona =
+                !step.back && STAGES.some((s) => s.status === step.to) && !ownerOf(step.to);
+              if (step.back || faltaPersona) setPendiente({ to: step.to, back: !!step.back });
+              else mover(step.to);
             }}
           >
             {step.label}
@@ -139,7 +187,7 @@ export function BriefWorkflow({
           {pidePersona ? (
             <div className="space-y-1">
               <label className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
-                ¿Quién lo toma?
+                Responsable de {STAGES.find((s) => s.status === pendiente.to)?.label}
               </label>
               <select
                 value={persona}
@@ -149,7 +197,7 @@ export function BriefWorkflow({
                 <option value="">Elige a alguien…</option>
                 {team.map((member) => (
                   <option key={member.id} value={member.id}>
-                    {member.name} · {ROLE_LABEL[member.role] ?? member.role}
+                    {member.name} · {ROLE_LABEL[member.role as Role] ?? member.role}
                   </option>
                 ))}
               </select>
@@ -159,7 +207,7 @@ export function BriefWorkflow({
           {pideMotivo ? (
             <div className="space-y-1">
               <label className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
-                ¿Por qué lo devuelves?
+                ¿Por qué lo regresas?
               </label>
               <Textarea
                 rows={2}
@@ -175,7 +223,7 @@ export function BriefWorkflow({
             <Button
               size="sm"
               disabled={pending || (pidePersona && !persona) || (pideMotivo && !motivo.trim())}
-              onClick={() => ejecutar(pendiente)}
+              onClick={() => mover(pendiente.to)}
             >
               {pending ? "Moviendo…" : "Confirmar"}
             </Button>
@@ -203,16 +251,7 @@ export function BriefWorkflow({
                   })}
                 </span>{" "}
                 <span className="font-medium">{event.actorName}</span>{" "}
-                {event.from_status ? (
-                  <>
-                    movió a{" "}
-                    <span className="text-foreground">
-                      {STATUS_LABEL[event.to_status as BriefStatus] ?? event.to_status}
-                    </span>
-                  </>
-                ) : (
-                  "creó el brief"
-                )}
+                {describe(event)}
                 {event.note ? (
                   <span className="mt-0.5 block italic text-muted-foreground">
                     “{event.note}”
@@ -224,5 +263,32 @@ export function BriefWorkflow({
         </details>
       ) : null}
     </section>
+  );
+}
+
+/** Estados de antes de las etapas, que siguen en el historial. */
+const LEGACY_LABEL: Record<string, string> = {
+  asignado: "Asignado",
+  en_diseno: "En diseño",
+  listo: "Listo para lanzar",
+};
+
+function describe(event: BriefEvent): React.ReactNode {
+  const label =
+    STATUS_LABEL[event.to_status as BriefStatus] ?? LEGACY_LABEL[event.to_status] ?? event.to_status;
+  if (!event.from_status) return "creó el brief";
+  // Misma etapa: cambio de manos, no de estado.
+  if (event.from_status === event.to_status) {
+    return (
+      <>
+        pasó la etapa a <span className="text-foreground">{event.assigneeName ?? "nadie"}</span>
+      </>
+    );
+  }
+  return (
+    <>
+      movió a <span className="text-foreground">{label}</span>
+      {event.assigneeName ? <> · a cargo de {event.assigneeName}</> : null}
+    </>
   );
 }

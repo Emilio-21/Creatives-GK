@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import type { BriefStatus } from "@/lib/brief-flow";
+import type { BriefStatus, StageStatus } from "@/lib/brief-flow";
 
 export type TeamMember = { id: string; name: string; role: string };
 
@@ -53,6 +53,28 @@ export async function moveBrief(
   return data as BriefStatus;
 }
 
+/**
+ * Cambia quien se encarga de una etapa. Si es la etapa en curso, la base
+ * registra el relevo y avisa a la persona nueva.
+ */
+export async function setBriefOwner(
+  briefId: string,
+  stage: StageStatus,
+  profileId: string | null,
+): Promise<void> {
+  await requireUser();
+  const supabase = await createClient();
+
+  const { error } = await supabase.rpc("set_brief_owner", {
+    p_brief: briefId,
+    p_stage: stage,
+    p_profile: profileId,
+  });
+
+  if (error) throw new Error(error.message);
+  revalidatePath("/", "layout");
+}
+
 export async function setBriefDueDate(briefId: string, dueDate: string | null): Promise<void> {
   await requireUser();
   const supabase = await createClient();
@@ -72,6 +94,7 @@ export type BriefEvent = {
   to_status: string;
   note: string | null;
   actorName: string;
+  assigneeName: string | null;
   created_at: string;
 };
 
@@ -81,12 +104,16 @@ export async function getBriefHistory(briefId: string): Promise<BriefEvent[]> {
 
   const { data } = await supabase
     .from("brief_events")
-    .select("id, from_status, to_status, note, actor, created_at")
+    .select("id, from_status, to_status, note, actor, assigned_to, created_at")
     .eq("brief_id", briefId)
     .order("created_at", { ascending: false });
 
   const rows = data ?? [];
-  const actorIds = [...new Set(rows.map((row) => row.actor as string))];
+  const actorIds = [
+    ...new Set(
+      rows.flatMap((row) => [row.actor as string, row.assigned_to as string | null]).filter(Boolean),
+    ),
+  ] as string[];
 
   const names = new Map<string, string>();
   if (actorIds.length > 0) {
@@ -105,6 +132,7 @@ export async function getBriefHistory(briefId: string): Promise<BriefEvent[]> {
     to_status: row.to_status as string,
     note: (row.note as string | null) ?? null,
     actorName: names.get(row.actor as string) ?? "sin nombre",
+    assigneeName: row.assigned_to ? (names.get(row.assigned_to as string) ?? null) : null,
     created_at: row.created_at as string,
   }));
 }

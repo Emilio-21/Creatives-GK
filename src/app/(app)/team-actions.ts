@@ -13,8 +13,12 @@ export async function listMembers(): Promise<Member[]> {
   const [{ data: profiles }, { data: members }, { data: briefs }] = await Promise.all([
     supabase.from("profiles").select("id, full_name, role").order("full_name"),
     supabase.from("client_members").select("client_id, profile_id"),
-    // Lo que tiene encima cada quien: asignado o en diseño, sin terminar.
-    supabase.from("briefs").select("assigned_to").in("status", ["asignado", "en_diseno"]),
+    // Lo que tiene encima cada quien: la etapa en curso de cada brief abierto.
+    supabase
+      .from("briefs")
+      .select("assigned_to")
+      .in("status", ["en_revision", "en_produccion", "en_lanzamiento"])
+      .is("archived_at", null),
   ]);
 
   const porPersona = new Map<string, string[]>();
