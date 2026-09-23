@@ -13,13 +13,16 @@ type Option = { id: string; name: string; count: number };
 export function MobileNav({ clients }: { clients: Option[] }) {
   const pathname = usePathname();
   const total = clients.reduce((sum, client) => sum + client.count, 0);
-  const allActive = pathname === "/";
+  const allActive = pathname === "/creativos";
 
   return (
     <div className="-mx-4 overflow-x-auto px-4 pb-1 md:hidden">
       <div className="flex w-max gap-2">
-        <Chip href="/" active={allActive}>
+        <Chip href="/creativos" active={allActive}>
           Todos · {total}
+        </Chip>
+        <Chip href="/dashboard" active={pathname.startsWith("/dashboard")}>
+          Resumen
         </Chip>
         {clients.map((client) => (
           <Chip

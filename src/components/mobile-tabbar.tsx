@@ -8,8 +8,12 @@ export function MobileTabBar() {
   const pathname = usePathname();
 
   const tabs = [
-    { href: "/", label: "Biblioteca", match: (p: string) => p === "/" || p.startsWith("/client") },
-    { href: "/dashboard", label: "Resumen", match: (p: string) => p.startsWith("/dashboard") },
+    { href: "/", label: "Inicio", match: (p: string) => p === "/" },
+    {
+      href: "/creativos",
+      label: "Creativos",
+      match: (p: string) => p.startsWith("/creativos") || p.startsWith("/client"),
+    },
     { href: "/pendientes", label: "Pendientes", match: (p: string) => p.startsWith("/pendientes") },
     { href: "/upload", label: "Subir", match: (p: string) => p.startsWith("/upload") },
     { href: "/equipo", label: "Equipo", match: (p: string) => p.startsWith("/equipo") },
@@ -23,7 +27,7 @@ export function MobileTabBar() {
           <Link
             key={tab.href}
             href={tab.href}
-            className={`flex-1 py-3 text-center text-sm transition-colors ${
+            className={`flex-1 py-3 text-center text-xs transition-colors ${
               active ? "font-medium text-primary" : "text-muted-foreground"
             }`}
           >

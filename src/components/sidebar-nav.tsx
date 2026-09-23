@@ -18,7 +18,10 @@ export function SidebarNav({ clients }: { clients: ClientOption[] }) {
   return (
     <>
       <nav className="space-y-1">
-        <SidebarLink href="/" active={pathname === "/"} count={total}>
+        <SidebarLink href="/" active={pathname === "/"}>
+          Inicio
+        </SidebarLink>
+        <SidebarLink href="/creativos" active={pathname === "/creativos"} count={total}>
           Todos los creativos
         </SidebarLink>
         <SidebarLink href="/dashboard" active={pathname.startsWith("/dashboard")}>
