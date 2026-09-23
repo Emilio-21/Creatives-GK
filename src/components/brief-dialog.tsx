@@ -6,7 +6,6 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { saveBrief } from "@/app/(app)/client/brief-actions";
 
 type ClientOption = { id: string; name: string };
@@ -28,7 +27,7 @@ export function BriefDialog({
     title: "",
     clientId: defaultClientId ?? "",
     briefDate: new Date().toISOString().slice(0, 10),
-    body: "",
+    docUrl: "",
   });
   const [pending, startTransition] = useTransition();
 
@@ -92,15 +91,19 @@ export function BriefDialog({
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="brief-body">Instrucciones</Label>
-            <Textarea
-              id="brief-body"
-              rows={14}
-              value={draft.body}
-              onChange={(event) => setDraft({ ...draft, body: event.target.value })}
-              placeholder={"Ángulo, promesa, hooks, CTA, referencias…\n\nLo que diseño necesita para producir el batch."}
-              className="font-mono text-sm"
+            <Label htmlFor="brief-doc">Link al Google Doc</Label>
+            <Input
+              id="brief-doc"
+              type="url"
+              inputMode="url"
+              value={draft.docUrl}
+              onChange={(event) => setDraft({ ...draft, docUrl: event.target.value })}
+              placeholder="https://docs.google.com/document/d/…"
             />
+            <p className="text-xs text-muted-foreground">
+              Las instrucciones viven en el Doc, con tu plantilla. Revisa que diseño
+              tenga acceso para verlo.
+            </p>
           </div>
         </div>
 
@@ -120,7 +123,7 @@ export function BriefDialog({
                   await saveBrief({
                     clientId: draft.clientId,
                     title: draft.title,
-                    body: draft.body,
+                    docUrl: draft.docUrl,
                     briefDate: draft.briefDate,
                   });
                   toast.success("Brief creado");

@@ -7,7 +7,7 @@ import { BriefCard } from "@/components/brief-card";
 import { BriefWorkflow } from "@/components/brief-workflow";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { docLabel } from "@/lib/brief-flow";
 import { UploadDropzone } from "@/app/(app)/upload/upload-dropzone";
 import { createBatch } from "@/app/(app)/client/batch-actions";
 import {
@@ -148,7 +148,7 @@ function BriefModal({
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState({
     title: brief.title,
-    body: brief.body,
+    docUrl: brief.doc_url ?? "",
     briefDate: brief.brief_date,
   });
   const [batchId, setBatchId] = useState(brief.batch_id);
@@ -198,11 +198,12 @@ function BriefModal({
               onChange={(event) => setDraft({ ...draft, briefDate: event.target.value })}
               className="w-44"
             />
-            <Textarea
-              rows={14}
-              value={draft.body}
-              onChange={(event) => setDraft({ ...draft, body: event.target.value })}
-              className="font-mono text-sm"
+            <Input
+              type="url"
+              inputMode="url"
+              value={draft.docUrl}
+              onChange={(event) => setDraft({ ...draft, docUrl: event.target.value })}
+              placeholder="Link al Google Doc"
             />
             <div className="flex gap-2">
               <Button
@@ -215,7 +216,7 @@ function BriefModal({
                         id: brief.id,
                         clientId,
                         title: draft.title,
-                        body: draft.body,
+                        docUrl: draft.docUrl,
                         briefDate: draft.briefDate,
                       });
                       toast.success("Brief guardado");
@@ -254,9 +255,31 @@ function BriefModal({
               />
             </div>
 
-            <p className="whitespace-pre-wrap rounded-md border bg-muted/30 p-3 text-sm">
-              {brief.body || "Sin instrucciones."}
-            </p>
+            {brief.doc_url ? (
+              <a
+                href={brief.doc_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-between gap-3 rounded-md border bg-muted/30 p-3 text-sm transition-colors hover:border-primary/40"
+              >
+                <span className="min-w-0">
+                  <span className="block font-medium">Abrir {docLabel(brief.doc_url)}</span>
+                  <span className="block truncate font-mono text-[11px] text-muted-foreground">
+                    {brief.doc_url}
+                  </span>
+                </span>
+                <span aria-hidden className="shrink-0 text-primary">↗</span>
+              </a>
+            ) : brief.body ? (
+              // Briefs de antes del Doc: el texto se queda, solo ya no se escribe aqui.
+              <p className="whitespace-pre-wrap rounded-md border bg-muted/30 p-3 text-sm">
+                {brief.body}
+              </p>
+            ) : (
+              <p className="rounded-md border border-dashed p-3 text-sm text-muted-foreground">
+                Sin Google Doc todavía.
+              </p>
+            )}
 
             <Button
               size="sm"
@@ -264,7 +287,7 @@ function BriefModal({
               className="mt-2"
               onClick={() => setEditing(true)}
             >
-              Editar instrucciones
+              {brief.doc_url ? "Editar" : "Pegar link del Doc"}
             </Button>
 
             <div className="mt-5 border-t pt-4">
@@ -296,7 +319,7 @@ function BriefModal({
                               clientId,
                               batchId: id,
                               title: brief.title,
-                              body: brief.body,
+                              docUrl: brief.doc_url,
                               briefDate: brief.brief_date,
                             });
                             await onChanged();

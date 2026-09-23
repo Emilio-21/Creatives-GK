@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
+import { normalizeDocUrl } from "@/lib/brief-flow";
 import { createClient } from "@/lib/supabase/server";
 
 export type BriefRow = {
@@ -9,7 +10,9 @@ export type BriefRow = {
   client_id: string;
   batch_id: string | null;
   title: string;
+  /** Texto de briefs viejos. Los nuevos viven en `doc_url`. */
   body: string;
+  doc_url: string | null;
   brief_date: string;
   status: "borrador" | "asignado" | "en_diseno" | "listo";
   assigned_to: string | null;
@@ -27,7 +30,7 @@ export type BriefWithMeta = BriefRow & {
   assigneeName: string | null;
 };
 
-/** Instrucciones de copy para diseño. Reemplaza el Google Doc suelto. */
+/** Encargos de copy para diseño. Las instrucciones viven en el Google Doc enlazado. */
 export async function listBriefs(clientId: string): Promise<BriefWithMeta[]> {
   await requireUser();
   const supabase = await createClient();
@@ -101,13 +104,14 @@ export async function saveBrief(input: {
   clientId: string;
   batchId?: string | null;
   title: string;
-  body: string;
+  docUrl: string | null;
   briefDate: string;
 }): Promise<string> {
   const user = await requireUser();
 
   const title = input.title.trim();
   if (!title) throw new Error("Ponle título al brief.");
+  const docUrl = input.docUrl ? normalizeDocUrl(input.docUrl) : null;
 
   const supabase = await createClient();
 
@@ -117,7 +121,7 @@ export async function saveBrief(input: {
       .update(
         {
           title,
-          body: input.body,
+          doc_url: docUrl,
           brief_date: input.briefDate,
           ...(input.batchId !== undefined ? { batch_id: input.batchId } : {}),
           updated_by: user.id,
@@ -140,7 +144,7 @@ export async function saveBrief(input: {
       client_id: input.clientId,
       batch_id: input.batchId ?? null,
       title,
-      body: input.body,
+      doc_url: docUrl,
       brief_date: input.briefDate,
       created_by: user.id,
       updated_by: user.id,

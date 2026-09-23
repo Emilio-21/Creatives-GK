@@ -1,6 +1,6 @@
 "use client";
 
-import { STATUS_LABEL, type BriefStatus } from "@/lib/brief-flow";
+import { docLabel, STATUS_LABEL, type BriefStatus } from "@/lib/brief-flow";
 import type { BriefWithMeta } from "@/app/(app)/client/brief-actions";
 
 /**
@@ -40,7 +40,9 @@ export function BriefCard({
       </div>
 
       <p className="line-clamp-2 text-xs text-muted-foreground">
-        {brief.body || "Sin instrucciones todavía."}
+        {brief.doc_url
+          ? `${docLabel(brief.doc_url)} ↗`
+          : brief.body || "Sin Google Doc todavía."}
       </p>
 
       <div className="mt-auto space-y-1 text-[10px] text-muted-foreground">
