@@ -94,7 +94,7 @@ export function NotificationBell({
           {campana}
           <span className="flex-1 text-left">Avisos</span>
           {sinLeer.length > 0 ? (
-            <span className="flex min-w-5 items-center justify-center rounded-full bg-destructive px-1.5 text-[10px] font-medium text-white">
+            <span className="flex min-w-5 items-center justify-center rounded-full bg-destructive px-1.5 text-[11px] font-medium text-white">
               {sinLeer.length > 9 ? "9+" : sinLeer.length}
             </span>
           ) : null}
@@ -108,7 +108,7 @@ export function NotificationBell({
         >
           {campana}
           {sinLeer.length > 0 ? (
-            <span className="absolute -right-0.5 -top-0.5 flex min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[9px] font-medium text-white">
+            <span className="absolute -right-0.5 -top-0.5 flex min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[11px] font-medium text-white">
               {sinLeer.length > 9 ? "9+" : sinLeer.length}
             </span>
           ) : null}
@@ -128,7 +128,7 @@ export function NotificationBell({
             }`}
           >
             <div className="flex items-center justify-between px-1.5 pb-1.5">
-              <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+              <p className="font-mono text-xs text-muted-foreground">
                 Avisos
               </p>
               {sinLeer.length > 0 ? (
@@ -190,7 +190,7 @@ export function NotificationBell({
                               {item.body}
                             </span>
                           ) : null}
-                          <span className="mt-0.5 block font-mono text-[10px] text-muted-foreground">
+                          <span className="mt-0.5 block font-mono text-[11px] text-muted-foreground">
                             {cuandoFue(item.created_at)}
                           </span>
                         </span>

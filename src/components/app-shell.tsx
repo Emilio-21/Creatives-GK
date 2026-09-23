@@ -98,7 +98,7 @@ export function AppShell({
             <SidebarNav clients={clients} />
 
             {filtrandoClientes ? (
-              <p className="px-1 text-[10px] text-muted-foreground">
+              <p className="px-1 text-[11px] text-muted-foreground">
                 Tus clientes ({clients.length} de {totalClientes}).{" "}
                 <Link href="/equipo" className="underline hover:text-foreground">
                   Cambiar

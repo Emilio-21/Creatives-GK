@@ -55,14 +55,14 @@ export function TaskList({ tasks, team }: { tasks: MyTask[]; team: TeamMember[] 
     <div className="space-y-6">
       {[...groups.entries()].map(([clientId, group]) => (
         <section key={clientId} className="space-y-2">
-          <h2 className="flex items-baseline gap-2 text-sm font-semibold">
+          <h3 className="flex items-baseline gap-2 text-sm font-semibold">
             <Link href={`/client/${clientId}`} className="hover:underline">
               {group.name}
             </Link>
             <span className="font-mono text-[11px] font-normal text-muted-foreground">
               {group.tasks.length}
             </span>
-          </h2>
+          </h3>
           <ul className="space-y-2">
             {group.tasks.map((task) => (
               <TaskRow key={task.id} task={task} team={team} />
@@ -116,7 +116,7 @@ function TaskRow({ task, team }: { task: MyTask; team: TeamMember[] }) {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <p className="flex items-center gap-2 text-sm font-medium">
-            <span className="shrink-0 rounded border px-1 py-px font-mono text-[9px] uppercase tracking-wider text-muted-foreground">
+            <span className="shrink-0 rounded border px-1 py-px font-mono text-xs text-muted-foreground">
               {CHANNEL_LABEL[task.channel]}
             </span>
             <Link href={href} className="truncate hover:underline">

@@ -73,7 +73,7 @@ export default async function CreativeDetailPage({
         {stats && stats.launch_count > 0 ? (
           <Card>
             <CardHeader>
-              <CardTitle className="font-mono text-xs font-medium uppercase tracking-widest text-muted-foreground">
+              <CardTitle className="font-mono text-xs font-medium text-muted-foreground">
                 Acumulado · {stats.launch_count} lanzamiento
                 {stats.launch_count === 1 ? "" : "s"}
               </CardTitle>
@@ -98,7 +98,7 @@ export default async function CreativeDetailPage({
 function Metric({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <p className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground">
+      <p className="font-mono text-xs text-muted-foreground">
         {label}
       </p>
       <p className="mt-0.5 text-2xl font-semibold tabular-nums">{value}</p>

@@ -104,7 +104,7 @@ export function BriefWorkflow({
     <section className="rounded-lg border p-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2 text-sm">
-          <span className="rounded-full border px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+          <span className="rounded-full border px-2 py-0.5 font-mono text-xs text-muted-foreground">
             {CHANNEL_LABEL[brief.channel]}
           </span>
           <span className="rounded-full border border-foreground/30 px-2 py-0.5 text-xs">
@@ -113,7 +113,7 @@ export function BriefWorkflow({
         </div>
 
         <div className="flex items-center gap-1.5">
-          <label className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+          <label className="font-mono text-xs text-muted-foreground">
             Entrega
           </label>
           <Input
@@ -146,7 +146,7 @@ export function BriefWorkflow({
                   <span className="mr-1 font-mono text-muted-foreground">{index + 1}</span>
                   {stage.label}
                 </span>
-                <span className="font-mono text-[10px] text-muted-foreground">
+                <span className="font-mono text-[11px] text-muted-foreground">
                   {actual ? "ahora" : pasada ? "✓" : ""}
                 </span>
               </p>
@@ -168,7 +168,7 @@ export function BriefWorkflow({
                 ))}
               </select>
               {actual ? (
-                <div className="mt-1.5 flex items-center justify-between gap-2 text-[10px]">
+                <div className="mt-1.5 flex items-center justify-between gap-2 text-[11px]">
                   {brief.stage_started_at ? (
                     <span className="text-foreground">
                       ● En progreso · {elapsed(brief.stage_started_at)}
@@ -191,7 +191,7 @@ export function BriefWorkflow({
                   ) : null}
                 </div>
               ) : (
-                <p className="mt-1 text-[10px] text-muted-foreground">{stage.hint}</p>
+                <p className="mt-1 text-[11px] text-muted-foreground">{stage.hint}</p>
               )}
             </li>
           );
@@ -223,7 +223,7 @@ export function BriefWorkflow({
         <div className="mt-3 space-y-2 rounded-md border bg-muted/30 p-3">
           {pidePersona ? (
             <div className="space-y-1">
-              <label className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+              <label className="font-mono text-xs text-muted-foreground">
                 Responsable de {STAGES.find((s) => s.status === pendiente.to)?.label}
               </label>
               <select
@@ -243,7 +243,7 @@ export function BriefWorkflow({
 
           {pideMotivo ? (
             <div className="space-y-1">
-              <label className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+              <label className="font-mono text-xs text-muted-foreground">
                 ¿Por qué lo regresas?
               </label>
               <Textarea
@@ -273,7 +273,7 @@ export function BriefWorkflow({
 
       {history.length > 0 ? (
         <details className="mt-3">
-          <summary className="cursor-pointer font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+          <summary className="cursor-pointer font-mono text-xs text-muted-foreground">
             Historial · {history.length}
           </summary>
           <ul className="mt-2 space-y-1.5 border-l pl-3">

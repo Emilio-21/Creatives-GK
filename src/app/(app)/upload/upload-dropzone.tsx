@@ -478,7 +478,7 @@ function FileRow({
             // eslint-disable-next-line @next/next/no-img-element
             <img src={item.thumbUrl} alt="" className="size-full object-cover" />
           ) : (
-            <span className="font-mono text-[9px] uppercase text-muted-foreground">
+            <span className="font-mono text-[11px] text-muted-foreground">
               {extensionOf(item.file.name)}
             </span>
           )}

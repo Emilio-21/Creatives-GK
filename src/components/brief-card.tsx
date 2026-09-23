@@ -34,13 +34,13 @@ export function BriefCard({
     >
       <div className="flex items-start justify-between gap-2">
         <p className="line-clamp-2 min-w-0 flex-1 text-sm font-medium">
-          <span className="mr-1.5 rounded border px-1 py-px align-middle font-mono text-[9px] uppercase tracking-wider text-muted-foreground">
+          <span className="mr-1.5 rounded border px-1 py-px align-middle font-mono text-xs text-muted-foreground">
             {CHANNEL_LABEL[brief.channel]}
           </span>
           {brief.title}
         </p>
         <span
-          className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] ${STATUS_STYLE[status]}`}
+          className={`shrink-0 rounded-full border px-2 py-0.5 text-[11px] ${STATUS_STYLE[status]}`}
         >
           {STATUS_LABEL[status]}
         </span>
@@ -52,12 +52,12 @@ export function BriefCard({
           : brief.body || "Sin Google Doc todavía."}
       </p>
 
-      <div className="mt-auto space-y-1 text-[10px] text-muted-foreground">
+      <div className="mt-auto space-y-1 text-[11px] text-muted-foreground">
         {/* Quien tiene la pelota, que es lo que uno busca al mirar el tablero. */}
         <p className="flex items-center gap-1.5">
           {brief.assigneeName ? (
             <>
-              <span className="flex size-4 shrink-0 items-center justify-center rounded-full bg-primary/15 text-[8px] font-medium text-primary">
+              <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-primary/15 text-[10px] font-medium text-primary">
                 {initials(brief.assigneeName)}
               </span>
               <span className="truncate">{brief.assigneeName}</span>

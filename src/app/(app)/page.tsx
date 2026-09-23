@@ -35,7 +35,7 @@ export default async function HomePage() {
     ((profile?.full_name as string | null) ?? user.email?.split("@")[0] ?? "").split(" ")[0];
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-12">
       <div>
         <h1 className="font-heading font-extralight tracking-tight text-4xl">Hola, {nombre}</h1>
         <p className="mt-1 text-sm text-muted-foreground">
@@ -45,6 +45,7 @@ export default async function HomePage() {
 
       <Block
         title="Lo tuyo, ahora"
+        primary
         count={tasks.length}
         action={
           tasks.length > PENDIENTES_EN_INICIO ? (
@@ -61,39 +62,42 @@ export default async function HomePage() {
         )}
       </Block>
 
-      <Block title="Lo que mandaste" count={home.sent.length}>
-        {home.sent.length === 0 ? (
-          <Empty>No tienes briefs en manos de alguien más.</Empty>
-        ) : (
-          <ul className="divide-y rounded-xl border">
-            {home.sent.map((brief) => (
-              <BriefLine key={brief.id} brief={brief} />
-            ))}
-          </ul>
-        )}
-      </Block>
-
-      <Block title="El equipo">
-        <Pipeline counts={home.pipeline} />
-
-        <div className="mt-4">
-          <h3 className="mb-2 text-sm font-medium">
-            Atorado{" "}
-            <span className="font-mono text-xs font-normal text-muted-foreground">
-              {home.stuck.length}
-            </span>
-          </h3>
-          {home.stuck.length === 0 ? (
-            <Empty>Nada atorado. Todo lo abierto se movió en los últimos {DIAS_ATORADO} días.</Empty>
+      {/* Lo de abajo se consulta, no se hace: va junto y con menos peso. */}
+      <div className="space-y-8">
+        <Block title="Lo que mandaste" count={home.sent.length}>
+          {home.sent.length === 0 ? (
+            <Empty>No tienes briefs en manos de alguien más.</Empty>
           ) : (
             <ul className="divide-y rounded-xl border">
-              {home.stuck.map((brief) => (
-                <BriefLine key={brief.id} brief={brief} reason={brief.reason} />
+              {home.sent.map((brief) => (
+                <BriefLine key={brief.id} brief={brief} />
               ))}
             </ul>
           )}
-        </div>
-      </Block>
+        </Block>
+
+        <Block title="El equipo">
+          <Pipeline counts={home.pipeline} />
+
+          <div className="mt-4">
+            <h3 className="mb-2 text-sm font-medium">
+              Atorado{" "}
+              <span className="font-mono text-xs font-normal text-muted-foreground">
+                {home.stuck.length}
+              </span>
+            </h3>
+            {home.stuck.length === 0 ? (
+              <Empty>Nada atorado. Todo lo abierto se movió en los últimos {DIAS_ATORADO} días.</Empty>
+            ) : (
+              <ul className="divide-y rounded-xl border">
+                {home.stuck.map((brief) => (
+                  <BriefLine key={brief.id} brief={brief} reason={brief.reason} />
+                ))}
+              </ul>
+            )}
+          </div>
+        </Block>
+      </div>
     </div>
   );
 }
@@ -112,17 +116,24 @@ function Block({
   title,
   count,
   action,
+  primary = false,
   children,
 }: {
   title: string;
   count?: number;
   action?: React.ReactNode;
+  /** El bloque de lo que se hace: manda sobre los que solo informan. */
+  primary?: boolean;
   children: React.ReactNode;
 }) {
   return (
     <section>
-      <div className="mb-3 flex items-baseline justify-between gap-2">
-        <h2 className="font-heading font-extralight tracking-tight text-2xl">
+      <div className={`flex items-baseline justify-between gap-2 ${primary ? "mb-4" : "mb-2"}`}>
+        <h2
+          className={`font-heading font-extralight tracking-tight ${
+            primary ? "text-3xl" : "text-xl text-muted-foreground"
+          }`}
+        >
           {title}
           {count !== undefined && count > 0 ? (
             <span className="ml-2 font-mono text-sm font-normal text-muted-foreground">
@@ -151,7 +162,7 @@ function BriefLine({ brief, reason }: { brief: HomeBrief; reason?: string }) {
         href={`/client/${brief.clientId}?brief=${brief.id}`}
         className="flex flex-wrap items-baseline gap-x-3 gap-y-1 px-3 py-2.5 text-sm transition-colors hover:bg-muted/50"
       >
-        <span className="shrink-0 rounded border px-1 py-px font-mono text-[9px] uppercase tracking-wider text-muted-foreground">
+        <span className="shrink-0 rounded border px-1 py-px font-mono text-xs text-muted-foreground">
           {CHANNEL_LABEL[brief.channel]}
         </span>
         <span className="min-w-0 flex-1 truncate font-medium">{brief.title}</span>
@@ -182,22 +193,30 @@ const PIPELINE: { status: BriefStatus; label: string }[] = [
   { status: "lanzado", label: "Lanzados esta semana" },
 ];
 
-/** La linea completa: cuantos briefs hay en cada etapa. */
+/**
+ * La linea completa en una franja: cuantos briefs hay en cada etapa. Es
+ * contexto, no tarea, asi que no lleva cajas ni numeros grandes que compitan
+ * con los pendientes. Los ceros se apagan.
+ */
 function Pipeline({ counts }: { counts: Record<BriefStatus, number> }) {
   return (
-    <ol className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+    <ol className="flex flex-wrap items-baseline gap-x-5 gap-y-1.5 rounded-xl border px-4 py-2.5 text-sm">
       {PIPELINE.map((step, index) => (
-        <li key={step.status} className="surface rounded-xl border p-3">
-          <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
-            {index + 1} · {step.label}
-          </p>
-          <p
-            className={`mt-1 text-2xl font-semibold tabular-nums ${
-              counts[step.status] === 0 ? "text-muted-foreground" : ""
-            }`}
-          >
-            {counts[step.status]}
-          </p>
+        <li
+          key={step.status}
+          className={`flex items-baseline gap-1.5 ${
+            counts[step.status] === 0 ? "text-muted-foreground/70" : ""
+          }`}
+        >
+          {index > 0 ? (
+            <span aria-hidden className="mr-3.5 text-muted-foreground/50">
+              →
+            </span>
+          ) : null}
+          <span className={counts[step.status] === 0 ? "" : "text-muted-foreground"}>
+            {step.label}
+          </span>
+          <span className="font-medium tabular-nums">{counts[step.status]}</span>
         </li>
       ))}
     </ol>

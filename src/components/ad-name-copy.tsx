@@ -22,7 +22,7 @@ export function AdNameCopy({
 
   return (
     <div className="space-y-1.5">
-      <p className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground">
+      <p className="font-mono text-xs text-muted-foreground">
         Nombre del anuncio en Meta
       </p>
       <div className="flex items-center gap-2">

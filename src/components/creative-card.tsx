@@ -36,7 +36,7 @@ export function CreativeCard({ creative }: { creative: Card }) {
             <span className="flex size-10 items-center justify-center rounded-full border">
               <PlayIcon />
             </span>
-            <span className="font-mono text-[10px] uppercase tracking-widest">
+            <span className="font-mono text-xs">
               sin póster
               {creative.mime_type === "video/quicktime" ? " · mov" : ""}
             </span>
@@ -44,7 +44,7 @@ export function CreativeCard({ creative }: { creative: Card }) {
         )}
 
         {creative.media_type === "video" && creative.duration_seconds ? (
-          <span className="absolute bottom-2 right-2 rounded bg-black/70 px-1.5 py-0.5 font-mono text-[10px] text-white">
+          <span className="absolute bottom-2 right-2 rounded bg-black/70 px-1.5 py-0.5 font-mono text-[11px] text-white">
             {formatDuration(creative.duration_seconds)}
           </span>
         ) : null}

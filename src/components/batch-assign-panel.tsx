@@ -110,7 +110,7 @@ export function BatchAssignPanel({
 
         <div className="mt-4 space-y-3">
           <div className="space-y-1.5">
-            <p className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground">
+            <p className="font-mono text-xs text-muted-foreground">
               Batch nuevo
             </p>
             <div className="flex gap-2">
@@ -130,7 +130,7 @@ export function BatchAssignPanel({
           </div>
 
           <div className="space-y-1.5 border-t pt-3">
-            <p className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground">
+            <p className="font-mono text-xs text-muted-foreground">
               Batch existente
             </p>
 

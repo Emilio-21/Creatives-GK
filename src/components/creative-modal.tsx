@@ -263,7 +263,7 @@ export function CreativeModal({
                   <>
                     {detail.stats && detail.stats.launch_count > 0 ? (
                       <div>
-                        <p className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground">
+                        <p className="font-mono text-xs text-muted-foreground">
                           Acumulado · {detail.stats.launch_count} lanzamiento
                           {detail.stats.launch_count === 1 ? "" : "s"}
                         </p>
@@ -281,7 +281,7 @@ export function CreativeModal({
                     ) : null}
 
                     <div>
-                      <p className="mb-2 font-mono text-[11px] uppercase tracking-widest text-muted-foreground">
+                      <p className="mb-2 font-mono text-xs text-muted-foreground">
                         Lanzamientos
                       </p>
                       {detail.launches.length === 0 ? (
@@ -386,7 +386,7 @@ export function CreativeModal({
 function Metric({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+      <p className="font-mono text-xs text-muted-foreground">
         {label}
       </p>
       <p className="mt-0.5 text-lg font-semibold tabular-nums">{value}</p>
@@ -416,7 +416,7 @@ function VariantList({
   return (
     <section className="rounded-lg border p-3">
       <div className="mb-2 flex items-baseline justify-between gap-2">
-        <p className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground">
+        <p className="font-mono text-xs text-muted-foreground">
           Otros formatos · {variants.length}
         </p>
         <Button
@@ -465,7 +465,7 @@ function VariantList({
             <p className="truncate text-[11px]" title={variant.display_name}>
               {variant.display_name}
             </p>
-            <p className="font-mono text-[10px] text-muted-foreground">
+            <p className="font-mono text-[11px] text-muted-foreground">
               {variant.aspect ?? "—"}
             </p>
           </li>

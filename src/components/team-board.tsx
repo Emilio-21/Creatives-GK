@@ -92,7 +92,7 @@ function MemberRow({
         </div>
 
         {member.openBriefs > 0 ? (
-          <span className="shrink-0 rounded-full border border-foreground/25 px-2 py-0.5 text-[10px]">
+          <span className="shrink-0 rounded-full border border-foreground/25 px-2 py-0.5 text-[11px]">
             {member.openBriefs} brief{member.openBriefs === 1 ? "" : "s"} encima
           </span>
         ) : null}
@@ -121,14 +121,14 @@ function MemberRow({
             ))}
           </select>
         ) : (
-          <span className="shrink-0 rounded-full border px-2 py-0.5 text-[10px] text-muted-foreground">
+          <span className="shrink-0 rounded-full border px-2 py-0.5 text-[11px] text-muted-foreground">
             {ROLE_LABEL[member.role]}
           </span>
         )}
       </div>
 
       <div className="mt-2.5 flex flex-wrap items-center gap-1.5 border-t pt-2.5">
-        <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+        <span className="font-mono text-xs text-muted-foreground">
           Clientes
         </span>
         {suyos.length === 0 ? (
@@ -137,7 +137,7 @@ function MemberRow({
           suyos.map((id) => (
             <span
               key={id}
-              className="rounded-full border border-foreground/25 px-2 py-0.5 text-[10px]"
+              className="rounded-full border border-foreground/25 px-2 py-0.5 text-[11px]"
             >
               {clients.find((client) => client.id === id)?.name ?? "—"}
             </span>
@@ -188,7 +188,7 @@ function MemberRow({
               </button>
             );
           })}
-          <p className="w-full pt-1 text-[10px] text-muted-foreground">
+          <p className="w-full pt-1 text-[11px] text-muted-foreground">
             Sin clientes marcados se ven todos. Es un filtro de la barra lateral, no un
             permiso.
           </p>

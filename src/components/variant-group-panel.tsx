@@ -114,11 +114,11 @@ export function VariantGroupPanel({
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-sm">{card.display_name}</span>
-                  <span className="block font-mono text-[10px] text-muted-foreground">
+                  <span className="block font-mono text-[11px] text-muted-foreground">
                     {card.aspect ?? "sin dimensiones"}
                   </span>
                 </span>
-                <span className="shrink-0 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+                <span className="shrink-0 font-mono text-xs text-muted-foreground">
                   {parentId === card.id ? "principal" : "formato"}
                 </span>
               </button>

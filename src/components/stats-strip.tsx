@@ -49,7 +49,7 @@ function Stat({
   return (
     <Card className={emphasis ? "border-foreground/25" : undefined}>
       <CardContent className="px-4 py-3">
-        <p className="text-[11px] uppercase tracking-wide text-muted-foreground">{label}</p>
+        <p className="text-xs text-muted-foreground">{label}</p>
         <p className={`mt-0.5 text-xl font-semibold tabular-nums${emphasis ? " text-foreground" : ""}`}>
           {value}
         </p>

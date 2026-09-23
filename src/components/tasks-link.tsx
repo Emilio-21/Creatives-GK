@@ -29,7 +29,7 @@ export function TasksLink({ count }: { count: number }) {
       </svg>
       <span className="flex-1">Mis pendientes</span>
       {count > 0 ? (
-        <span className="flex min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-[10px] font-medium text-primary-foreground">
+        <span className="flex min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-[11px] font-medium text-primary-foreground">
           {count > 9 ? "9+" : count}
         </span>
       ) : null}

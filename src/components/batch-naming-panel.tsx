@@ -151,7 +151,7 @@ export function BatchNamingPanel({
 
               <div>
                 <div className="mb-1.5 flex items-baseline justify-between gap-2">
-                  <p className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground">
+                  <p className="font-mono text-xs text-muted-foreground">
                     Anuncios · {creativos.length}
                   </p>
                   {creativos.length > 0 ? (
@@ -225,7 +225,7 @@ function Copiable({
   return (
     <div className={compacta ? "" : "space-y-1.5"}>
       {!compacta ? (
-        <p className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground">
+        <p className="font-mono text-xs text-muted-foreground">
           {etiqueta}
         </p>
       ) : null}

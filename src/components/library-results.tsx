@@ -490,7 +490,7 @@ function BoardColumn({
                   {group.cards.length}
                 </span>
                 {group.completed ? (
-                  <span className="rounded-full border border-foreground/25 px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                  <span className="rounded-full border border-foreground/25 px-1.5 py-0.5 text-[11px] text-muted-foreground">
                     Completado
                   </span>
                 ) : null}
@@ -498,7 +498,7 @@ function BoardColumn({
                   <button
                     type="button"
                     onClick={() => onNaming(group.key)}
-                    className="ml-auto rounded border px-1.5 py-0.5 text-[10px] text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground"
+                    className="ml-auto rounded border px-1.5 py-0.5 text-[11px] text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground"
                   >
                     Nomenclatura
                   </button>
