@@ -5,8 +5,10 @@
   "compatibility_date": "2026-09-01",
   "observability": { "enabled": true },
   "triggers": {
-    // Diario a las 13:00 UTC. Cloudflare de pago no limita a 2 al dia.
-    "crons": ["0 13 * * *"]
+    // Diario a las 13:00 UTC: sync de Meta.
+    // Cada 10 minutos: reintento de avisos de Slack que no salieron al momento.
+    // Si cambias este, cambia SLACK_CRON en index.ts.
+    "crons": ["0 13 * * *", "*/10 * * * *"]
   },
   "vars": {
     "APP_URL": "https://creativos-gk.growth-kingdom.workers.dev"

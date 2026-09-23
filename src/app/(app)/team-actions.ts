@@ -12,7 +12,10 @@ export async function listMembers(): Promise<Member[]> {
   const supabase = await createClient();
 
   const [{ data: profiles }, { data: members }, { data: briefs }] = await Promise.all([
-    supabase.from("profiles").select("id, full_name, role").order("full_name"),
+    supabase
+      .from("profiles")
+      .select("id, full_name, role, slack_user_id, slack_notify")
+      .order("full_name"),
     supabase.from("client_members").select("client_id, profile_id"),
     // Lo que tiene encima cada quien: la etapa en curso de cada brief abierto.
     supabase
@@ -41,6 +44,8 @@ export async function listMembers(): Promise<Member[]> {
     clientIds: porPersona.get(row.id as string) ?? [],
     isMe: row.id === user.id,
     openBriefs: pendientes.get(row.id as string) ?? 0,
+    slackLinked: Boolean(row.slack_user_id),
+    slackNotify: row.slack_notify !== false,
   }));
 }
 
@@ -97,6 +102,15 @@ export async function myClientIds(): Promise<string[]> {
   return (data ?? []).map((row) => row.client_id as string);
 }
 
+/** Prende o apaga los mensajes de Slack de quien lo pide. Los avisos de la app siguen. */
+async function setSlackNotifyImpl(on: boolean): Promise<void> {
+  await requireUser();
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("set_slack_notify", { p_on: on });
+  if (error) throw new Error(error.message);
+  revalidatePath("/equipo");
+}
+
 // ---- Acciones expuestas al navegador ----
 // Regresan el error en vez de lanzarlo: en produccion Next oculta el mensaje de
 // lo que se lanza. Ver src/lib/action-result.ts.
@@ -111,4 +125,10 @@ export async function setRole(
   ...args: Parameters<typeof setRoleImpl>
 ): Promise<ActionResult<Awaited<ReturnType<typeof setRoleImpl>>>> {
   return attempt(() => setRoleImpl(...args));
+}
+
+export async function setSlackNotify(
+  ...args: Parameters<typeof setSlackNotifyImpl>
+): Promise<ActionResult<Awaited<ReturnType<typeof setSlackNotifyImpl>>>> {
+  return attempt(() => setSlackNotifyImpl(...args));
 }

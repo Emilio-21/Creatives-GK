@@ -13,9 +13,12 @@ export interface Env {
   CRON_SECRET: string;
 }
 
+/** Cada horario de wrangler.jsonc dispara una ruta distinta. */
+const SLACK_CRON = "*/10 * * * *";
+
 export default {
-  async scheduled(_event: ScheduledController, env: Env, ctx: ExecutionContext) {
-    ctx.waitUntil(runSync(env));
+  async scheduled(event: ScheduledController, env: Env, ctx: ExecutionContext) {
+    ctx.waitUntil(event.cron === SLACK_CRON ? runRoute(env, "slack") : runSync(env));
   },
 
   // Para dispararlo a mano en desarrollo: curl al worker.
@@ -30,13 +33,17 @@ export default {
 };
 
 async function runSync(env: Env): Promise<unknown> {
-  const response = await fetch(`${env.APP_URL}/api/cron/sync-meta`, {
+  return runRoute(env, "sync-meta");
+}
+
+async function runRoute(env: Env, route: "sync-meta" | "slack"): Promise<unknown> {
+  const response = await fetch(`${env.APP_URL}/api/cron/${route}`, {
     headers: { authorization: `Bearer ${env.CRON_SECRET}` },
   });
 
   const body = await response.json().catch(() => ({ error: "respuesta no JSON" }));
   if (!response.ok) {
-    console.error("sync-meta falló", response.status, body);
+    console.error(`${route} falló`, response.status, body);
   }
   return body;
 }

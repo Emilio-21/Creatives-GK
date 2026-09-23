@@ -31,4 +31,7 @@ export type Member = {
   clientIds: string[];
   isMe: boolean;
   openBriefs: number;
+  /** Ya se encontro su usuario de Slack (por correo, al mandarle el primer aviso). */
+  slackLinked: boolean;
+  slackNotify: boolean;
 };

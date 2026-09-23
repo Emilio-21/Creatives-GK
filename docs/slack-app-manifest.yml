@@ -1,0 +1,23 @@
+# App de Slack para los avisos de Creativos GK.
+# api.slack.com/apps → Create New App → From a manifest → pega esto.
+display_information:
+  name: Creativos GK
+  description: Te avisa por mensaje directo cuando te toca una etapa de un brief.
+  background_color: "#b4481f"
+features:
+  bot_user:
+    display_name: Creativos GK
+    always_online: true
+  app_home:
+    messages_tab_enabled: true
+    messages_tab_read_only_enabled: true
+oauth_config:
+  scopes:
+    bot:
+      - chat:write          # mandar el mensaje directo
+      - users:read          # requisito de users:read.email
+      - users:read.email    # encontrar a cada quien por su correo de la app
+settings:
+  org_deploy_enabled: false
+  socket_mode_enabled: false
+  token_rotation_enabled: false

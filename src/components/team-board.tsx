@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import {
   setClientMember as setClientMemberAction,
   setRole as setRoleAction,
+  setSlackNotify as setSlackNotifyAction,
 } from "@/app/(app)/team-actions";
 import { ROLES, ROLE_HINT, ROLE_LABEL, type Member, type Role } from "@/lib/team";
 import { unwrapped } from "@/lib/action-result";
@@ -14,6 +15,7 @@ import { unwrapped } from "@/lib/action-result";
 // Las acciones regresan el error como dato; esto lo vuelve a lanzar con su mensaje real.
 const setClientMember = unwrapped(setClientMemberAction);
 const setRole = unwrapped(setRoleAction);
+const setSlackNotify = unwrapped(setSlackNotifyAction);
 
 /**
  * El equipo, sus roles y sus clientes.
@@ -90,6 +92,34 @@ function MemberRow({
           </p>
           <p className="text-[11px] text-muted-foreground">{ROLE_HINT[member.role]}</p>
         </div>
+
+        {/* Slack: se enlaza solo, por correo, con el primer aviso que se le manda. */}
+        {member.isMe ? (
+          <label className="flex shrink-0 items-center gap-1.5 text-[11px] text-muted-foreground">
+            <input
+              type="checkbox"
+              checked={member.slackNotify}
+              disabled={pending}
+              onChange={(event) => {
+                const on = event.target.checked;
+                startTransition(async () => {
+                  try {
+                    await setSlackNotify(on);
+                    toast.success(on ? "Avisos por Slack prendidos" : "Avisos por Slack apagados");
+                    router.refresh();
+                  } catch (error) {
+                    toast.error((error as Error).message);
+                  }
+                });
+              }}
+            />
+            Avisarme por Slack
+          </label>
+        ) : (
+          <span className="shrink-0 text-[11px] text-muted-foreground">
+            {!member.slackNotify ? "Slack apagado" : member.slackLinked ? "Slack ✓" : ""}
+          </span>
+        )}
 
         {member.openBriefs > 0 ? (
           <span className="shrink-0 rounded-full border border-foreground/25 px-2 py-0.5 text-[11px]">

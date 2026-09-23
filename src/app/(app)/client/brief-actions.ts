@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { deliverSlackSoon } from "@/lib/slack-after";
 import { requireUser } from "@/lib/auth";
 import { normalizeDocUrl, type BriefStatus, type Channel } from "@/lib/brief-flow";
 import { createClient } from "@/lib/supabase/server";
@@ -241,6 +242,7 @@ async function publishBriefImpl(
   });
 
   revalidatePath("/", "layout");
+  if (!pasoError) deliverSlackSoon();
   return { handedOff: !pasoError, reason: pasoError?.message ?? null };
 }
 

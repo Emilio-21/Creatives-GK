@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { deliverSlackSoon } from "@/lib/slack-after";
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import type { BriefStatus, Channel, StageStatus } from "@/lib/brief-flow";
@@ -52,6 +53,7 @@ async function moveBriefImpl(
   if (error) throw new Error(error.message);
 
   revalidatePath("/", "layout");
+  deliverSlackSoon();
   return data as BriefStatus;
 }
 
@@ -75,6 +77,7 @@ async function setBriefOwnerImpl(
 
   if (error) throw new Error(error.message);
   revalidatePath("/", "layout");
+  deliverSlackSoon();
 }
 
 async function setBriefDueDateImpl(briefId: string, dueDate: string | null): Promise<void> {
