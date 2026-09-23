@@ -185,7 +185,7 @@
   /* El fondo de la marca: la reticula naranja. Fija y a pantalla completa; los
      paneles de vidrio la difuminan, asi que se lee como textura y no compite
      con el contenido. El color de respaldo es su naranja, por si tarda en cargar. */
-  background: oklch(0.7 0.17 50) url("/fondo.webp") center / cover no-repeat;
+  background: oklch(0.5 0.17 38) url("/fondo-cutting-mat.webp") center / cover no-repeat;
 }
 
 /* En claro el aura tapa el texto: se queda como un tinte apenas perceptible. */
