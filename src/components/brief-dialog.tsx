@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { saveBrief } from "@/app/(app)/client/brief-actions";
-import { listTeam, type TeamMember } from "@/app/(app)/client/assignment-actions";
+import { listTeam, moveBrief, type TeamMember } from "@/app/(app)/client/assignment-actions";
 import { CHANNELS, CHANNEL_LABEL, STAGES, type Channel, type OwnerField } from "@/lib/brief-flow";
 import { ROLE_LABEL, type Role } from "@/lib/team";
 
@@ -45,6 +45,47 @@ export function BriefDialog({
   useEffect(() => {
     if (open) listTeam().then(setTeam).catch(() => setTeam([]));
   }, [open]);
+
+  function crear(mandarARevision: boolean) {
+    startTransition(async () => {
+      if (!draft.clientId) {
+        toast.error("Elige el cliente.");
+        return;
+      }
+      try {
+        const id = await saveBrief({
+          clientId: draft.clientId,
+          title: draft.title,
+          docUrl: draft.docUrl,
+          briefDate: draft.briefDate,
+          channel: draft.channel,
+          owners: {
+            reviewer_id: owners.reviewer_id || null,
+            producer_id: owners.producer_id || null,
+            launcher_id: owners.launcher_id || null,
+          },
+        });
+
+        if (mandarARevision) {
+          try {
+            await moveBrief(id, "en_revision");
+            toast.success("Brief creado y enviado a revisión");
+          } catch (error) {
+            // El brief ya existe; solo no se movio. Se dice, no se esconde.
+            toast.warning(`Brief creado en borrador: ${(error as Error).message}`);
+          }
+        } else {
+          toast.success("Brief guardado como borrador");
+        }
+
+        onOpenChange(false);
+        router.push(`/client/${draft.clientId}`);
+        router.refresh();
+      } catch (error) {
+        toast.error((error as Error).message);
+      }
+    });
+  }
 
   if (!open) return null;
 
@@ -171,47 +212,25 @@ export function BriefDialog({
               ))}
             </div>
             <p className="text-xs text-muted-foreground">
-              El brief nace en borrador. Cuando lo mandes a revisión, le avisa a quien revisa.
+              Los avisos van en orden: primero a quien revisa; al aprobar, a quien
+              produce; al terminar, a quien lanza.
             </p>
           </div>
         </div>
 
-        <div className="mt-5 flex justify-end gap-2">
+        <div className="mt-5 flex flex-wrap justify-end gap-2">
           <Button variant="ghost" disabled={pending} onClick={() => onOpenChange(false)}>
             Cancelar
           </Button>
-          <Button
-            disabled={pending}
-            onClick={() =>
-              startTransition(async () => {
-                if (!draft.clientId) {
-                  toast.error("Elige el cliente.");
-                  return;
-                }
-                try {
-                  await saveBrief({
-                    clientId: draft.clientId,
-                    title: draft.title,
-                    docUrl: draft.docUrl,
-                    briefDate: draft.briefDate,
-                    channel: draft.channel,
-                    owners: {
-                      reviewer_id: owners.reviewer_id || null,
-                      producer_id: owners.producer_id || null,
-                      launcher_id: owners.launcher_id || null,
-                    },
-                  });
-                  toast.success("Brief creado");
-                  onOpenChange(false);
-                  router.push(`/client/${draft.clientId}`);
-                  router.refresh();
-                } catch (error) {
-                  toast.error((error as Error).message);
-                }
-              })
-            }
-          >
-            {pending ? "Guardando…" : "Crear brief"}
+          {/* Con quien revisa elegido, crear ya es mandarlo: el primer aviso sale
+              al crear, no cuando alguien se acuerde de volver a picarle. */}
+          {owners.reviewer_id ? (
+            <Button variant="outline" disabled={pending} onClick={() => crear(false)}>
+              Guardar como borrador
+            </Button>
+          ) : null}
+          <Button disabled={pending} onClick={() => crear(!!owners.reviewer_id)}>
+            {pending ? "Guardando…" : owners.reviewer_id ? "Crear y mandar a revisión" : "Crear brief"}
           </Button>
         </div>
       </div>
