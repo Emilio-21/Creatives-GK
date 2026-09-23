@@ -11,6 +11,7 @@ import {
   moveBrief,
   setBriefDueDate,
   setBriefOwner,
+  startBriefStage,
   type BriefEvent,
   type TeamMember,
 } from "@/app/(app)/client/assignment-actions";
@@ -18,6 +19,7 @@ import type { BriefWithMeta } from "@/app/(app)/client/brief-actions";
 import {
   BRIEF_STATUSES,
   CHANNEL_LABEL,
+  elapsed,
   NEXT_STEPS,
   STAGES,
   STATUS_LABEL,
@@ -87,6 +89,7 @@ export function BriefWorkflow({
     );
 
   const posicion = BRIEF_STATUSES.indexOf(status);
+  const soyResponsable = team.some((m) => m.isMe && m.id === brief.assigned_to);
 
   return (
     <section className="rounded-lg border p-3">
@@ -155,7 +158,32 @@ export function BriefWorkflow({
                   </option>
                 ))}
               </select>
-              <p className="mt-1 text-[10px] text-muted-foreground">{stage.hint}</p>
+              {actual ? (
+                <div className="mt-1.5 flex items-center justify-between gap-2 text-[10px]">
+                  {brief.stage_started_at ? (
+                    <span className="text-primary">
+                      ● En progreso · {elapsed(brief.stage_started_at)}
+                    </span>
+                  ) : (
+                    <span className="text-highlight">
+                      ○ Pendiente
+                      {brief.stage_entered_at ? ` · ${elapsed(brief.stage_entered_at)}` : ""}
+                    </span>
+                  )}
+                  {!brief.stage_started_at && soyResponsable ? (
+                    <button
+                      type="button"
+                      disabled={pending}
+                      onClick={() => run(() => startBriefStage(brief.id), "En progreso")}
+                      className="rounded border border-primary/40 px-1.5 py-0.5 text-primary hover:bg-primary/10"
+                    >
+                      Empezar
+                    </button>
+                  ) : null}
+                </div>
+              ) : (
+                <p className="mt-1 text-[10px] text-muted-foreground">{stage.hint}</p>
+              )}
             </li>
           );
         })}
@@ -277,6 +305,13 @@ function describe(event: BriefEvent): React.ReactNode {
   const label =
     STATUS_LABEL[event.to_status as BriefStatus] ?? LEGACY_LABEL[event.to_status] ?? event.to_status;
   if (!event.from_status) return "creó el brief";
+  if (event.kind === "empezo") {
+    return (
+      <>
+        empezó <span className="text-foreground">{label.toLowerCase()}</span>
+      </>
+    );
+  }
   // Misma etapa: cambio de manos, no de estado.
   if (event.from_status === event.to_status) {
     return (

@@ -118,3 +118,20 @@ export function docEmbedUrl(docUrl: string): string | null {
   }
   return null;
 }
+
+/** "3 h", "2 d": lo que lleva algo esperando, sin fecha que haya que restar. */
+export function elapsed(iso: string, now = Date.now()): string {
+  const minutes = Math.max(0, Math.floor((now - new Date(iso).getTime()) / 60000));
+  if (minutes < 1) return "recién";
+  if (minutes < 60) return `${minutes} min`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} h`;
+  return `${Math.floor(hours / 24)} d`;
+}
+
+/** Lo que dice el boton de terminar cada etapa desde la lista de pendientes. */
+export const FINISH_LABEL: Record<StageStatus, string> = {
+  en_revision: "Aprobar",
+  en_produccion: "Terminar",
+  en_lanzamiento: "Marcar lanzado",
+};

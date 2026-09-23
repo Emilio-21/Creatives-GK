@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { BriefCard } from "@/components/brief-card";
 import { BriefWorkflow } from "@/components/brief-workflow";
@@ -30,7 +30,8 @@ export function BriefsSection({
 }) {
   const router = useRouter();
   const [briefs, setBriefs] = useState<BriefWithMeta[] | null>(null);
-  const [openId, setOpenId] = useState<string | null>(null);
+  // ?brief= abre ese brief: es como llega alguien desde "Mis pendientes".
+  const [openId, setOpenId] = useState<string | null>(useSearchParams().get("brief"));
 
   const reload = () =>
     listBriefs(clientId)
@@ -105,7 +106,13 @@ export function BriefsSection({
           brief={open}
           clientId={clientId}
           clientName={clientName}
-          onClose={() => setOpenId(null)}
+          onClose={() => {
+            setOpenId(null);
+            // Sin esto, recargar la pagina volveria a abrir el brief.
+            if (window.location.search.includes("brief=")) {
+              router.replace(`/client/${clientId}`, { scroll: false });
+            }
+          }}
           onChanged={async () => {
             await reload();
             router.refresh();

@@ -21,6 +21,9 @@ export type BriefRow = {
   reviewer_id: string | null;
   producer_id: string | null;
   launcher_id: string | null;
+  /** Cuando llego la etapa a quien la tiene, y cuando la tomo (null = pendiente). */
+  stage_entered_at: string | null;
+  stage_started_at: string | null;
   due_date: string | null;
   created_at: string;
   updated_at: string;

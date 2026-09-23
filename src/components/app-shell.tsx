@@ -7,6 +7,7 @@ import { NewClientForm } from "@/components/new-client-form";
 import { SidebarNav, type ClientOption } from "@/components/sidebar-nav";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { NotificationBell } from "@/components/notification-bell";
+import { TasksLink } from "@/components/tasks-link";
 import { Button } from "@/components/ui/button";
 import { roleLabel } from "@/lib/roles";
 import type { Profile } from "@/lib/supabase/server";
@@ -21,11 +22,14 @@ export function AppShell({
   totalClientes,
   orgName,
   teamSize,
+  taskCount = 0,
 }: {
   profile: Profile | null;
   email: string;
   orgName?: string | null;
   teamSize?: number;
+  /** Etapas de briefs que tiene esta persona en sus manos. */
+  taskCount?: number;
   clients: ClientOption[];
   children: React.ReactNode;
   /** Se está mostrando solo una parte de los clientes de la organización. */
@@ -86,7 +90,10 @@ export function AppShell({
             {/* Debajo del boton principal y encima de los clientes: es lo
                 primero que alguien quiere saber al entrar, y ahi se ve sin
                 bajar la vista. */}
-            <NotificationBell variant="row" />
+            <div className="-my-2 space-y-0.5">
+              <NotificationBell variant="row" />
+              <TasksLink count={taskCount} />
+            </div>
 
             <SidebarNav clients={clients} />
 

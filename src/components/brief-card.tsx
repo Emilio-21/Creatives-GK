@@ -60,6 +60,12 @@ export function BriefCard({
                 {initials(brief.assigneeName)}
               </span>
               <span className="truncate">{brief.assigneeName}</span>
+              {/* Tomado o solo recibido: lo que distingue "ya va" de "nadie lo ha abierto". */}
+              <span
+                className={`ml-auto shrink-0 ${brief.stage_started_at ? "text-primary" : "text-highlight"}`}
+              >
+                {brief.stage_started_at ? "● en progreso" : "○ pendiente"}
+              </span>
             </>
           ) : (
             <span className="italic">

@@ -3,13 +3,14 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-/** Barra inferior en movil. El header no alcanza para las tres secciones. */
+/** Barra inferior en movil. El header no alcanza para las secciones. */
 export function MobileTabBar() {
   const pathname = usePathname();
 
   const tabs = [
     { href: "/", label: "Biblioteca", match: (p: string) => p === "/" || p.startsWith("/client") },
     { href: "/dashboard", label: "Resumen", match: (p: string) => p.startsWith("/dashboard") },
+    { href: "/pendientes", label: "Pendientes", match: (p: string) => p.startsWith("/pendientes") },
     { href: "/upload", label: "Subir", match: (p: string) => p.startsWith("/upload") },
     { href: "/equipo", label: "Equipo", match: (p: string) => p.startsWith("/equipo") },
   ];

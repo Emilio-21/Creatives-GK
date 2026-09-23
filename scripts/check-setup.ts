@@ -130,6 +130,7 @@ async function main() {
       ["clients", "meta_currency", "0020_moneda.sql"],
       ["briefs", "doc_url", "0021_brief_doc.sql"],
       ["briefs", "launcher_id", "0022_etapas.sql"],
+      ["briefs", "stage_started_at", "0023_pendientes.sql"],
       ["creative_stats", "paused_launch_count", "0014_pausados.sql"],
     ];
     for (const [table, column, migration] of columns) {
