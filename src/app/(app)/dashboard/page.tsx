@@ -36,7 +36,7 @@ export default async function DashboardPage() {
   return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-xl font-semibold">Resumen</h1>
+          <h1 className="font-heading font-extralight tracking-tight text-3xl">Resumen</h1>
           <p className="text-sm text-muted-foreground">
             Qué hay, qué se quemó y qué nunca salió al aire.
           </p>

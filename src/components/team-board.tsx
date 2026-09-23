@@ -36,7 +36,7 @@ export function TeamBoard({
   return (
     <div className="space-y-4">
       {!hayMedia ? (
-        <p className="rounded-lg border border-highlight/40 bg-highlight/10 px-3 py-2 text-xs">
+        <p className="rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs">
           Nadie tiene el rol de <strong>media buying</strong>. Los avisos de «listo para
           lanzar» están cayendo en los admin como respaldo; asígnale el rol a quien lance
           y dejan de depender de eso.
@@ -92,7 +92,7 @@ function MemberRow({
         </div>
 
         {member.openBriefs > 0 ? (
-          <span className="shrink-0 rounded-full border border-highlight/40 px-2 py-0.5 text-[10px] text-highlight">
+          <span className="shrink-0 rounded-full border border-foreground/25 px-2 py-0.5 text-[10px]">
             {member.openBriefs} brief{member.openBriefs === 1 ? "" : "s"} encima
           </span>
         ) : null}
@@ -137,7 +137,7 @@ function MemberRow({
           suyos.map((id) => (
             <span
               key={id}
-              className="rounded-full border border-primary/30 px-2 py-0.5 text-[10px] text-primary"
+              className="rounded-full border border-foreground/25 px-2 py-0.5 text-[10px]"
             >
               {clients.find((client) => client.id === id)?.name ?? "—"}
             </span>

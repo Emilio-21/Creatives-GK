@@ -43,11 +43,11 @@ const deleteCreative = unwrapped(deleteCreativeAction);
 const setCreativePaused = unwrapped(setCreativePausedAction);
 
 const STATUS_DOT: Record<ReturnType<typeof statusOf>, string> = {
-  // Amarillo solo para "sin lanzar"; morado para lo que ya salio al aire.
-  "sin-lanzar": "bg-highlight",
-  "en-circulacion": "bg-primary",
-  // Pausado no es finalizado: sigue vivo, solo dejo de entregar. Hueco a
-  // proposito — el relleno lo llevan los estados que si estan pasando algo.
+  // Por forma, no por color: lleno = al aire, punteado = nunca salio, hueco =
+  // pausado, apagado = termino. El color queda para lo que pide accion.
+  "sin-lanzar": "bg-transparent border border-dashed border-foreground/70",
+  "en-circulacion": "bg-foreground",
+  // Pausado no es finalizado: sigue vivo, solo dejo de entregar.
   pausado: "bg-transparent ring-1 ring-inset ring-muted-foreground",
   finalizado: "bg-muted-foreground/60",
 };
@@ -458,14 +458,14 @@ function BoardColumn({
 }) {
   return (
     <section
-      className={`rounded-xl border p-4 ${accent ? "border-highlight/40" : "border-primary/25"}`}
+      className={`rounded-xl border p-4 ${accent ? "border-foreground/25" : ""}`}
     >
       <header className="mb-3 flex items-baseline justify-between gap-2 px-1">
         <h3 className="text-base font-medium">
           {title}
           <span
             className={`ml-2 font-mono text-xs font-normal ${
-              accent ? "text-highlight" : "text-muted-foreground"
+              accent ? "text-foreground" : "text-muted-foreground"
             }`}
           >
             {cards.length}
@@ -490,7 +490,7 @@ function BoardColumn({
                   {group.cards.length}
                 </span>
                 {group.completed ? (
-                  <span className="rounded-full border border-primary/40 px-1.5 py-0.5 text-[10px] text-primary">
+                  <span className="rounded-full border border-foreground/25 px-1.5 py-0.5 text-[10px] text-muted-foreground">
                     Completado
                   </span>
                 ) : null}

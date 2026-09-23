@@ -67,7 +67,7 @@ export async function LibraryView({
     <div className="space-y-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <Heading className={headingLevel === "h1" ? "truncate text-xl font-semibold" : "truncate text-base font-semibold"}>
+          <Heading className="truncate font-heading text-3xl font-extralight tracking-tight">
             {title}
           </Heading>
           <p className="text-sm text-muted-foreground">

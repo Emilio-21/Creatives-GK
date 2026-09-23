@@ -107,7 +107,7 @@ export function BriefWorkflow({
           <span className="rounded-full border px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
             {CHANNEL_LABEL[brief.channel]}
           </span>
-          <span className="rounded-full border border-primary/40 px-2 py-0.5 text-xs text-primary">
+          <span className="rounded-full border border-foreground/30 px-2 py-0.5 text-xs">
             {STATUS_LABEL[status]}
           </span>
         </div>
@@ -138,7 +138,7 @@ export function BriefWorkflow({
             <li
               key={stage.status}
               className={`rounded-md border p-2 ${
-                actual ? "border-primary bg-primary/5" : pasada ? "opacity-70" : ""
+                actual ? "border-foreground/40 bg-foreground/5" : pasada ? "opacity-70" : ""
               }`}
             >
               <p className="flex items-baseline justify-between gap-2">
@@ -170,11 +170,11 @@ export function BriefWorkflow({
               {actual ? (
                 <div className="mt-1.5 flex items-center justify-between gap-2 text-[10px]">
                   {brief.stage_started_at ? (
-                    <span className="text-primary">
+                    <span className="text-foreground">
                       ● En progreso · {elapsed(brief.stage_started_at)}
                     </span>
                   ) : (
-                    <span className="text-highlight">
+                    <span className="text-muted-foreground">
                       ○ Pendiente
                       {brief.stage_entered_at ? ` · ${elapsed(brief.stage_entered_at)}` : ""}
                     </span>

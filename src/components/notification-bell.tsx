@@ -18,14 +18,9 @@ const markAllRead = unwrapped(markAllReadAction);
 const markRead = unwrapped(markReadAction);
 
 const KIND_DOT: Record<string, string> = {
-  en_revision: "bg-highlight",
-  en_produccion: "bg-highlight",
-  en_lanzamiento: "bg-primary",
-  lanzado: "bg-primary",
+  // Solo "te lo regresaron" pide atencion distinta: hay algo que corregir. El
+  // resto es "te toca", y basta con el punto neutro.
   devuelto: "bg-destructive",
-  // Avisos de antes de las etapas.
-  asignado: "bg-highlight",
-  listo: "bg-primary",
 };
 
 /**
@@ -183,7 +178,7 @@ export function NotificationBell({
                       >
                         <span
                           className={`mt-1.5 size-1.5 shrink-0 rounded-full ${
-                            KIND_DOT[item.kind] ?? "bg-muted-foreground"
+                            KIND_DOT[item.kind] ?? "bg-foreground/70"
                           }`}
                         />
                         <span className="min-w-0 flex-1">

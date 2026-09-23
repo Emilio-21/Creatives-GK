@@ -3,11 +3,11 @@ import { statusOf, STATUS_LABEL } from "@/lib/metrics";
 import type { CreativeCard as Card } from "@/lib/creatives";
 
 const STATUS_DOT: Record<ReturnType<typeof statusOf>, string> = {
-  // Amarillo solo para "sin lanzar"; morado para lo que ya salio al aire.
-  "sin-lanzar": "bg-highlight",
-  "en-circulacion": "bg-primary",
-  // Pausado no es finalizado: sigue vivo, solo dejo de entregar. Hueco a
-  // proposito — el relleno lo llevan los estados que si estan pasando algo.
+  // Por forma, no por color: lleno = al aire, punteado = nunca salio, hueco =
+  // pausado, apagado = termino. El color queda para lo que pide accion.
+  "sin-lanzar": "bg-transparent border border-dashed border-foreground/70",
+  "en-circulacion": "bg-foreground",
+  // Pausado no es finalizado: sigue vivo, solo dejo de entregar.
   pausado: "bg-transparent ring-1 ring-inset ring-muted-foreground",
   finalizado: "bg-muted-foreground/60",
 };

@@ -4,14 +4,15 @@ import { CHANNEL_LABEL, docLabel, STATUS_LABEL, type BriefStatus } from "@/lib/b
 import type { BriefWithMeta } from "@/app/(app)/client/brief-actions";
 
 /**
- * "Por lanzar" es lo que ya costo trabajo y todavia no produce nada, asi que es
- * el que grita. Lanzado ya no le debe nada a nadie: se apaga.
+ * Neutro: el estado se lee en la palabra, no en el color. El color de alerta
+ * queda para lo que pide accion (vencido); si todo tiene color, nada resalta.
+ * Lo que esta en curso se ve mas firme que lo que espera o ya termino.
  */
 const STATUS_STYLE: Record<BriefStatus, string> = {
   borrador: "border-muted-foreground/30 text-muted-foreground",
-  en_revision: "border-highlight/40 text-highlight",
-  en_produccion: "border-primary/40 text-primary",
-  en_lanzamiento: "border-primary bg-primary/10 text-primary font-medium",
+  en_revision: "border-foreground/30 text-foreground",
+  en_produccion: "border-foreground/30 text-foreground",
+  en_lanzamiento: "border-foreground/50 text-foreground font-medium",
   lanzado: "border-muted-foreground/30 text-muted-foreground",
 };
 
@@ -62,7 +63,7 @@ export function BriefCard({
               <span className="truncate">{brief.assigneeName}</span>
               {/* Tomado o solo recibido: lo que distingue "ya va" de "nadie lo ha abierto". */}
               <span
-                className={`ml-auto shrink-0 ${brief.stage_started_at ? "text-primary" : "text-highlight"}`}
+                className={`ml-auto shrink-0 ${brief.stage_started_at ? "text-foreground" : ""}`}
               >
                 {brief.stage_started_at ? "● en progreso" : "○ pendiente"}
               </span>

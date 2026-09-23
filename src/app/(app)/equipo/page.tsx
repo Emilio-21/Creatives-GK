@@ -26,7 +26,7 @@ export default async function EquipoPage() {
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="text-xl font-semibold">{(org?.name as string) ?? "Equipo"}</h1>
+        <h1 className="font-heading font-extralight tracking-tight text-3xl">{(org?.name as string) ?? "Equipo"}</h1>
         <p className="text-sm text-muted-foreground">
           {members.length} persona{members.length === 1 ? "" : "s"} · el rol decide a quién
           le llegan los avisos

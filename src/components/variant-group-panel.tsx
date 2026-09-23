@@ -79,7 +79,7 @@ export function VariantGroupPanel({
         </p>
 
         {pareceVariosAnuncios ? (
-          <p className="mt-3 rounded-md border border-highlight/40 bg-highlight/10 px-2.5 py-2 text-xs">
+          <p className="mt-3 rounded-md border border-destructive/40 bg-destructive/10 px-2.5 py-2 text-xs">
             Por los nombres, esto parecen {pares.length} anuncios distintos (
             {pares.map((par) => par.key).join(", ")}). Si es así, agrúpalos de uno en
             uno.

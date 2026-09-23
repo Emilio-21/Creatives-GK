@@ -64,7 +64,7 @@ export function BriefsSection({
     <section className="space-y-3">
       <div className="flex items-end justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-semibold">Briefs</h2>
+          <h2 className="font-heading font-extralight tracking-tight text-3xl">Briefs</h2>
           {briefs ? (
             <p className="mt-1 flex flex-wrap gap-x-4 text-sm text-muted-foreground">
               <span>

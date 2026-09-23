@@ -14,7 +14,7 @@ export default async function PendientesPage() {
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="text-xl font-semibold">Mis pendientes</h1>
+        <h1 className="font-heading font-extralight tracking-tight text-3xl">Mis pendientes</h1>
         <p className="text-sm text-muted-foreground">
           {tasks.length === 0
             ? "Nada por ahora."

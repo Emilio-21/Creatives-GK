@@ -46,7 +46,7 @@ function Kpi({
       <p className="text-sm text-muted-foreground">{label}</p>
       <p
         className={`mt-1 text-4xl font-semibold tabular-nums${
-          highlight ? " text-highlight" : ""
+          highlight ? " text-foreground" : ""
         }`}
       >
         {value}

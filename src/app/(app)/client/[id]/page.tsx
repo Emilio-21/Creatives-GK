@@ -35,7 +35,7 @@ export default async function ClientPage({
       <div className="space-y-8">
         <header className="flex flex-wrap items-start justify-between gap-4">
           <div className="min-w-0">
-            <h1 className="truncate text-3xl font-semibold">{client.name}</h1>
+            <h1 className="truncate font-heading font-extralight tracking-tight text-4xl">{client.name}</h1>
             <p className="mt-1 flex flex-wrap gap-x-4 text-sm text-muted-foreground">
               <span>{overview.kpis.total} creativos</span>
               <span>{overview.kpis.unlaunched} sin lanzar</span>

@@ -508,7 +508,7 @@ function FileRow({
       </div>
 
       {item.duplicate && item.status !== "hecho" ? (
-        <p className="mt-2 text-xs text-highlight">
+        <p className="mt-2 text-xs text-destructive">
           Ya existe un creativo con este nombre. ¿Es una versión nueva? Se sube igual.
         </p>
       ) : null}

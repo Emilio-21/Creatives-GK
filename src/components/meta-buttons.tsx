@@ -180,7 +180,7 @@ export function MetaButtons({
           </p>
           {report.adsWithoutCode.length > 0 ? (
             <details className="mt-1">
-              <summary className="cursor-pointer text-highlight">
+              <summary className="cursor-pointer text-destructive">
                 {report.adsWithoutCode.length} sin código en el nombre
               </summary>
               <ul className="mt-1 space-y-0.5 font-mono text-[11px] text-muted-foreground">

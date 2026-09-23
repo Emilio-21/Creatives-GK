@@ -126,9 +126,9 @@ function TaskRow({ task, team }: { task: MyTask; team: TeamMember[] }) {
           <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
             <span>{STAGES.find((s) => s.status === stage)?.label}</span>
             {task.startedAt ? (
-              <span className="text-primary">● En progreso · {elapsed(task.startedAt)}</span>
+              <span className="text-foreground">● En progreso · {elapsed(task.startedAt)}</span>
             ) : (
-              <span className="text-highlight">
+              <span>
                 ○ Pendiente{task.enteredAt ? ` · esperando ${elapsed(task.enteredAt)}` : ""}
               </span>
             )}

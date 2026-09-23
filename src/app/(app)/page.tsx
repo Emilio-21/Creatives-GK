@@ -37,7 +37,7 @@ export default async function HomePage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-semibold">Hola, {nombre}</h1>
+        <h1 className="font-heading font-extralight tracking-tight text-4xl">Hola, {nombre}</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           {resumen(tasks.length, home.stuck.length)}
         </p>
@@ -122,7 +122,7 @@ function Block({
   return (
     <section>
       <div className="mb-3 flex items-baseline justify-between gap-2">
-        <h2 className="text-lg font-semibold">
+        <h2 className="font-heading font-extralight tracking-tight text-2xl">
           {title}
           {count !== undefined && count > 0 ? (
             <span className="ml-2 font-mono text-sm font-normal text-muted-foreground">
@@ -165,7 +165,7 @@ function BriefLine({ brief, reason }: { brief: HomeBrief; reason?: string }) {
         ) : !brief.assigneeName ? (
           <span className="text-xs text-destructive">sin responsable</span>
         ) : (
-          <span className={`text-xs ${brief.startedAt ? "text-primary" : "text-highlight"}`}>
+          <span className={`text-xs ${brief.startedAt ? "text-foreground" : "text-muted-foreground"}`}>
             {brief.startedAt ? "● en progreso" : "○ sin empezar"}
           </span>
         )}
