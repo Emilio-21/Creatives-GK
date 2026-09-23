@@ -7,6 +7,7 @@ import { getPreviewUrl } from "@/lib/storage";
 import { aspectLabel } from "@/lib/aspect";
 import type { CreativeRow, CreativeStats, CreativeVariant } from "@/lib/creatives";
 import type { LaunchRow } from "@/lib/launches";
+import { attempt, type ActionResult } from "@/lib/action-result";
 
 export type CreativeDetail = {
   creative: CreativeRow;
@@ -21,7 +22,7 @@ export type CreativeDetail = {
 };
 
 /** Todo lo que necesita el modal, en una sola llamada. */
-export async function getCreativeDetail(id: string): Promise<CreativeDetail> {
+async function getCreativeDetailImpl(id: string): Promise<CreativeDetail> {
   await requireUser();
   const supabase = await createClient();
 
@@ -88,7 +89,7 @@ export async function getCreativeDetail(id: string): Promise<CreativeDetail> {
  * `publicado` es derivado (§3.3): no hay un campo que prender. Esto crea un
  * lanzamiento con la fecha de hoy y sin metricas, para capturarlas despues.
  */
-export async function quickLaunch(creativeId: string): Promise<void> {
+async function quickLaunchImpl(creativeId: string): Promise<void> {
   const user = await requireUser();
   const supabase = await createClient();
 
@@ -103,4 +104,20 @@ export async function quickLaunch(creativeId: string): Promise<void> {
   if (error) throw new Error(`No se pudo marcar como lanzado: ${error.message}`);
 
   revalidatePath("/", "layout");
+}
+
+// ---- Acciones expuestas al navegador ----
+// Regresan el error en vez de lanzarlo: en produccion Next oculta el mensaje de
+// lo que se lanza. Ver src/lib/action-result.ts.
+
+export async function getCreativeDetail(
+  ...args: Parameters<typeof getCreativeDetailImpl>
+): Promise<ActionResult<Awaited<ReturnType<typeof getCreativeDetailImpl>>>> {
+  return attempt(() => getCreativeDetailImpl(...args));
+}
+
+export async function quickLaunch(
+  ...args: Parameters<typeof quickLaunchImpl>
+): Promise<ActionResult<Awaited<ReturnType<typeof quickLaunchImpl>>>> {
+  return attempt(() => quickLaunchImpl(...args));
 }

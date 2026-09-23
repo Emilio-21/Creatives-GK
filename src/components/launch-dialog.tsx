@@ -16,8 +16,17 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { createLaunch, updateLaunch, type LaunchInput } from "@/app/(app)/creative/launch-actions";
+import {
+  createLaunch as createLaunchAction,
+  updateLaunch as updateLaunchAction,
+  type LaunchInput,
+} from "@/app/(app)/creative/launch-actions";
 import type { LaunchRow } from "@/lib/launches";
+import { unwrapped } from "@/lib/action-result";
+
+// Las acciones regresan el error como dato; esto lo vuelve a lanzar con su mensaje real.
+const createLaunch = unwrapped(createLaunchAction);
+const updateLaunch = unwrapped(updateLaunchAction);
 
 type Draft = {
   launchedAt: string;

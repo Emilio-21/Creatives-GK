@@ -3,9 +3,15 @@
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { groupAsAd } from "@/app/(app)/client/variant-actions";
+import {
+  groupAsAd as groupAsAdAction,
+} from "@/app/(app)/client/variant-actions";
 import { isBaseName, suggestPairs } from "@/lib/pairing";
 import type { CreativeCard } from "@/lib/creatives";
+import { unwrapped } from "@/lib/action-result";
+
+// Las acciones regresan el error como dato; esto lo vuelve a lanzar con su mensaje real.
+const groupAsAd = unwrapped(groupAsAdAction);
 
 /**
  * Junta los archivos seleccionados en un solo anuncio.

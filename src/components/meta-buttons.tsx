@@ -6,8 +6,16 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { setMetaAdAccount, syncClientNow } from "@/app/(app)/client/meta-actions";
+import {
+  setMetaAdAccount as setMetaAdAccountAction,
+  syncClientNow as syncClientNowAction,
+} from "@/app/(app)/client/meta-actions";
 import type { SyncReport } from "@/lib/meta-sync";
+import { unwrapped } from "@/lib/action-result";
+
+// Las acciones regresan el error como dato; esto lo vuelve a lanzar con su mensaje real.
+const setMetaAdAccount = unwrapped(setMetaAdAccountAction);
+const syncClientNow = unwrapped(syncClientNowAction);
 
 /**
  * Dos botones separados, como el diseño: META abre la configuración de la

@@ -4,7 +4,13 @@ import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { setArchived } from "@/app/(app)/creative/creative-actions";
+import {
+  setArchived as setArchivedAction,
+} from "@/app/(app)/creative/creative-actions";
+import { unwrapped } from "@/lib/action-result";
+
+// Las acciones regresan el error como dato; esto lo vuelve a lanzar con su mensaje real.
+const setArchived = unwrapped(setArchivedAction);
 
 export function ArchiveButton({
   creativeId,

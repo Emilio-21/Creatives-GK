@@ -4,10 +4,11 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { attempt, type ActionResult } from "@/lib/action-result";
 
 export type ClientFormState = { error: string | null };
 
-export async function createClientRecord(
+async function createClientRecordImpl(
   _prev: ClientFormState,
   formData: FormData,
 ): Promise<ClientFormState> {
@@ -37,7 +38,7 @@ export async function createClientRecord(
   redirect(`/client/${data.id as string}`);
 }
 
-export async function renameClient(id: string, name: string): Promise<void> {
+async function renameClientImpl(id: string, name: string): Promise<void> {
   await requireUser();
   const trimmed = name.trim();
   if (!trimmed) throw new Error("El nombre no puede ir vacío.");
@@ -54,7 +55,7 @@ export async function renameClient(id: string, name: string): Promise<void> {
 }
 
 /** Archivar en vez de borrar: los creativos apuntan al cliente. */
-export async function archiveClient(id: string): Promise<void> {
+async function archiveClientImpl(id: string): Promise<void> {
   await requireUser();
   const supabase = await createClient();
   const { error } = await supabase
@@ -65,4 +66,26 @@ export async function archiveClient(id: string): Promise<void> {
 
   revalidatePath("/", "layout");
   redirect("/");
+}
+
+// ---- Acciones expuestas al navegador ----
+// Regresan el error en vez de lanzarlo: en produccion Next oculta el mensaje de
+// lo que se lanza. Ver src/lib/action-result.ts.
+
+export async function archiveClient(
+  ...args: Parameters<typeof archiveClientImpl>
+): Promise<ActionResult<Awaited<ReturnType<typeof archiveClientImpl>>>> {
+  return attempt(() => archiveClientImpl(...args));
+}
+
+export async function renameClient(
+  ...args: Parameters<typeof renameClientImpl>
+): Promise<ActionResult<Awaited<ReturnType<typeof renameClientImpl>>>> {
+  return attempt(() => renameClientImpl(...args));
+}
+
+export async function createClientRecord(
+  ...args: Parameters<typeof createClientRecordImpl>
+): Promise<ActionResult<Awaited<ReturnType<typeof createClientRecordImpl>>>> {
+  return attempt(() => createClientRecordImpl(...args));
 }

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { attempt, type ActionResult } from "@/lib/action-result";
 
 export type Notification = {
   id: string;
@@ -16,7 +17,7 @@ export type Notification = {
 };
 
 /** Las policies ya limitan a lo propio: no hace falta filtrar por usuario. */
-export async function listNotifications(limit = 30): Promise<Notification[]> {
+async function listNotificationsImpl(limit = 30): Promise<Notification[]> {
   await requireUser();
   const supabase = await createClient();
 
@@ -41,7 +42,7 @@ export async function unreadCount(): Promise<number> {
   return count ?? 0;
 }
 
-export async function markRead(ids: string[]): Promise<void> {
+async function markReadImpl(ids: string[]): Promise<void> {
   await requireUser();
   if (ids.length === 0) return;
 
@@ -56,7 +57,7 @@ export async function markRead(ids: string[]): Promise<void> {
   revalidatePath("/", "layout");
 }
 
-export async function markAllRead(): Promise<void> {
+async function markAllReadImpl(): Promise<void> {
   await requireUser();
   const supabase = await createClient();
 
@@ -67,4 +68,26 @@ export async function markAllRead(): Promise<void> {
 
   if (error) throw new Error(error.message);
   revalidatePath("/", "layout");
+}
+
+// ---- Acciones expuestas al navegador ----
+// Regresan el error en vez de lanzarlo: en produccion Next oculta el mensaje de
+// lo que se lanza. Ver src/lib/action-result.ts.
+
+export async function listNotifications(
+  ...args: Parameters<typeof listNotificationsImpl>
+): Promise<ActionResult<Awaited<ReturnType<typeof listNotificationsImpl>>>> {
+  return attempt(() => listNotificationsImpl(...args));
+}
+
+export async function markAllRead(
+  ...args: Parameters<typeof markAllReadImpl>
+): Promise<ActionResult<Awaited<ReturnType<typeof markAllReadImpl>>>> {
+  return attempt(() => markAllReadImpl(...args));
+}
+
+export async function markRead(
+  ...args: Parameters<typeof markReadImpl>
+): Promise<ActionResult<Awaited<ReturnType<typeof markReadImpl>>>> {
+  return attempt(() => markReadImpl(...args));
 }

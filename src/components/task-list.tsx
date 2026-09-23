@@ -6,8 +6,8 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
-  moveBrief,
-  startBriefStage,
+  moveBrief as moveBriefAction,
+  startBriefStage as startBriefStageAction,
   type MyTask,
   type TeamMember,
 } from "@/app/(app)/client/assignment-actions";
@@ -21,6 +21,11 @@ import {
   type StageStatus,
 } from "@/lib/brief-flow";
 import { ROLE_LABEL, type Role } from "@/lib/team";
+import { unwrapped } from "@/lib/action-result";
+
+// Las acciones regresan el error como dato; esto lo vuelve a lanzar con su mensaje real.
+const moveBrief = unwrapped(moveBriefAction);
+const startBriefStage = unwrapped(startBriefStageAction);
 
 /** A donde pasa cada etapa al terminarla, y quien la recibe. */
 const NEXT: Record<StageStatus, { to: BriefStatus; owner: keyof MyTask | null }> = {

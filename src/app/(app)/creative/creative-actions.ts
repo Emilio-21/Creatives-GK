@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { deleteFile } from "@/lib/storage";
+import { attempt, type ActionResult } from "@/lib/action-result";
 
 export type MetadataInput = {
   creativeId: string;
@@ -15,7 +16,7 @@ export type MetadataInput = {
 };
 
 /** RLS deja editar solo al que subio el archivo o a un admin. */
-export async function updateMetadata(input: MetadataInput): Promise<void> {
+async function updateMetadataImpl(input: MetadataInput): Promise<void> {
   await requireUser();
 
   const displayName = input.displayName.trim();
@@ -47,7 +48,7 @@ export async function updateMetadata(input: MetadataInput): Promise<void> {
  * Archivar, no borrar: el archivo sigue en R2 y los lanzamientos con sus
  * metricas siguen existiendo. Sale de la biblioteca y de los KPIs.
  */
-export async function setArchived(creativeId: string, archived: boolean): Promise<void> {
+async function setArchivedImpl(creativeId: string, archived: boolean): Promise<void> {
   await requireUser();
 
   const supabase = await createClient();
@@ -70,7 +71,7 @@ export async function setArchived(creativeId: string, archived: boolean): Promis
  * apuntando a archivos que ya no existen. Al hacerlo en este orden lo peor que
  * pasa es un huerfano en R2, que es justo lo que barre cleanup-orphans.
  */
-export async function deleteCreative(creativeId: string): Promise<void> {
+async function deleteCreativeImpl(creativeId: string): Promise<void> {
   await requireUser();
   const supabase = await createClient();
 
@@ -114,7 +115,7 @@ export async function deleteCreative(creativeId: string): Promise<void> {
  * lanzamientos manuales, que no tienen un anuncio que consultar. Afecta a los
  * lanzamientos del creativo que siguen abiertos.
  */
-export async function setCreativePaused(
+async function setCreativePausedImpl(
   creativeId: string,
   paused: boolean,
 ): Promise<number> {
@@ -131,4 +132,32 @@ export async function setCreativePaused(
   revalidatePath(`/creative/${creativeId}`);
   revalidatePath("/", "layout");
   return (data as number) ?? 0;
+}
+
+// ---- Acciones expuestas al navegador ----
+// Regresan el error en vez de lanzarlo: en produccion Next oculta el mensaje de
+// lo que se lanza. Ver src/lib/action-result.ts.
+
+export async function deleteCreative(
+  ...args: Parameters<typeof deleteCreativeImpl>
+): Promise<ActionResult<Awaited<ReturnType<typeof deleteCreativeImpl>>>> {
+  return attempt(() => deleteCreativeImpl(...args));
+}
+
+export async function setCreativePaused(
+  ...args: Parameters<typeof setCreativePausedImpl>
+): Promise<ActionResult<Awaited<ReturnType<typeof setCreativePausedImpl>>>> {
+  return attempt(() => setCreativePausedImpl(...args));
+}
+
+export async function setArchived(
+  ...args: Parameters<typeof setArchivedImpl>
+): Promise<ActionResult<Awaited<ReturnType<typeof setArchivedImpl>>>> {
+  return attempt(() => setArchivedImpl(...args));
+}
+
+export async function updateMetadata(
+  ...args: Parameters<typeof updateMetadataImpl>
+): Promise<ActionResult<Awaited<ReturnType<typeof updateMetadataImpl>>>> {
+  return attempt(() => updateMetadataImpl(...args));
 }

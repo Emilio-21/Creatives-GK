@@ -4,7 +4,15 @@ import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { archiveClient, renameClient } from "@/app/(app)/client/actions";
+import {
+  archiveClient as archiveClientAction,
+  renameClient as renameClientAction,
+} from "@/app/(app)/client/actions";
+import { unwrapped } from "@/lib/action-result";
+
+// Las acciones regresan el error como dato; esto lo vuelve a lanzar con su mensaje real.
+const archiveClient = unwrapped(archiveClientAction);
+const renameClient = unwrapped(renameClientAction);
 
 export function ClientMenu({ id, name }: { id: string; name: string }) {
   const [editing, setEditing] = useState(false);

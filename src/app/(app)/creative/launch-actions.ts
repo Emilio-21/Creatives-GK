@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { attempt, type ActionResult } from "@/lib/action-result";
 
 export type LaunchInput = {
   creativeId: string;
@@ -45,7 +46,7 @@ function validate(input: LaunchInput) {
  * Un creativo tiene muchos lanzamientos (§3.3): esto siempre inserta, nunca
  * pisa el anterior. `publicado` sale de aqui, no es un campo editable.
  */
-export async function createLaunch(input: LaunchInput): Promise<void> {
+async function createLaunchImpl(input: LaunchInput): Promise<void> {
   const user = await requireUser();
   validate(input);
 
@@ -78,7 +79,7 @@ export async function createLaunch(input: LaunchInput): Promise<void> {
   revalidatePath("/", "layout");
 }
 
-export async function updateLaunch(launchId: string, input: LaunchInput): Promise<void> {
+async function updateLaunchImpl(launchId: string, input: LaunchInput): Promise<void> {
   await requireUser();
   validate(input);
 
@@ -112,7 +113,7 @@ export async function updateLaunch(launchId: string, input: LaunchInput): Promis
 }
 
 /** Solo admin, por RLS. Un member recibe 0 filas afectadas. */
-export async function deleteLaunch(launchId: string, creativeId: string): Promise<void> {
+async function deleteLaunchImpl(launchId: string, creativeId: string): Promise<void> {
   await requireUser();
 
   const supabase = await createClient();
@@ -126,4 +127,26 @@ export async function deleteLaunch(launchId: string, creativeId: string): Promis
 
   revalidatePath(`/creative/${creativeId}`);
   revalidatePath("/", "layout");
+}
+
+// ---- Acciones expuestas al navegador ----
+// Regresan el error en vez de lanzarlo: en produccion Next oculta el mensaje de
+// lo que se lanza. Ver src/lib/action-result.ts.
+
+export async function createLaunch(
+  ...args: Parameters<typeof createLaunchImpl>
+): Promise<ActionResult<Awaited<ReturnType<typeof createLaunchImpl>>>> {
+  return attempt(() => createLaunchImpl(...args));
+}
+
+export async function updateLaunch(
+  ...args: Parameters<typeof updateLaunchImpl>
+): Promise<ActionResult<Awaited<ReturnType<typeof updateLaunchImpl>>>> {
+  return attempt(() => updateLaunchImpl(...args));
+}
+
+export async function deleteLaunch(
+  ...args: Parameters<typeof deleteLaunchImpl>
+): Promise<ActionResult<Awaited<ReturnType<typeof deleteLaunchImpl>>>> {
+  return attempt(() => deleteLaunchImpl(...args));
 }

@@ -1,5 +1,6 @@
 import { TaskList } from "@/components/task-list";
 import { listMyTasks, listTeam } from "@/app/(app)/client/assignment-actions";
+import { unwrap } from "@/lib/action-result";
 
 /**
  * Lo que me toca, de todos los clientes. Vive aparte y no dentro de cada
@@ -7,7 +8,7 @@ import { listMyTasks, listTeam } from "@/app/(app)/client/assignment-actions";
  * repartidos, lo que no ve se le olvida.
  */
 export default async function PendientesPage() {
-  const [tasks, team] = await Promise.all([listMyTasks(), listTeam()]);
+  const [tasks, team] = await Promise.all([listMyTasks(), unwrap(listTeam())]);
   const enProgreso = tasks.filter((task) => task.startedAt).length;
 
   return (

@@ -7,7 +7,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { updateMetadata } from "@/app/(app)/creative/creative-actions";
+import {
+  updateMetadata as updateMetadataAction,
+} from "@/app/(app)/creative/creative-actions";
+import { unwrapped } from "@/lib/action-result";
+
+// Las acciones regresan el error como dato; esto lo vuelve a lanzar con su mensaje real.
+const updateMetadata = unwrapped(updateMetadataAction);
 
 const FORMATS = ["reel", "story", "feed", "1x1", "9x16"];
 

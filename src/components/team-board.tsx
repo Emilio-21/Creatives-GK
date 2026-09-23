@@ -4,8 +4,16 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { setClientMember, setRole } from "@/app/(app)/team-actions";
+import {
+  setClientMember as setClientMemberAction,
+  setRole as setRoleAction,
+} from "@/app/(app)/team-actions";
 import { ROLES, ROLE_HINT, ROLE_LABEL, type Member, type Role } from "@/lib/team";
+import { unwrapped } from "@/lib/action-result";
+
+// Las acciones regresan el error como dato; esto lo vuelve a lanzar con su mensaje real.
+const setClientMember = unwrapped(setClientMemberAction);
+const setRole = unwrapped(setRoleAction);
 
 /**
  * El equipo, sus roles y sus clientes.

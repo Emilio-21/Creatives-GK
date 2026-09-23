@@ -6,12 +6,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  getBatchCreatives,
-  getBatchNaming,
-  setBatchNaming,
+  getBatchCreatives as getBatchCreativesAction,
+  getBatchNaming as getBatchNamingAction,
+  setBatchNaming as setBatchNamingAction,
   type BatchNamingInput,
 } from "@/app/(app)/client/batch-actions";
 import { adName, adsetName, campaignName } from "@/lib/naming";
+import { unwrapped } from "@/lib/action-result";
+
+// Las acciones regresan el error como dato; esto lo vuelve a lanzar con su mensaje real.
+const getBatchCreatives = unwrapped(getBatchCreativesAction);
+const getBatchNaming = unwrapped(getBatchNamingAction);
+const setBatchNaming = unwrapped(setBatchNamingAction);
 
 type Creativo = { id: string; displayName: string };
 

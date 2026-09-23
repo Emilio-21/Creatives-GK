@@ -3,9 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { attempt, type ActionResult } from "@/lib/action-result";
 
 /** Los creativos se producen por tandas: el batch es la unidad de prueba. */
-export async function createBatch(clientId: string, name: string): Promise<string> {
+async function createBatchImpl(clientId: string, name: string): Promise<string> {
   const user = await requireUser();
 
   const trimmed = name.trim();
@@ -31,7 +32,7 @@ export async function createBatch(clientId: string, name: string): Promise<strin
   return data.id as string;
 }
 
-export async function listBatches(
+async function listBatchesImpl(
   clientId: string,
 ): Promise<{ id: string; name: string }[]> {
   await requireUser();
@@ -83,7 +84,7 @@ export type BatchNamingInput = {
 };
 
 /** Nomenclatura de Meta del batch. Un batch es un adset. */
-export async function setBatchNaming(
+async function setBatchNamingImpl(
   batchId: string,
   input: BatchNamingInput,
 ): Promise<void> {
@@ -126,7 +127,7 @@ export async function setBatchNaming(
  * anuncio en Meta, y contarlo dos veces correria el consecutivo de todos los
  * demas.
  */
-export async function getBatchCreatives(
+async function getBatchCreativesImpl(
   batchId: string,
 ): Promise<{ id: string; displayName: string }[]> {
   await requireUser();
@@ -146,7 +147,7 @@ export async function getBatchCreatives(
   }));
 }
 
-export async function getBatchNaming(batchId: string): Promise<BatchNamingInput & { name: string }> {
+async function getBatchNamingImpl(batchId: string): Promise<BatchNamingInput & { name: string }> {
   await requireUser();
   const supabase = await createClient();
 
@@ -173,7 +174,7 @@ export async function getBatchNaming(batchId: string): Promise<BatchNamingInput 
  * porque la policy de creatives solo deja al que subio el archivo: sin esto,
  * copy no podria agrupar lo que subio diseño.
  */
-export async function assignCreativesToBatch(
+async function assignCreativesToBatchImpl(
   creativeIds: string[],
   batchId: string | null,
 ): Promise<number> {
@@ -190,4 +191,44 @@ export async function assignCreativesToBatch(
 
   revalidatePath("/", "layout");
   return (data as number) ?? 0;
+}
+
+// ---- Acciones expuestas al navegador ----
+// Regresan el error en vez de lanzarlo: en produccion Next oculta el mensaje de
+// lo que se lanza. Ver src/lib/action-result.ts.
+
+export async function assignCreativesToBatch(
+  ...args: Parameters<typeof assignCreativesToBatchImpl>
+): Promise<ActionResult<Awaited<ReturnType<typeof assignCreativesToBatchImpl>>>> {
+  return attempt(() => assignCreativesToBatchImpl(...args));
+}
+
+export async function createBatch(
+  ...args: Parameters<typeof createBatchImpl>
+): Promise<ActionResult<Awaited<ReturnType<typeof createBatchImpl>>>> {
+  return attempt(() => createBatchImpl(...args));
+}
+
+export async function listBatches(
+  ...args: Parameters<typeof listBatchesImpl>
+): Promise<ActionResult<Awaited<ReturnType<typeof listBatchesImpl>>>> {
+  return attempt(() => listBatchesImpl(...args));
+}
+
+export async function getBatchCreatives(
+  ...args: Parameters<typeof getBatchCreativesImpl>
+): Promise<ActionResult<Awaited<ReturnType<typeof getBatchCreativesImpl>>>> {
+  return attempt(() => getBatchCreativesImpl(...args));
+}
+
+export async function getBatchNaming(
+  ...args: Parameters<typeof getBatchNamingImpl>
+): Promise<ActionResult<Awaited<ReturnType<typeof getBatchNamingImpl>>>> {
+  return attempt(() => getBatchNamingImpl(...args));
+}
+
+export async function setBatchNaming(
+  ...args: Parameters<typeof setBatchNamingImpl>
+): Promise<ActionResult<Awaited<ReturnType<typeof setBatchNamingImpl>>>> {
+  return attempt(() => setBatchNamingImpl(...args));
 }

@@ -3,6 +3,7 @@
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { getDownloadUrl } from "@/lib/storage";
+import { attempt, type ActionResult } from "@/lib/action-result";
 
 export type DownloadTarget = {
   id: string;
@@ -19,7 +20,7 @@ const MAX_BATCH = 25;
  * El zip se genera en el cliente a partir de estas URLs: en el servidor no cabe,
  * Vercel Hobby corta a los 10 s (§8).
  */
-export async function requestDownloads(creativeIds: string[]): Promise<DownloadTarget[]> {
+async function requestDownloadsImpl(creativeIds: string[]): Promise<DownloadTarget[]> {
   const user = await requireUser();
 
   const ids = [...new Set(creativeIds)].filter(Boolean);
@@ -116,4 +117,14 @@ export async function getDownloadHistory(creativeId: string): Promise<DownloadLo
     downloaded_at: row.downloaded_at as string,
     userName: names.get(row.user_id as string) ?? "sin nombre",
   }));
+}
+
+// ---- Acciones expuestas al navegador ----
+// Regresan el error en vez de lanzarlo: en produccion Next oculta el mensaje de
+// lo que se lanza. Ver src/lib/action-result.ts.
+
+export async function requestDownloads(
+  ...args: Parameters<typeof requestDownloadsImpl>
+): Promise<ActionResult<Awaited<ReturnType<typeof requestDownloadsImpl>>>> {
+  return attempt(() => requestDownloadsImpl(...args));
 }

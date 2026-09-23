@@ -5,9 +5,10 @@ import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { syncClient } from "@/lib/meta-sync";
 import type { SyncReport } from "@/lib/meta-sync";
+import { attempt, type ActionResult } from "@/lib/action-result";
 
 /** Solo el id de la cuenta publicitaria. El token nunca toca la base. */
-export async function setMetaAdAccount(clientId: string, adAccountId: string): Promise<void> {
+async function setMetaAdAccountImpl(clientId: string, adAccountId: string): Promise<void> {
   await requireUser();
 
   const value = adAccountId.trim();
@@ -27,7 +28,7 @@ export async function setMetaAdAccount(clientId: string, adAccountId: string): P
   revalidatePath("/", "layout");
 }
 
-export async function syncClientNow(
+async function syncClientNowImpl(
   clientId: string,
   range?: { since: string; until: string },
 ): Promise<SyncReport> {
@@ -41,4 +42,20 @@ export async function syncClientNow(
   const report = await syncClient(clientId, range);
   revalidatePath("/", "layout");
   return report;
+}
+
+// ---- Acciones expuestas al navegador ----
+// Regresan el error en vez de lanzarlo: en produccion Next oculta el mensaje de
+// lo que se lanza. Ver src/lib/action-result.ts.
+
+export async function setMetaAdAccount(
+  ...args: Parameters<typeof setMetaAdAccountImpl>
+): Promise<ActionResult<Awaited<ReturnType<typeof setMetaAdAccountImpl>>>> {
+  return attempt(() => setMetaAdAccountImpl(...args));
+}
+
+export async function syncClientNow(
+  ...args: Parameters<typeof syncClientNowImpl>
+): Promise<ActionResult<Awaited<ReturnType<typeof syncClientNowImpl>>>> {
+  return attempt(() => syncClientNowImpl(...args));
 }

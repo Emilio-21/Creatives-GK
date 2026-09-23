@@ -4,10 +4,11 @@ import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import type { BriefStatus, Channel, StageStatus } from "@/lib/brief-flow";
+import { attempt, type ActionResult } from "@/lib/action-result";
 
 export type TeamMember = { id: string; name: string; role: string; isMe: boolean };
 
-export async function listTeam(): Promise<TeamMember[]> {
+async function listTeamImpl(): Promise<TeamMember[]> {
   const user = await requireUser();
   const supabase = await createClient();
 
@@ -32,7 +33,7 @@ export async function listTeam(): Promise<TeamMember[]> {
  * asignar exige persona y que devolver exige motivo. Aqui no se repite, porque
  * dos copias de la misma regla se separan.
  */
-export async function moveBrief(
+async function moveBriefImpl(
   briefId: string,
   to: BriefStatus,
   assignedTo?: string | null,
@@ -58,7 +59,7 @@ export async function moveBrief(
  * Cambia quien se encarga de una etapa. Si es la etapa en curso, la base
  * registra el relevo y avisa a la persona nueva.
  */
-export async function setBriefOwner(
+async function setBriefOwnerImpl(
   briefId: string,
   stage: StageStatus,
   profileId: string | null,
@@ -76,7 +77,7 @@ export async function setBriefOwner(
   revalidatePath("/", "layout");
 }
 
-export async function setBriefDueDate(briefId: string, dueDate: string | null): Promise<void> {
+async function setBriefDueDateImpl(briefId: string, dueDate: string | null): Promise<void> {
   await requireUser();
   const supabase = await createClient();
 
@@ -100,7 +101,7 @@ export type BriefEvent = {
   created_at: string;
 };
 
-export async function getBriefHistory(briefId: string): Promise<BriefEvent[]> {
+async function getBriefHistoryImpl(briefId: string): Promise<BriefEvent[]> {
   await requireUser();
   const supabase = await createClient();
 
@@ -141,7 +142,7 @@ export async function getBriefHistory(briefId: string): Promise<BriefEvent[]> {
 }
 
 /** "Ya lo tome." La base valida que sea quien tiene la etapa (o un admin). */
-export async function startBriefStage(briefId: string): Promise<void> {
+async function startBriefStageImpl(briefId: string): Promise<void> {
   await requireUser();
   const supabase = await createClient();
 
@@ -223,4 +224,44 @@ export async function myTaskCount(): Promise<number> {
     .is("archived_at", null);
 
   return count ?? 0;
+}
+
+// ---- Acciones expuestas al navegador ----
+// Regresan el error en vez de lanzarlo: en produccion Next oculta el mensaje de
+// lo que se lanza. Ver src/lib/action-result.ts.
+
+export async function getBriefHistory(
+  ...args: Parameters<typeof getBriefHistoryImpl>
+): Promise<ActionResult<Awaited<ReturnType<typeof getBriefHistoryImpl>>>> {
+  return attempt(() => getBriefHistoryImpl(...args));
+}
+
+export async function listTeam(
+  ...args: Parameters<typeof listTeamImpl>
+): Promise<ActionResult<Awaited<ReturnType<typeof listTeamImpl>>>> {
+  return attempt(() => listTeamImpl(...args));
+}
+
+export async function moveBrief(
+  ...args: Parameters<typeof moveBriefImpl>
+): Promise<ActionResult<Awaited<ReturnType<typeof moveBriefImpl>>>> {
+  return attempt(() => moveBriefImpl(...args));
+}
+
+export async function setBriefDueDate(
+  ...args: Parameters<typeof setBriefDueDateImpl>
+): Promise<ActionResult<Awaited<ReturnType<typeof setBriefDueDateImpl>>>> {
+  return attempt(() => setBriefDueDateImpl(...args));
+}
+
+export async function setBriefOwner(
+  ...args: Parameters<typeof setBriefOwnerImpl>
+): Promise<ActionResult<Awaited<ReturnType<typeof setBriefOwnerImpl>>>> {
+  return attempt(() => setBriefOwnerImpl(...args));
+}
+
+export async function startBriefStage(
+  ...args: Parameters<typeof startBriefStageImpl>
+): Promise<ActionResult<Awaited<ReturnType<typeof startBriefStageImpl>>>> {
+  return attempt(() => startBriefStageImpl(...args));
 }

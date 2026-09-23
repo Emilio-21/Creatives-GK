@@ -16,13 +16,29 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { deleteLaunch } from "@/app/(app)/creative/launch-actions";
-import { deleteCreative } from "@/app/(app)/creative/creative-actions";
-import { getCreativeDetail, type CreativeDetail } from "@/app/(app)/creative/detail-actions";
-import { ungroup } from "@/app/(app)/client/variant-actions";
+import {
+  deleteLaunch as deleteLaunchAction,
+} from "@/app/(app)/creative/launch-actions";
+import {
+  deleteCreative as deleteCreativeAction,
+} from "@/app/(app)/creative/creative-actions";
+import {
+  getCreativeDetail as getCreativeDetailAction,
+  type CreativeDetail,
+} from "@/app/(app)/creative/detail-actions";
+import {
+  ungroup as ungroupAction,
+} from "@/app/(app)/client/variant-actions";
 import type { CreativeVariant } from "@/lib/creatives";
 import { derive, formatMoney, formatPercent, statusOf, STATUS_LABEL } from "@/lib/metrics";
 import { formatCount } from "@/lib/metrics";
+import { unwrapped } from "@/lib/action-result";
+
+// Las acciones regresan el error como dato; esto lo vuelve a lanzar con su mensaje real.
+const deleteLaunch = unwrapped(deleteLaunchAction);
+const deleteCreative = unwrapped(deleteCreativeAction);
+const getCreativeDetail = unwrapped(getCreativeDetailAction);
+const ungroup = unwrapped(ungroupAction);
 
 /**
  * El detalle vive en un modal: abrir un creativo no debe costar una navegación.

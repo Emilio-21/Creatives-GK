@@ -17,9 +17,27 @@ import {
 import { ALLOWED_MIME_TYPES, MAX_FILE_BYTES } from "@/lib/env";
 import { extractMetadata, type MediaMetadata } from "@/lib/media";
 import { uploadToR2 } from "@/lib/upload-xhr";
-import { confirmUpload, findDuplicateNames, requestUploadUrls } from "./actions";
-import { createBatch, listBatches } from "@/app/(app)/client/batch-actions";
-import { autoPairUploaded } from "@/app/(app)/client/variant-actions";
+import {
+  confirmUpload as confirmUploadAction,
+  findDuplicateNames as findDuplicateNamesAction,
+  requestUploadUrls as requestUploadUrlsAction,
+} from "./actions";
+import {
+  createBatch as createBatchAction,
+  listBatches as listBatchesAction,
+} from "@/app/(app)/client/batch-actions";
+import {
+  autoPairUploaded as autoPairUploadedAction,
+} from "@/app/(app)/client/variant-actions";
+import { unwrapped } from "@/lib/action-result";
+
+// Las acciones regresan el error como dato; esto lo vuelve a lanzar con su mensaje real.
+const confirmUpload = unwrapped(confirmUploadAction);
+const findDuplicateNames = unwrapped(findDuplicateNamesAction);
+const requestUploadUrls = unwrapped(requestUploadUrlsAction);
+const createBatch = unwrapped(createBatchAction);
+const listBatches = unwrapped(listBatchesAction);
+const autoPairUploaded = unwrapped(autoPairUploadedAction);
 
 const FORMATS = ["reel", "story", "feed", "1x1", "9x16"];
 const ACCEPT = ALLOWED_MIME_TYPES.join(",");

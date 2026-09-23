@@ -11,6 +11,7 @@ import {
   getUploadUrl,
   statFile,
 } from "@/lib/storage";
+import { attempt, type ActionResult } from "@/lib/action-result";
 
 export type UploadTicket = {
   uuid: string;
@@ -24,7 +25,7 @@ export type UploadTicket = {
  * Firma el PUT del archivo (y el del poster, si es video).
  * Valida sesion, mime y tamaño ANTES de firmar (§4.4).
  */
-export async function requestUploadUrls(
+async function requestUploadUrlsImpl(
   filename: string,
   mimeType: string,
   size: number,
@@ -74,7 +75,7 @@ export type ConfirmUploadInput = {
  * huerfano en R2 — por eso el intento de borrarlo aqui y el script de limpieza
  * de la fase 7 para lo que se escape (§7).
  */
-export async function confirmUpload(input: ConfirmUploadInput): Promise<{ id: string }> {
+async function confirmUploadImpl(input: ConfirmUploadInput): Promise<{ id: string }> {
   const user = await requireUser();
 
   // El tamaño que reporto el cliente al firmar no es confiable: se verifica
@@ -129,7 +130,7 @@ export async function confirmUpload(input: ConfirmUploadInput): Promise<{ id: st
 }
 
 /** Nombres que ya existen, para advertir en la UI sin bloquear (§3.7). */
-export async function findDuplicateNames(filenames: string[]): Promise<string[]> {
+async function findDuplicateNamesImpl(filenames: string[]): Promise<string[]> {
   await requireUser();
   if (filenames.length === 0) return [];
 
@@ -146,4 +147,26 @@ export async function revalidateLibrary(clientId: string) {
   await requireUser();
   revalidatePath("/");
   revalidatePath(`/client/${clientId}`);
+}
+
+// ---- Acciones expuestas al navegador ----
+// Regresan el error en vez de lanzarlo: en produccion Next oculta el mensaje de
+// lo que se lanza. Ver src/lib/action-result.ts.
+
+export async function confirmUpload(
+  ...args: Parameters<typeof confirmUploadImpl>
+): Promise<ActionResult<Awaited<ReturnType<typeof confirmUploadImpl>>>> {
+  return attempt(() => confirmUploadImpl(...args));
+}
+
+export async function findDuplicateNames(
+  ...args: Parameters<typeof findDuplicateNamesImpl>
+): Promise<ActionResult<Awaited<ReturnType<typeof findDuplicateNamesImpl>>>> {
+  return attempt(() => findDuplicateNamesImpl(...args));
+}
+
+export async function requestUploadUrls(
+  ...args: Parameters<typeof requestUploadUrlsImpl>
+): Promise<ActionResult<Awaited<ReturnType<typeof requestUploadUrlsImpl>>>> {
+  return attempt(() => requestUploadUrlsImpl(...args));
 }

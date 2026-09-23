@@ -9,13 +9,22 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { docEmbedUrl, docLabel } from "@/lib/brief-flow";
 import { UploadDropzone } from "@/app/(app)/upload/upload-dropzone";
-import { createBatch } from "@/app/(app)/client/batch-actions";
 import {
-  listBriefs,
-  publishBrief,
-  saveBrief,
+  createBatch as createBatchAction,
+} from "@/app/(app)/client/batch-actions";
+import {
+  listBriefs as listBriefsAction,
+  publishBrief as publishBriefAction,
+  saveBrief as saveBriefAction,
   type BriefWithMeta,
 } from "@/app/(app)/client/brief-actions";
+import { unwrapped } from "@/lib/action-result";
+
+// Las acciones regresan el error como dato; esto lo vuelve a lanzar con su mensaje real.
+const createBatch = unwrapped(createBatchAction);
+const listBriefs = unwrapped(listBriefsAction);
+const publishBrief = unwrapped(publishBriefAction);
+const saveBrief = unwrapped(saveBriefAction);
 
 /**
  * El brief es el punto de partida: copy escribe, diseño sube ahi mismo, y al

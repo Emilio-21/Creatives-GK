@@ -5,6 +5,7 @@ import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { aspectLabel } from "@/lib/aspect";
 import { selectAutoPairs } from "@/lib/pairing";
+import { attempt, type ActionResult } from "@/lib/action-result";
 
 /**
  * Junta varios archivos bajo un solo anuncio.
@@ -12,7 +13,7 @@ import { selectAutoPairs } from "@/lib/pairing";
  * El principal se queda con el codigo [GK-xxxx], con los lanzamientos y con su
  * lugar en el tablero; los demas pasan a ser formatos suyos.
  */
-export async function groupAsAd(parentId: string, variantIds: string[]): Promise<number> {
+async function groupAsAdImpl(parentId: string, variantIds: string[]): Promise<number> {
   await requireUser();
   const otros = variantIds.filter((id) => id !== parentId);
   if (otros.length === 0) return 0;
@@ -30,7 +31,7 @@ export async function groupAsAd(parentId: string, variantIds: string[]): Promise
 }
 
 /** Devuelve variantes a ser anuncios por su cuenta. */
-export async function ungroup(variantIds: string[]): Promise<number> {
+async function ungroupImpl(variantIds: string[]): Promise<number> {
   await requireUser();
   if (variantIds.length === 0) return 0;
 
@@ -56,7 +57,7 @@ export type AutoPair = { principal: string; variantes: string[] };
  * Se aplica UNICAMENTE a los ids recien subidos: no toca nada que ya estuviera
  * en la biblioteca, aunque el nombre empate.
  */
-export async function autoPairUploaded(creativeIds: string[]): Promise<AutoPair[]> {
+async function autoPairUploadedImpl(creativeIds: string[]): Promise<AutoPair[]> {
   await requireUser();
   if (creativeIds.length < 2) return [];
 
@@ -99,4 +100,26 @@ export async function autoPairUploaded(creativeIds: string[]): Promise<AutoPair[
 
   if (hechos.length > 0) revalidatePath("/", "layout");
   return hechos;
+}
+
+// ---- Acciones expuestas al navegador ----
+// Regresan el error en vez de lanzarlo: en produccion Next oculta el mensaje de
+// lo que se lanza. Ver src/lib/action-result.ts.
+
+export async function autoPairUploaded(
+  ...args: Parameters<typeof autoPairUploadedImpl>
+): Promise<ActionResult<Awaited<ReturnType<typeof autoPairUploadedImpl>>>> {
+  return attempt(() => autoPairUploadedImpl(...args));
+}
+
+export async function groupAsAd(
+  ...args: Parameters<typeof groupAsAdImpl>
+): Promise<ActionResult<Awaited<ReturnType<typeof groupAsAdImpl>>>> {
+  return attempt(() => groupAsAdImpl(...args));
+}
+
+export async function ungroup(
+  ...args: Parameters<typeof ungroupImpl>
+): Promise<ActionResult<Awaited<ReturnType<typeof ungroupImpl>>>> {
+  return attempt(() => ungroupImpl(...args));
 }

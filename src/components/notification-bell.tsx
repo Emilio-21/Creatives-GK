@@ -5,11 +5,17 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { toast } from "sonner";
 import {
-  listNotifications,
-  markAllRead,
-  markRead,
+  listNotifications as listNotificationsAction,
+  markAllRead as markAllReadAction,
+  markRead as markReadAction,
   type Notification,
 } from "@/app/(app)/notification-actions";
+import { unwrapped } from "@/lib/action-result";
+
+// Las acciones regresan el error como dato; esto lo vuelve a lanzar con su mensaje real.
+const listNotifications = unwrapped(listNotificationsAction);
+const markAllRead = unwrapped(markAllReadAction);
+const markRead = unwrapped(markReadAction);
 
 const KIND_DOT: Record<string, string> = {
   en_revision: "bg-highlight",

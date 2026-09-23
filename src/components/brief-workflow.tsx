@@ -6,12 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  getBriefHistory,
-  listTeam,
-  moveBrief,
-  setBriefDueDate,
-  setBriefOwner,
-  startBriefStage,
+  getBriefHistory as getBriefHistoryAction,
+  listTeam as listTeamAction,
+  moveBrief as moveBriefAction,
+  setBriefDueDate as setBriefDueDateAction,
+  setBriefOwner as setBriefOwnerAction,
+  startBriefStage as startBriefStageAction,
   type BriefEvent,
   type TeamMember,
 } from "@/app/(app)/client/assignment-actions";
@@ -26,6 +26,15 @@ import {
   type BriefStatus,
 } from "@/lib/brief-flow";
 import { ROLE_LABEL, type Role } from "@/lib/team";
+import { unwrapped } from "@/lib/action-result";
+
+// Las acciones regresan el error como dato; esto lo vuelve a lanzar con su mensaje real.
+const getBriefHistory = unwrapped(getBriefHistoryAction);
+const listTeam = unwrapped(listTeamAction);
+const moveBrief = unwrapped(moveBriefAction);
+const setBriefDueDate = unwrapped(setBriefDueDateAction);
+const setBriefOwner = unwrapped(setBriefOwnerAction);
+const startBriefStage = unwrapped(startBriefStageAction);
 
 /**
  * El relevo: las tres etapas con su responsable, en que etapa va y que sigue.

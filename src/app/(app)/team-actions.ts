@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import type { Member, Role } from "@/lib/team";
+import { attempt, type ActionResult } from "@/lib/action-result";
 
 /** El equipo con sus clientes y cuánto tiene encima. */
 export async function listMembers(): Promise<Member[]> {
@@ -43,7 +44,7 @@ export async function listMembers(): Promise<Member[]> {
   }));
 }
 
-export async function setRole(profileId: string, role: Role): Promise<void> {
+async function setRoleImpl(profileId: string, role: Role): Promise<void> {
   await requireUser();
   const supabase = await createClient();
 
@@ -62,7 +63,7 @@ export async function setRole(profileId: string, role: Role): Promise<void> {
  * Es un filtro de vista, no un permiso: quien no tenga clientes asignados los
  * ve todos. Asi la app sigue sirviendo aunque nadie se acuerde de repartir.
  */
-export async function setClientMember(
+async function setClientMemberImpl(
   clientId: string,
   profileId: string,
   belongs: boolean,
@@ -94,4 +95,20 @@ export async function myClientIds(): Promise<string[]> {
     .eq("profile_id", user.id);
 
   return (data ?? []).map((row) => row.client_id as string);
+}
+
+// ---- Acciones expuestas al navegador ----
+// Regresan el error en vez de lanzarlo: en produccion Next oculta el mensaje de
+// lo que se lanza. Ver src/lib/action-result.ts.
+
+export async function setClientMember(
+  ...args: Parameters<typeof setClientMemberImpl>
+): Promise<ActionResult<Awaited<ReturnType<typeof setClientMemberImpl>>>> {
+  return attempt(() => setClientMemberImpl(...args));
+}
+
+export async function setRole(
+  ...args: Parameters<typeof setRoleImpl>
+): Promise<ActionResult<Awaited<ReturnType<typeof setRoleImpl>>>> {
+  return attempt(() => setRoleImpl(...args));
 }

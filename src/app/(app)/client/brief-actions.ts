@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
 import { normalizeDocUrl, type BriefStatus, type Channel } from "@/lib/brief-flow";
 import { createClient } from "@/lib/supabase/server";
+import { attempt, type ActionResult } from "@/lib/action-result";
 
 export type BriefRow = {
   id: string;
@@ -39,7 +40,7 @@ export type BriefWithMeta = BriefRow & {
 };
 
 /** Encargos de copy para diseño. Las instrucciones viven en el Google Doc enlazado. */
-export async function listBriefs(clientId: string): Promise<BriefWithMeta[]> {
+async function listBriefsImpl(clientId: string): Promise<BriefWithMeta[]> {
   await requireUser();
   const supabase = await createClient();
 
@@ -113,7 +114,7 @@ export async function listBriefs(clientId: string): Promise<BriefWithMeta[]> {
   }));
 }
 
-export async function saveBrief(input: {
+async function saveBriefImpl(input: {
   id?: string;
   clientId: string;
   batchId?: string | null;
@@ -198,7 +199,7 @@ export async function archiveBrief(briefId: string): Promise<void> {
  * Publicar no mueve archivos: los creativos ya se subieron con ese batch_id.
  * Lo que hace es cerrar el ciclo del brief.
  */
-export async function publishBrief(
+async function publishBriefImpl(
   briefId: string,
   batchId: string,
 ): Promise<{ handedOff: boolean; reason: string | null }> {
@@ -241,4 +242,26 @@ export async function publishBrief(
 
   revalidatePath("/", "layout");
   return { handedOff: !pasoError, reason: pasoError?.message ?? null };
+}
+
+// ---- Acciones expuestas al navegador ----
+// Regresan el error en vez de lanzarlo: en produccion Next oculta el mensaje de
+// lo que se lanza. Ver src/lib/action-result.ts.
+
+export async function listBriefs(
+  ...args: Parameters<typeof listBriefsImpl>
+): Promise<ActionResult<Awaited<ReturnType<typeof listBriefsImpl>>>> {
+  return attempt(() => listBriefsImpl(...args));
+}
+
+export async function publishBrief(
+  ...args: Parameters<typeof publishBriefImpl>
+): Promise<ActionResult<Awaited<ReturnType<typeof publishBriefImpl>>>> {
+  return attempt(() => publishBriefImpl(...args));
+}
+
+export async function saveBrief(
+  ...args: Parameters<typeof saveBriefImpl>
+): Promise<ActionResult<Awaited<ReturnType<typeof saveBriefImpl>>>> {
+  return attempt(() => saveBriefImpl(...args));
 }

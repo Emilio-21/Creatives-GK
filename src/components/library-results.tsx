@@ -18,15 +18,29 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { requestDownloads } from "@/app/(app)/creative/actions";
-import { quickLaunch } from "@/app/(app)/creative/detail-actions";
-import { deleteCreative, setCreativePaused } from "@/app/(app)/creative/creative-actions";
+import {
+  requestDownloads as requestDownloadsAction,
+} from "@/app/(app)/creative/actions";
+import {
+  quickLaunch as quickLaunchAction,
+} from "@/app/(app)/creative/detail-actions";
+import {
+  deleteCreative as deleteCreativeAction,
+  setCreativePaused as setCreativePausedAction,
+} from "@/app/(app)/creative/creative-actions";
 import { downloadOne, downloadZip } from "@/lib/download";
 import { exportReportCsv } from "@/lib/export-report";
 import { useRouter } from "next/navigation";
 import { formatMoney, formatPercent, statusOf, STATUS_LABEL } from "@/lib/metrics";
 import { adCodeFor } from "@/lib/ad-code";
 import type { CreativeCard as Card } from "@/lib/creatives";
+import { unwrapped } from "@/lib/action-result";
+
+// Las acciones regresan el error como dato; esto lo vuelve a lanzar con su mensaje real.
+const requestDownloads = unwrapped(requestDownloadsAction);
+const quickLaunch = unwrapped(quickLaunchAction);
+const deleteCreative = unwrapped(deleteCreativeAction);
+const setCreativePaused = unwrapped(setCreativePausedAction);
 
 const STATUS_DOT: Record<ReturnType<typeof statusOf>, string> = {
   // Amarillo solo para "sin lanzar"; morado para lo que ya salio al aire.

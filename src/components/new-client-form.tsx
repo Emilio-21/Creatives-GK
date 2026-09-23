@@ -4,7 +4,14 @@ import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { createClientRecord, type ClientFormState } from "@/app/(app)/client/actions";
+import {
+  createClientRecord as createClientRecordAction,
+  type ClientFormState,
+} from "@/app/(app)/client/actions";
+import { unwrapped } from "@/lib/action-result";
+
+// Las acciones regresan el error como dato; esto lo vuelve a lanzar con su mensaje real.
+const createClientRecord = unwrapped(createClientRecordAction);
 
 function Submit() {
   const { pending } = useFormStatus();

@@ -7,10 +7,22 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { saveBrief } from "@/app/(app)/client/brief-actions";
-import { listTeam, moveBrief, type TeamMember } from "@/app/(app)/client/assignment-actions";
+import {
+  saveBrief as saveBriefAction,
+} from "@/app/(app)/client/brief-actions";
+import {
+  listTeam as listTeamAction,
+  moveBrief as moveBriefAction,
+  type TeamMember,
+} from "@/app/(app)/client/assignment-actions";
 import { CHANNELS, CHANNEL_LABEL, STAGES, type Channel, type OwnerField } from "@/lib/brief-flow";
 import { ROLE_LABEL, type Role } from "@/lib/team";
+import { unwrapped } from "@/lib/action-result";
+
+// Las acciones regresan el error como dato; esto lo vuelve a lanzar con su mensaje real.
+const saveBrief = unwrapped(saveBriefAction);
+const listTeam = unwrapped(listTeamAction);
+const moveBrief = unwrapped(moveBriefAction);
 
 type ClientOption = { id: string; name: string };
 

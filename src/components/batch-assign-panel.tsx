@@ -5,10 +5,16 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-  assignCreativesToBatch,
-  createBatch,
-  listBatches,
+  assignCreativesToBatch as assignCreativesToBatchAction,
+  createBatch as createBatchAction,
+  listBatches as listBatchesAction,
 } from "@/app/(app)/client/batch-actions";
+import { unwrapped } from "@/lib/action-result";
+
+// Las acciones regresan el error como dato; esto lo vuelve a lanzar con su mensaje real.
+const assignCreativesToBatch = unwrapped(assignCreativesToBatchAction);
+const createBatch = unwrapped(createBatchAction);
+const listBatches = unwrapped(listBatchesAction);
 
 type Batch = { id: string; name: string };
 
