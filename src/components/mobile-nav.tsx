@@ -9,20 +9,22 @@ type Option = { id: string; name: string; count: number };
  * En movil el sidebar no cabe. En vez de un <select>, una fila de chips que se
  * desplaza: se ve a que cliente estas entrando y cuantos creativos tiene sin
  * abrir nada.
+ *
+ * Solo dentro de Creativos (la biblioteca y cada cliente). En el resto de las
+ * pantallas era una segunda navegacion encima de la barra de abajo.
  */
 export function MobileNav({ clients }: { clients: Option[] }) {
   const pathname = usePathname();
   const total = clients.reduce((sum, client) => sum + client.count, 0);
   const allActive = pathname === "/creativos";
 
+  if (!pathname.startsWith("/creativos") && !pathname.startsWith("/client")) return null;
+
   return (
-    <div className="-mx-4 overflow-x-auto px-4 pb-1 md:hidden">
+    <div className="-ml-4 min-w-0 flex-1 overflow-x-auto pb-1 pl-4 md:hidden">
       <div className="flex w-max gap-2">
         <Chip href="/creativos" active={allActive}>
           Todos · {total}
-        </Chip>
-        <Chip href="/dashboard" active={pathname.startsWith("/dashboard")}>
-          Resumen
         </Chip>
         {clients.map((client) => (
           <Chip

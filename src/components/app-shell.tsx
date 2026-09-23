@@ -124,6 +124,7 @@ export function AppShell({
         <main className="glass min-w-0 flex-1 rounded-2xl border p-4 pb-20 sm:p-6 md:pb-6">
           <div className="mb-4 flex items-center gap-2 md:hidden">
             <MobileNav clients={clients} />
+            <div className="ml-auto" />
             <ThemeToggle />
             <NotificationBell />
           </div>

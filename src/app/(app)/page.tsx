@@ -76,7 +76,15 @@ export default async function HomePage() {
           )}
         </Block>
 
-        <Block title="El equipo">
+        <Block
+          title="El equipo"
+          action={
+            // En movil el Resumen no tiene pestaña propia: se llega desde aqui.
+            <Link href="/dashboard" className="text-xs text-primary hover:underline">
+              Ver resumen
+            </Link>
+          }
+        >
           <Pipeline counts={home.pipeline} />
 
           <div className="mt-4">
@@ -209,7 +217,9 @@ function Pipeline({ counts }: { counts: Record<BriefStatus, number> }) {
           }`}
         >
           {index > 0 ? (
-            <span aria-hidden className="mr-3.5 text-muted-foreground/50">
+            // En angosto la franja se parte y una flecha al inicio del renglon
+            // no apunta a nada: ahi basta el espacio.
+            <span aria-hidden className="mr-3.5 hidden text-muted-foreground/50 sm:inline">
               →
             </span>
           ) : null}

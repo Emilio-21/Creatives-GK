@@ -86,7 +86,9 @@ export async function LibraryView({
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
-        <form method="get" action={basePath} className="flex gap-2">
+        {/* En angosto el buscador ocupa su renglon y se acomoda; antes empujaba la
+            pagina de lado. */}
+        <form method="get" action={basePath} className="flex w-full flex-wrap gap-2 sm:w-auto">
           {params.onlyUnlaunched ? <input type="hidden" name="sinLanzar" value="1" /> : null}
           {params.onlyArchived ? <input type="hidden" name="archivados" value="1" /> : null}
           {params.view === "tabla" ? <input type="hidden" name="view" value="tabla" /> : null}
@@ -94,7 +96,7 @@ export async function LibraryView({
             name="q"
             defaultValue={params.q ?? ""}
             placeholder="Buscar por nombre…"
-            className="h-9 w-56"
+            className="h-9 min-w-0 flex-1 sm:w-56 sm:flex-none"
           />
           <select name="sort" defaultValue={params.sort ?? "recientes"} className={selectClass}>
             <option value="recientes">Más recientes</option>

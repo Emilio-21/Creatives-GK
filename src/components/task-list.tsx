@@ -150,6 +150,8 @@ function TaskRow({ task, team }: { task: MyTask; team: TeamMember[] }) {
           </p>
         </div>
 
+        {/* Un solo boton: la accion siguiente. Con diez tareas, dos botones por
+            renglon eran veinte. Terminar sin haber empezado sigue dentro del brief. */}
         <div className="flex shrink-0 gap-2">
           {!task.startedAt ? (
             <Button
@@ -159,21 +161,13 @@ function TaskRow({ task, team }: { task: MyTask; team: TeamMember[] }) {
             >
               Empezar
             </Button>
-          ) : null}
-          {terminaDentro ? (
-            <Link
-              href={href}
-              className={buttonVariants({
-                size: "sm",
-                variant: task.startedAt ? "default" : "outline",
-              })}
-            >
+          ) : terminaDentro ? (
+            <Link href={href} className={buttonVariants({ size: "sm" })}>
               Subir y publicar
             </Link>
           ) : (
             <Button
               size="sm"
-              variant={task.startedAt ? "default" : "outline"}
               disabled={pending}
               onClick={() => (faltaSiguiente ? setEligiendo(true) : terminar())}
             >
