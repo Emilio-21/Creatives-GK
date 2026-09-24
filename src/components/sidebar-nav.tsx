@@ -11,15 +11,22 @@ export type ClientOption = { id: string; name: string; count: number };
  * Asi el layout no necesita saber en que cliente estas, que es lo que obligaba
  * a montar el shell dentro de cada pagina.
  */
-export function SidebarNav({ clients }: { clients: ClientOption[] }) {
+export function SidebarNav({
+  clients,
+  taskCount = 0,
+}: {
+  clients: ClientOption[];
+  /** Etapas de briefs en manos de quien mira: va como globo en "Mi trabajo". */
+  taskCount?: number;
+}) {
   const pathname = usePathname();
   const total = clients.reduce((sum, client) => sum + client.count, 0);
 
   return (
     <>
       <nav className="space-y-1">
-        <SidebarLink href="/" active={pathname === "/"}>
-          Inicio
+        <SidebarLink href="/" active={pathname === "/"} badge={taskCount}>
+          Mi trabajo
         </SidebarLink>
         <SidebarLink href="/creativos" active={pathname === "/creativos"} count={total}>
           Todos los creativos
@@ -56,11 +63,14 @@ function SidebarLink({
   href,
   active,
   count,
+  badge = 0,
   children,
 }: {
   href: string;
   active: boolean;
   count?: number;
+  /** Lo que pide accion: globo de color, no el conteo gris. */
+  badge?: number;
   children: React.ReactNode;
 }) {
   return (
@@ -72,6 +82,11 @@ function SidebarLink({
       }`}
     >
       <span className="min-w-0 flex-1 truncate">{children}</span>
+      {badge > 0 ? (
+        <span className="flex min-w-5 shrink-0 items-center justify-center rounded-full bg-primary px-1.5 text-[11px] font-medium text-primary-foreground">
+          {badge > 9 ? "9+" : badge}
+        </span>
+      ) : null}
       {count !== undefined ? (
         <span className="shrink-0 font-mono text-xs tabular-nums text-muted-foreground">
           {count}

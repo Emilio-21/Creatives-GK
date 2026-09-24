@@ -17,7 +17,7 @@ export function NewBriefButton({ clients }: { clients: { id: string; name: strin
         onClick={() => setOpen(true)}
         className="brand-gradient flex w-full items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90"
       >
-        <span aria-hidden="true">+</span> Nuevo brief
+        <span aria-hidden="true">+</span> Nueva tarea
       </button>
       {/* La clave remonta el formulario al abrir: hereda el cliente actual. */}
       <BriefDialog

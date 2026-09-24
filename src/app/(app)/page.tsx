@@ -7,15 +7,13 @@ import { CHANNEL_LABEL, elapsed, STATUS_LABEL, type BriefStatus } from "@/lib/br
 import { DIAS_ATORADO, getHomeData, type HomeBrief } from "@/lib/home";
 import { createClient } from "@/lib/supabase/server";
 
-export const metadata = { title: "Inicio · Creativos" };
-
-/** Cuantos pendientes caben aqui antes de mandar a la lista completa. */
-const PENDIENTES_EN_INICIO = 5;
+export const metadata = { title: "Mi trabajo · Creativos" };
 
 /**
- * El inicio responde lo que alguien se pregunta al abrir la app: que hago
- * ahora y que esta atorado. Arriba lo que se hace, abajo lo que se sabe. El
- * inventario de creativos tiene su propia seccion; aqui no.
+ * "Mi trabajo": lo que alguien se pregunta al abrir la app, que hago ahora y
+ * que esta atorado. Arriba lo que se hace, abajo lo que se sabe. Absorbio a
+ * "Mis pendientes": mostraba la misma lista, solo que completa; ahora esta la
+ * lista completa aqui. El inventario de creativos tiene su propia seccion.
  */
 export default async function HomePage() {
   const supabase = await createClient();
@@ -47,18 +45,11 @@ export default async function HomePage() {
         title="Lo tuyo, ahora"
         primary
         count={tasks.length}
-        action={
-          tasks.length > PENDIENTES_EN_INICIO ? (
-            <Link href="/pendientes" className="text-xs text-primary hover:underline">
-              Ver los {tasks.length}
-            </Link>
-          ) : null
-        }
       >
         {tasks.length === 0 ? (
           <Empty>Nada en tus manos.</Empty>
         ) : (
-          <TaskList tasks={tasks.slice(0, PENDIENTES_EN_INICIO)} team={team} />
+          <TaskList tasks={tasks} team={team} />
         )}
       </Block>
 

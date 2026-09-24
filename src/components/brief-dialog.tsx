@@ -81,13 +81,13 @@ export function BriefDialog({
         if (mandarARevision) {
           try {
             await moveBrief(id, "en_revision");
-            toast.success("Brief creado y enviado a revisión");
+            toast.success("Tarea creada y enviada a revisión");
           } catch (error) {
             // El brief ya existe; solo no se movio. Se dice, no se esconde.
-            toast.warning(`Brief creado en borrador: ${(error as Error).message}`);
+            toast.warning(`Tarea creada en borrador: ${(error as Error).message}`);
           }
         } else {
-          toast.success("Brief guardado como borrador");
+          toast.success("Tarea guardada como borrador");
         }
 
         onOpenChange(false);
@@ -107,14 +107,14 @@ export function BriefDialog({
     <div
       role="dialog"
       aria-modal="true"
-      aria-label="Nuevo brief"
+      aria-label="Nueva tarea"
       className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/60 p-4 backdrop-blur-sm sm:p-8"
       onClick={(event) => {
         if (event.target === event.currentTarget) onOpenChange(false);
       }}
     >
       <div className="w-full max-w-2xl rounded-xl border bg-card p-5 shadow-2xl">
-        <h2 className="mb-4 text-base font-semibold">Nuevo brief</h2>
+        <h2 className="mb-4 text-base font-semibold">Nueva tarea</h2>
 
         <div className="space-y-4">
           <div className="space-y-1.5">
@@ -242,7 +242,7 @@ export function BriefDialog({
             </Button>
           ) : null}
           <Button disabled={pending} onClick={() => crear(!!owners.reviewer_id)}>
-            {pending ? "Guardando…" : owners.reviewer_id ? "Crear y mandar a revisión" : "Crear brief"}
+            {pending ? "Guardando…" : owners.reviewer_id ? "Crear y mandar a revisión" : "Crear tarea"}
           </Button>
         </div>
       </div>

@@ -39,7 +39,7 @@ export function BriefsSection({
 }) {
   const router = useRouter();
   const [briefs, setBriefs] = useState<BriefWithMeta[] | null>(null);
-  // ?brief= abre ese brief: es como llega alguien desde "Mis pendientes".
+  // ?brief= abre ese brief: es como llega alguien desde "Mi trabajo" o desde Slack.
   const [openId, setOpenId] = useState<string | null>(useSearchParams().get("brief"));
 
   const reload = () =>
@@ -93,7 +93,7 @@ export function BriefsSection({
         <p className="text-sm text-muted-foreground">Cargando…</p>
       ) : briefs.length === 0 ? (
         <p className="rounded-xl border border-dashed p-6 text-center text-sm text-muted-foreground">
-          Sin briefs. Créalos desde &quot;Nuevo brief&quot; en el panel
+          Sin briefs. Créalos desde &quot;Nueva tarea&quot; en el panel
           izquierdo.
         </p>
       ) : (

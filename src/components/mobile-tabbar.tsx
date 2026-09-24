@@ -8,13 +8,12 @@ export function MobileTabBar() {
   const pathname = usePathname();
 
   const tabs = [
-    { href: "/", label: "Inicio", match: (p: string) => p === "/" },
+    { href: "/", label: "Mi trabajo", match: (p: string) => p === "/" },
     {
       href: "/creativos",
       label: "Creativos",
       match: (p: string) => p.startsWith("/creativos") || p.startsWith("/client"),
     },
-    { href: "/pendientes", label: "Pendientes", match: (p: string) => p.startsWith("/pendientes") },
     { href: "/upload", label: "Subir", match: (p: string) => p.startsWith("/upload") },
     { href: "/equipo", label: "Equipo", match: (p: string) => p.startsWith("/equipo") },
   ];

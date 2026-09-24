@@ -7,7 +7,6 @@ import { NewClientForm } from "@/components/new-client-form";
 import { SidebarNav, type ClientOption } from "@/components/sidebar-nav";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { NotificationBell } from "@/components/notification-bell";
-import { TasksLink } from "@/components/tasks-link";
 import { Button } from "@/components/ui/button";
 import { roleLabel } from "@/lib/roles";
 import type { Profile } from "@/lib/supabase/server";
@@ -90,12 +89,9 @@ export function AppShell({
             {/* Debajo del boton principal y encima de los clientes: es lo
                 primero que alguien quiere saber al entrar, y ahi se ve sin
                 bajar la vista. */}
-            <div className="-my-2 space-y-0.5">
-              <NotificationBell variant="row" />
-              <TasksLink count={taskCount} />
-            </div>
+            <NotificationBell variant="row" />
 
-            <SidebarNav clients={clients} />
+            <SidebarNav clients={clients} taskCount={taskCount} />
 
             {filtrandoClientes ? (
               <p className="px-1 text-[11px] text-muted-foreground">
