@@ -1,5 +1,4 @@
 import "server-only";
-import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { adCodeFor, extractAdCode } from "@/lib/ad-code";
 import {
   fetchAccountAds,
@@ -7,8 +6,7 @@ import {
   fetchAccountInsights,
   type DateRange,
 } from "@/lib/meta";
-import { serverEnv } from "@/lib/env";
-import { publicEnv } from "@/lib/env";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export type SyncReport = {
   clientId: string;
@@ -40,14 +38,8 @@ export type SyncReport = {
  * El sync corre con service role: necesita ver todos los creativos y escribir
  * launches sin sesion de usuario (lo dispara un cron).
  */
-function serviceClient() {
-  return createServiceClient(publicEnv.supabaseUrl, serverEnv.supabaseServiceRoleKey, {
-    auth: { persistSession: false },
-  });
-}
-
 export async function syncClient(clientId: string, range?: DateRange): Promise<SyncReport> {
-  const supabase = serviceClient();
+  const supabase = createAdminClient();
 
   const { data: client } = await supabase
     .from("clients")
@@ -194,7 +186,7 @@ export async function syncClient(clientId: string, range?: DateRange): Promise<S
 }
 
 export async function syncAllClients(range?: DateRange): Promise<SyncReport[]> {
-  const supabase = serviceClient();
+  const supabase = createAdminClient();
   const { data: clients } = await supabase
     .from("clients")
     .select("id")

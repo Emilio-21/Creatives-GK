@@ -6,7 +6,7 @@ function required(name: string): string {
   const value = process.env[name];
   if (!value) {
     throw new Error(
-      `Falta la variable de entorno ${name}. Copiala de .env.example a .env.local (o agregala en Vercel).`,
+      `Falta la variable de entorno ${name}. Copiala de .env.example a .env.local (en produccion: wrangler secret put).`,
     );
   }
   return value;

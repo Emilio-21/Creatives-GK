@@ -27,7 +27,7 @@ const DOWNLOAD_TTL_SECONDS = 5 * 60;
 /** Ventana para completar el PUT del navegador. */
 const UPLOAD_TTL_SECONDS = 15 * 60;
 
-/** URL firmada para subir. El navegador hace el PUT directo, sin pasar por Next. */
+/** URL firmada para subir. El navegador hace el PUT directo, sin pasar por el Worker. */
 export async function getUploadUrl(path: string, contentType: string): Promise<string> {
   return getSignedUrl(
     r2(),
@@ -68,10 +68,9 @@ export async function getDownloadUrl(path: string, filename: string): Promise<st
 /**
  * Tamaño y tipo reales del objeto ya subido.
  *
- * El plan pedia cuatro funciones; esta es la quinta a proposito. El `size` que
- * manda el cliente al pedir la firma no es confiable, asi que confirmUpload
- * compara contra lo que de verdad quedo en R2 antes de insertar en la DB. Sin
- * esto, un cliente modificado puede subir 5 GB y quemar el free tier.
+ * El `size` que manda el cliente al pedir la firma no es confiable, asi que al
+ * confirmar se compara contra lo que de verdad quedo en R2 antes de insertar en
+ * la DB. Sin esto, un cliente modificado puede subir 5 GB y quemar el free tier.
  */
 export async function statFile(
   path: string,
@@ -93,8 +92,8 @@ export async function deleteFile(path: string): Promise<void> {
 }
 
 /**
- * Bytes y objetos que ocupa el bucket. Sexta funcion: el free tier son 10 GB
- * acumulados y sin este dato te enteras del limite cuando falla un upload (§8).
+ * Bytes y objetos que ocupa el bucket. El free tier son 10 GB acumulados y sin
+ * este dato te enteras del limite cuando falla un upload (§8).
  */
 export async function getStorageUsage(): Promise<{ bytes: number; objects: number }> {
   let bytes = 0;

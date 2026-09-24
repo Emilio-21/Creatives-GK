@@ -4,7 +4,9 @@ import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
 import { getPreviewUrl } from "@/lib/storage";
 import { createClient } from "@/lib/supabase/server";
-import type { Member, Role } from "@/lib/team";
+import { OPEN_STATUSES } from "@/lib/brief-flow";
+import type { Role } from "@/lib/roles";
+import type { Member } from "@/lib/team";
 import { attempt, type ActionResult } from "@/lib/action-result";
 
 /** El equipo con sus clientes y cuánto tiene encima. */
@@ -22,7 +24,7 @@ export async function listMembers(): Promise<Member[]> {
     supabase
       .from("briefs")
       .select("assigned_to")
-      .in("status", ["en_revision", "en_produccion", "en_lanzamiento"])
+      .in("status", OPEN_STATUSES)
       .is("archived_at", null),
   ]);
 

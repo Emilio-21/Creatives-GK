@@ -10,7 +10,8 @@ import {
   setRole as setRoleAction,
   setSlackNotify as setSlackNotifyAction,
 } from "@/app/(app)/team-actions";
-import { ROLES, ROLE_HINT, ROLE_LABEL, type Member, type Role } from "@/lib/team";
+import { ROLES, ROLE_HINT, ROLE_LABEL, type Role } from "@/lib/roles";
+import type { Member } from "@/lib/team";
 import { unwrapped } from "@/lib/action-result";
 
 // Las acciones regresan el error como dato; esto lo vuelve a lanzar con su mensaje real.

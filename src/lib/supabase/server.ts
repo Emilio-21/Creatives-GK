@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
 import { publicEnv } from "@/lib/env";
+import type { Role } from "@/lib/roles";
 
 /**
  * Cliente para Server Components, Server Actions y Route Handlers.
@@ -43,23 +44,7 @@ export async function getCurrentUser() {
 export type Profile = {
   id: string;
   full_name: string | null;
-  role: "admin" | "member";
+  role: Role;
   created_at: string;
   avatar_path?: string | null;
 };
-
-export async function getCurrentProfile(): Promise<Profile | null> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return null;
-
-  const { data } = await supabase
-    .from("profiles")
-    .select("id, full_name, role, created_at")
-    .eq("id", user.id)
-    .single();
-
-  return (data as Profile) ?? null;
-}

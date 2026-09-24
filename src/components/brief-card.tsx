@@ -3,6 +3,7 @@
 import { CHANNEL_LABEL, docLabel, STATUS_LABEL, type BriefStatus } from "@/lib/brief-flow";
 import type { BriefWithMeta } from "@/app/(app)/client/brief-actions";
 import { UserAvatar } from "@/components/user-avatar";
+import { today } from "@/lib/dates";
 
 /**
  * Neutro: el estado se lee en la palabra, no en el color. El color de alerta
@@ -96,5 +97,5 @@ export function BriefCard({
 /** Solo lo que sigue pendiente puede ir tarde: un brief lanzado ya no debe nada. */
 function isLate(dueDate: string | null, status: BriefStatus): boolean {
   if (!dueDate || status === "lanzado") return false;
-  return dueDate < new Date().toISOString().slice(0, 10);
+  return dueDate < today();
 }

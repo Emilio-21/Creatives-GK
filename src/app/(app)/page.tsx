@@ -11,9 +11,8 @@ export const metadata = { title: "Mi trabajo · Relevo" };
 
 /**
  * "Mi trabajo": lo que alguien se pregunta al abrir la app, que hago ahora y
- * que esta atorado. Arriba lo que se hace, abajo lo que se sabe. Absorbio a
- * "Mis pendientes": mostraba la misma lista, solo que completa; ahora esta la
- * lista completa aqui. El inventario de creativos tiene su propia seccion.
+ * que esta atorado. Arriba lo que se hace, abajo lo que se sabe. El inventario
+ * de creativos vive en cada cliente.
  */
 export default async function HomePage() {
   const supabase = await createClient();

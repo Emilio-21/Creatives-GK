@@ -89,7 +89,7 @@ async function loadRows(clientId?: string) {
     stats: statsById.get(creative.id) ?? null,
   }));
 
-  return { rows, clientNames, supabase };
+  return { rows, clientNames };
 }
 
 /**

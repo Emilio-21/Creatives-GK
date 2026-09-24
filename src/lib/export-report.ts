@@ -1,14 +1,15 @@
 "use client";
 
 import { adCodeFor } from "@/lib/ad-code";
+import { saveBlob } from "@/lib/download";
 import { statusOf, STATUS_LABEL } from "@/lib/metrics";
 import type { CreativeCard } from "@/lib/creatives";
 
 /**
  * Informe de resultados en CSV, para mandarlo a copy.
  *
- * Se arma en el navegador con los datos que ya estan en pantalla: nada de
- * generarlo en el servidor, que en Hobby corta a los 10 s.
+ * Se arma en el navegador con los datos que ya estan en pantalla: no hace falta
+ * otra consulta al servidor.
  */
 export function exportReportCsv(cards: CreativeCard[], filename: string): void {
   const headers = [
@@ -56,18 +57,7 @@ export function exportReportCsv(cards: CreativeCard[], filename: string): void {
       .map((row) => row.map(escapeCell).join(","))
       .join("\r\n");
 
-  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  try {
-    const anchor = document.createElement("a");
-    anchor.href = url;
-    anchor.download = filename;
-    document.body.appendChild(anchor);
-    anchor.click();
-    anchor.remove();
-  } finally {
-    setTimeout(() => URL.revokeObjectURL(url), 10_000);
-  }
+  saveBlob(new Blob([csv], { type: "text/csv;charset=utf-8" }), filename);
 }
 
 function escapeCell(value: string | number): string {

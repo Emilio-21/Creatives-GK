@@ -1,353 +1,168 @@
 # Relevo
 
-Del brief al lanzamiento: quién tiene cada entrega, qué sigue, qué ya salió y cómo le fue. Empezó como la biblioteca de creativos de Growth Kingdom.
+Del brief al lanzamiento: quién tiene cada entrega, qué sigue, qué ya salió y cómo le fue.
+Empezó como la biblioteca de creativos de Growth Kingdom.
 
-Stack: Next.js 15 (App Router) + Tailwind 4 + shadcn/ui · Supabase (auth + Postgres) · Cloudflare R2 (archivos privados) · Vercel.
+Stack: Next.js 15 (App Router) + Tailwind 4 + shadcn/ui (Base UI) · Supabase (auth + Postgres) ·
+Cloudflare R2 (archivos privados) · Cloudflare Workers con `@opennextjs/cloudflare`.
 
-Plan completo: `docs/plan.md`.
-
----
-
-## Estado
-
-| Fase | Qué | Estado |
-|---|---|---|
-| 0 | Setup: app, migraciones SQL, config R2/Supabase, deploy | código listo — faltan las cuentas |
-| 1 | Auth: `@supabase/ssr`, middleware, trigger de profile, `/login` | código listo |
-| 2 | Storage: `lib/storage.ts`, presigned URLs, CORS | listo |
-| 3 | Upload múltiple y biblioteca por cliente | listo |
-| 4 | Descarga individual y en lote (zip) | código listo |
-| 5 | Lanzamientos, métricas derivadas, orden por performance | listo |
-| 6 | Dashboard resumen | listo |
-| 7 | Pulido, cleanup de huérfanos, backup | listo |
-| 8 | Sync con Meta | código listo — falta correr 0006 y poner el token |
+Producción: <https://relevo.growth-kingdom.workers.dev>. Plan original: `docs/plan.md`.
 
 ---
 
-## Fase 0 — lo que hay que hacer a mano
+## Qué hace
+
+- **Mi trabajo** (`/`) — lo que te toca ahora, lo que mandaste y sigue en manos de alguien
+  más, y lo que está atorado en el equipo.
+- **Tareas** — cada cliente tiene sus briefs. Un brief es un Google Doc (se incrusta en la
+  app) con canal (ads, email o SMS) y tres responsables: revisión → producción →
+  lanzamiento. Al terminar una etapa pasa sola a la siguiente persona y le llega el aviso.
+- **Creativos** — biblioteca por cliente: subida múltiple directa a R2, pares de formatos
+  (1:1 + 9:16 = un anuncio), batches con la nomenclatura de Meta, descarga en zip,
+  lanzamientos y métricas.
+- **Material** — por cliente, lo que no es un ad: presentaciones, plantillas, links.
+- **Avisos** — en la campana de la app y por mensaje directo de Slack.
+- **Equipo** (`/equipo`) — foto y nombre de perfil, áreas, clientes de cada quien y avisos de Slack.
+- **Resumen** (`/dashboard`) — KPIs, tops por CPA y CTR, inventario sin lanzar, uso de R2.
+
+---
+
+## Poner a andar desde cero
 
 ### 1. Supabase
-1. Crear proyecto en <https://supabase.com/dashboard>.
-2. SQL Editor → correr **en orden**:
-   - `supabase/migrations/0001_schema.sql`
-   - `supabase/migrations/0002_rls.sql`
-   - `supabase/migrations/0003_auth_trigger.sql`
-3. Settings → API: copiar `Project URL`, `anon key` y `service_role key`.
+1. Crear el proyecto y, en el SQL Editor, correr **en orden** todo `supabase/migrations/`
+   (`0001_schema.sql` … `0026_perfil.sql`).
+2. Settings → API: copiar `Project URL`, `anon key` y `service_role key`.
+3. Authentication → URL Configuration: *Site URL* con la URL de la app y, en *Redirect URLs*,
+   `https://<dominio>/**`. El enlace del correo de confirmación regresa a `/auth/confirm`.
+
+La plantilla en español del correo de confirmación está en `docs/email-confirmar-registro.html`.
+Supabase solo deja editarla con un SMTP propio configurado.
 
 ### 2. Cloudflare R2
-1. R2 → crear buckets `creatives-dev` y `creatives-prod`.
-2. R2 → Manage API Tokens → token con **Object Read & Write** limitado a esos buckets.
-   El secret se muestra una sola vez.
-3. Anotar el Account ID (endpoint: `https://{ACCOUNT_ID}.r2.cloudflarestorage.com`).
-4. **En cada bucket** → Settings → **CORS Policy** → pegar `infra/r2-cors.json`.
-   Es configuración por bucket: hay que pegarla en `creatives-dev` y en `creatives-prod`.
-   Sin esto el `PUT` desde el navegador falla con un error de CORS ilegible.
-   Al agregar un dominio nuevo, se edita `infra/r2-cors.json` y se vuelve a pegar en los dos.
-
-```bash
-npm run check:cors   # prueba el preflight de cada origen contra cada bucket
-```
+1. Crear los buckets `creatives-dev` y `creatives-prod`, y un API token con **Object Read &
+   Write** limitado a ellos (el secret se muestra una sola vez).
+2. CORS en cada bucket, con los orígenes de `infra/r2-cors.json`:
+   ```bash
+   npx wrangler r2 bucket cors set creatives-prod --file infra/r2-cors.json
+   npm run check:cors   # prueba el preflight de cada origen contra cada bucket
+   ```
+   Sin esto el `PUT` desde el navegador falla con un error de CORS ilegible. Un dominio
+   nuevo va primero en `infra/r2-cors.json`.
 
 ### 3. Variables de entorno
 ```bash
 cp .env.example .env.local   # y llenarlo
-npm run check:setup          # valida env + tablas + bucket
+npm run check:setup          # valida env, tablas y bucket
 ```
-`check:setup` debe terminar en **"Fase 0 lista"** antes de seguir.
+Ninguna credencial de R2 ni la service role key llevan prefijo `NEXT_PUBLIC_`.
 
-Ninguna credencial de R2 lleva prefijo `NEXT_PUBLIC_`.
-
-### 4. Vercel
-Importar el repo, pegar las mismas 7 variables (`R2_BUCKET_NAME=creatives-prod` en producción)
-y desplegar para validar el pipeline.
-
----
-
-## Fase 1 — Auth
-
-Ya implementado:
-
-- `src/lib/supabase/{client,server,middleware}.ts` — clientes de navegador, servidor y refresco de sesión.
-- `src/middleware.ts` — protege todo excepto `/login`; guarda el destino en `?next=`.
-- `src/app/login/` — email + password, sin signup público.
-- `0003_auth_trigger.sql` — crea el `profile` al crear el usuario (con backfill).
-
-**Alta del equipo:** `/signup`, solo correos `@growthkingdom.com`. El candado está en un
-trigger sobre `auth.users` (0010), no en la pantalla: la anon key es pública y cualquiera
-puede llamar al endpoint de registro de Supabase saltándose el formulario.
-
-Cada quien elige su área al registrarse — Media buying, Copywriting o Diseño. El rol
-`admin` no se puede auto-asignar: si alguien lo manda en el metadata, el trigger lo
-degrada a `member`.
-
-Para volverte admin:
-```sql
-update profiles set role = 'admin' where id = (select id from auth.users where email = 'tu@correo.com');
-```
-
----
-
-## Fase 2 — Storage
-
-`src/lib/storage.ts` expone exactamente cuatro funciones y **ningún componente llama al SDK de S3 directo**:
-
-| Función | TTL | Para qué |
-|---|---|---|
-| `getUploadUrl(path, contentType)` | 15 min | PUT directo del navegador |
-| `getPreviewUrl(path)` | 1 h | `src` de `<img>` / `<video>` |
-| `getDownloadUrl(path, filename)` | 5 min | descarga con `Content-Disposition: attachment` |
-| `deleteFile(path)` | — | borrado |
-
-La protección de los archivos **no** es RLS: es que la URL solo se firma después de
-`requireUser()` (`src/lib/auth.ts`). Toda Server Action que toque storage debe llamarla primero.
-
-### Verificación
-
+### 4. Slack (opcional)
+Crear la app con `docs/slack-app-manifest.yml`, instalarla en el workspace y poner el *Bot
+User OAuth Token* en `SLACK_BOT_TOKEN`. Sin token la app funciona igual, solo sin Slack.
 ```bash
-npm run test:storage
+npm run slack:test -- tu@correo.com   # manda un mensaje de ejemplo
 ```
-
-Prueba contra el bucket real: PUT firmado, preview byte a byte, que el bucket rechace
-la request sin firma, `Content-Disposition`, borrado, y el **preflight de CORS**.
-Debe terminar en "Storage OK end-to-end".
-
-Para el CORS de todos los orígenes contra los dos buckets:
-
-```bash
-npm run check:cors
-```
-
-Falta la prueba desde el navegador: `npm run dev` → entrar → **`/dev/storage`** →
-subir un archivo, verlo, descargarlo y borrarlo. Es el banco de pruebas de la fase 2;
-si el PUT falla ahí, falla el upload de la fase 3.
-
----
-
-## Fase 3 — Upload y biblioteca
-
-### `/upload`
-Dropzone múltiple con progreso por archivo (XHR, no `fetch`, que no expone progreso).
-Por batch: **cliente obligatorio**, formato y tags opcionales.
-
-Del navegador salen las dimensiones, la duración y el **poster frame** de cada video
-(seek a ~1s → `<canvas>` → JPEG 85%, máx 720px de lado largo). El grid solo carga
-posters, nunca el video. Nada de esto puede vivir en el servidor: Vercel Hobby tiene
-10 s de timeout y ~4.5 MB de body.
-
-Un nombre repetido se advierte pero no se bloquea. Reintentar solo re-sube lo que falló.
-
-### `/`
-Grid de tarjetas con badge de estado, filtros (cliente, estado, formato, tag, quién subió),
-buscador por nombre, orden y toggle grid ↔ tabla. Los filtros van en la URL, así que se
-pueden compartir y el botón de atrás funciona.
-
-### Orden de las operaciones
-
-```
-requestUploadUrls  → valida sesión, mime y tamaño ANTES de firmar
-PUT del navegador  → archivo directo a R2, sin pasar por Next
-PUT del poster     → si es video y el navegador pudo pintar el frame
-confirmUpload      → HEAD al objeto real, insert en creatives
-```
-
-Si el insert falla se borra el archivo de R2 en el momento. Lo que se escape lo barre
-`scripts/cleanup-orphans.ts` en la fase 7.
-
----
-
-## Fase 4 — Descarga
-
-Presigned URL de 5 minutos con `Content-Disposition: attachment`, así que el archivo
-baja con su nombre original en vez de abrirse en una pestaña. Cada descarga queda
-registrada en `downloads` y se ve en el historial del detalle.
-
-En la biblioteca cada tarjeta tiene checkbox: seleccionas varias y la barra de abajo
-ofrece descargar. Uno solo baja directo; varios se empaquetan en un **zip generado en
-el navegador** con `jszip`, bajando cada archivo desde su presigned URL. Nunca en el
-servidor: Vercel Hobby corta a los 10 s.
-
-Tope de 25 archivos por lote, porque el zip se arma en memoria del navegador. Nombres
-repetidos dentro del zip se numeran (`video.mp4`, `video (2).mp4`).
-
----
-
-## Fase 6 — Resumen
-
-`/dashboard`: total de creativos, % lanzados, **creativos sin lanzar** (el número que
-importa), gasto de los lanzamientos iniciados este mes, top 10 por CPA y por CTR,
-inventario con más de 30 días sin lanzarse, producción de los últimos 12 meses y el
-widget de uso de R2.
-
-El widget de R2 lista el bucket y suma los tamaños. Sin él te enteras del límite de
-10 GB cuando falla un upload. Avisa a los 8 GB.
-
-Los mismos números existen **por cliente**: `/client/[id]` muestra su franja de KPIs
-(creativos, lanzados, sin lanzar, gasto, CTR, CPA) y, plegado, sus tops y su producción
-mensual. El resumen general trae además una tabla "Por cliente" para compararlos.
-
-CTR y CPA de un conjunto se calculan sumando los números base y dividiendo **una vez**,
-nunca promediando el CTR de cada creativo: un creativo con 100 impresiones pesaría igual
-que uno con un millón.
-
----
-
-## Fase 7 — Pulido y mantenimiento
-
-**Archivar** un creativo lo saca de la biblioteca y de los KPIs sin borrar nada: el
-archivo sigue en R2 y sus lanzamientos con sus métricas siguen existiendo. El botón
-"Archivados" de la biblioteca los muestra y desde el detalle se restauran.
-
-Skeletons en las cuatro pantallas, navegación por cliente en móvil (el sidebar no cabe)
-y edición de metadata en el detalle.
-
-### Los dos scripts que la infra gratis exige
-
-```bash
-npm run cleanup:orphans                        # dry run, lista lo que borraría
-npm run cleanup:orphans -- --delete
-npm run cleanup:orphans -- --delete --bucket creatives-prod
-```
-
-Compara los objetos de R2 contra `creatives.storage_path` y `poster_path` y borra lo
-que no tenga registro — un PUT exitoso con insert fallido deja el archivo ocupando
-espacio para siempre. **Respeta los objetos de menos de 24 h** para no matar un upload
-en curso; `--min-age-hours 0` salta ese margen. Usa la service role key porque tiene
-que ver todos los creativos, no solo los tuyos. Correr mensual, en cada bucket.
-
-```bash
-npm run backup:db
-```
-
-`pg_dump` del esquema `public` comprimido a `backups/`. El free tier de Supabase **no
-tiene backups automáticos**: si se corrompe la base pierdes las métricas, aunque los
-archivos sigan en R2. Correr semanal. Necesita `SUPABASE_DB_URL` en `.env.local`
-(Supabase → Project Settings → Database → Connection string → URI) y `pg_dump`
-instalado (`brew install libpq && brew link --force libpq`).
-
----
-
-## Fase 8 — Sync con Meta
-
-No se capturan IDs a mano. Cada creativo tiene un código derivado de su id
-(`GK-c7c05468`) y la app arma el nombre del anuncio ya listo para copiar:
-
-```
-AB_TESTIMONIAL_v3_[GK-c7c05468]
-```
-
-Lo pegas como nombre del ad en Meta. El código puede ir donde sea dentro del nombre, así que convive con la nomenclatura que
-ya use el equipo:
-
-```
-[C019-A01-Ad01] John 1 Abril | VSL | Copy 01.1 [GK-c7c05468]
-```
-
-El sync lista **todos** los anuncios de la cuenta y aparte pide los insights. No usa solo
-insights porque ese endpoint se salta los anuncios que no gastaron: uno recién creado,
-pausado o en revisión no aparece ahí, y esos también hay que enlazar. Los enlazados sin
-métricas quedan registrados con métricas vacías, listos para llenarse en el siguiente sync. **El
-nombre lo genera la app, no la persona**: si la convención dependiera de que alguien la
-recuerde, el match fallaría en silencio y el dashboard quedaría en ceros sin que nadie
-se entere. Los anuncios sin código se listan en el reporte en vez de desaparecer.
-
-Un ad de Meta es un lanzamiento. El upsert va sobre `meta_ad_id` (índice único parcial),
-así que volver a sincronizar actualiza en lugar de duplicar, y un creativo que corre en
-tres ad sets produce tres lanzamientos con su desglose.
-
-### Configuración
-
-1. Correr `supabase/migrations/0006_meta_sync.sql`.
-2. En cada cliente, pegar su **ad account id** (`act_123…`) en el panel de Meta.
-3. En el entorno: `META_ACCESS_TOKEN` con un System User token del Business Manager, y
-   `CRON_SECRET` con cualquier cadena larga.
-
-**El token nunca va en la base.** Un token de Meta puede gastar dinero y la RLS de equipo
-cerrado deja que cualquier usuario autenticado lea las tablas. En `clients` solo vive el
-ad account id, que no es secreto.
-
-El cron de Vercel corre diario a las 13:00 UTC (`vercel.json`); Hobby permite 2 al día.
-La ruta exige `Authorization: Bearer $CRON_SECRET` — sin eso, cualquiera podría dispararla
-y quemar el rate limit de la Graph API.
 
 ---
 
 ## Despliegue — Cloudflare Workers
 
-Corre sobre Workers con `@opennextjs/cloudflare`. R2 ya vive en Cloudflare, y el plan
-gratuito de Vercel prohíbe uso comercial, que es justo lo que es esta herramienta.
+| Worker | Qué es |
+|---|---|
+| `relevo` | la app (`wrangler.jsonc`) |
+| `creativos-gk-cron` | cron: reintento de Slack cada 10 min; sync de Meta **pausado** (`workers/cron-sync`) |
+| `creativos-gk` | la URL vieja, redirige a `relevo` (`workers/redirect`) |
 
 ```bash
 npm run cf:preview   # build + servidor local sobre workerd
-npm run cf:deploy    # build + deploy
+npm run cf:deploy    # build + deploy de la app
 ```
 
-El bundle pesa **1.8 MB comprimido**, muy por debajo del límite. El SDK de S3 cabe sin
-problema, así que `lib/storage.ts` sigue igual; el binding `CREATIVES_BUCKET` ya está
-declarado para cuando convenga cambiarlo por acceso directo a R2.
+No correr `npm run build` con `npm run dev` abierto: comparten `.next` y el dev se corrompe.
 
 ### Secretos
 
-Las variables no van en un archivo: se suben como secretos.
-
-```bash
-npx wrangler secret put NEXT_PUBLIC_SUPABASE_URL
-npx wrangler secret put NEXT_PUBLIC_SUPABASE_ANON_KEY
-npx wrangler secret put SUPABASE_SERVICE_ROLE_KEY
-npx wrangler secret put R2_ACCOUNT_ID
-npx wrangler secret put R2_ACCESS_KEY_ID
-npx wrangler secret put R2_SECRET_ACCESS_KEY
-npx wrangler secret put R2_BUCKET_NAME
-npx wrangler secret put META_ACCESS_TOKEN
-npx wrangler secret put CRON_SECRET
-```
+Van como secretos del worker `relevo`, no en archivos: `npx wrangler secret put NOMBRE`.
+La app necesita `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`,
+`SUPABASE_SERVICE_ROLE_KEY`, `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`,
+`R2_BUCKET_NAME`, `CRON_SECRET`, `SLACK_BOT_TOKEN` y `META_ACCESS_TOKEN`.
 
 ### Cron
 
-El sync diario vive en un Worker aparte (`workers/cron-sync`), no dentro de la app: el
-worker que genera OpenNext exporta su propio `fetch`, y colgarle un `scheduled` encima
-ata el despliegue a los detalles internos del adaptador.
+Vive en un worker aparte: el que genera OpenNext exporta su propio `fetch`, y colgarle un
+`scheduled` ata el despliegue a los detalles internos del adaptador. Llama a
+`/api/cron/slack` (y a `/api/cron/sync-meta` cuando se reactive) con
+`Authorization: Bearer $CRON_SECRET`.
 
 ```bash
 cd workers/cron-sync
-npx wrangler secret put CRON_SECRET
+npx wrangler secret put CRON_SECRET   # el mismo valor que en la app
 npx wrangler deploy
-```
-
-Ajusta `APP_URL` en `workers/cron-sync/wrangler.jsonc` al dominio real.
-
-### Después de desplegar
-
-Agrega el dominio nuevo a `AllowedOrigins` en `infra/r2-cors.json` y pégalo en los dos
-buckets, o el upload desde el navegador falla.
-
-```bash
-npm run check:cors
 ```
 
 ---
 
-## Desarrollo
+## Cómo está armado
 
-```bash
-npm run dev
-```
+### Acciones de servidor
+En producción Next oculta el mensaje de cualquier error lanzado desde una acción. Por eso
+cada archivo de acciones tiene la función real (`xImpl`) y exporta un envoltorio que regresa
+`ActionResult` con `attempt()`; el cliente la usa con `unwrapped()`, que vuelve a lanzar el
+error con su mensaje real. Ver `src/lib/action-result.ts`.
+
+Un archivo `"use server"` solo puede exportar funciones async: las constantes y tipos
+compartidos viven en `src/lib/` (`brief-flow.ts`, `roles.ts`, `material.ts`…).
+
+### Flujo de tareas
+Las reglas viven en la base, no en la pantalla: `transition_brief`, `set_brief_owner` y
+`start_brief_stage` (migraciones 0022–0023) deciden qué transición vale, exigen responsable
+al entrar a una etapa y motivo al regresar trabajo, y escriben el aviso en la misma
+transacción. Un trigger impide cambiar el estado de un brief por fuera de esas funciones.
+
+Slack es otra salida del mismo aviso: `src/lib/slack-deliver.ts` manda lo pendiente justo
+después de cada cambio (`after()`) y el cron reintenta lo que falló.
+
+### Archivos
+- Toda la I/O de archivos vive en `src/lib/storage.ts`. Ningún componente llama al SDK de S3.
+- El bucket es privado: el acceso es por presigned URL generada en el servidor **después**
+  de verificar la sesión (`requireUser()`).
+- El navegador sube directo a R2 (XHR, con progreso); el servidor solo firma y luego
+  confirma con un `HEAD` que el archivo existe y pesa lo que se dijo.
+- Carpetas: `creatives/`, `posters/`, `material/{cliente}/`, `avatars/{usuario}/`.
+
+### Métricas
+- `publicado` es derivado (tiene al menos un lanzamiento), nunca un campo editable.
+- CTR/CPM/CPC/CPA salen de la vista `creative_stats`; solo se capturan gasto, impresiones,
+  alcance, clics y resultados. Los de un conjunto se calculan sumando y dividiendo **una
+  vez**, nunca promediando promedios.
+- Cada creativo tiene un código derivado de su id (`GK-c7c05468`) que va en el nombre del
+  anuncio de Meta; el sync lo extrae para enlazar sin capturar IDs a mano. El token de Meta
+  nunca va en la base.
+
+### Alta del equipo
+`/signup`, solo correos `@growthkingdom.com`. El candado real es un trigger sobre
+`auth.users` (0010): la anon key es pública y cualquiera puede llamar al endpoint de
+registro saltándose el formulario. El rol `admin` no se auto-asigna; se da desde `/equipo`,
+y un trigger (0026) impide que alguien cambie su propio rol u organización.
+
+---
+
+## Comandos
 
 | Comando | Qué hace |
 |---|---|
 | `npm run dev` | servidor local en :3000 |
-| `npm run build` | build de producción |
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm run lint` | eslint |
+| `npm run cf:deploy` | build + deploy a Cloudflare |
 | `npm run check:setup` | verifica env, tablas y bucket |
-| `npm run test:storage` | prueba el ciclo completo contra R2 |
 | `npm run check:cors` | preflight de cada origen contra cada bucket |
-| `npm run cleanup:orphans` | lista/borra objetos de R2 sin registro (mensual) |
-| `npm run backup:db` | `pg_dump` comprimido a `backups/` (semanal) |
+| `npm run test:storage` | ciclo completo contra R2: subir, leer, descargar, borrar |
 | `npm run test:adcode` | verifica el código que enlaza anuncios con creativos |
-
-## Convenciones
-
-- Toda la I/O de archivos vive en `src/lib/storage.ts` (fase 2). Ningún componente llama al SDK de S3 directo.
-- El bucket es privado: el acceso siempre es por presigned URL generada en el servidor **después** de verificar la sesión. Si una Server Action olvida el check de auth, el archivo queda expuesto.
-- `publicado` es derivado (tiene al menos un launch), nunca un campo editable.
-- CTR/CPM/CPC/CPA salen de la vista `creative_stats`; solo se capturan `spend`, `impressions`, `reach`, `clicks`, `results`.
+| `npm run slack:test -- correo` | prueba el token de Slack con un mensaje de ejemplo |
+| `npm run cleanup:orphans` | lista (o con `--delete` borra) archivos de R2 que nada referencia — mensual |
+| `npm run backup:db` | `pg_dump` comprimido a `backups/` — semanal; el free tier de Supabase no respalda |
+| `npm run dedupe` | encuentra archivos subidos dos veces (por hash); `-- --apply` los borra |
+| `npm run pair:statics` | agrupa pares 1:1 + 9:16 ya subidos; `-- --apply` los junta |
+| `node scripts/logo.mjs` | regenera el logo y sus iconos desde la geometría |

@@ -1,5 +1,6 @@
 "use client";
 
+import { Bell } from "lucide-react";
 import { useCallback, useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -64,18 +65,7 @@ export function NotificationBell({
 
   const sinLeer = items.filter((item) => item.read_at === null);
 
-  const campana = (
-    <svg viewBox="0 0 24 24" className="size-4 shrink-0" aria-hidden="true">
-      <path
-        d="M18 8a6 6 0 1 0-12 0c0 7-3 8-3 8h18s-3-1-3-8M13.7 21a2 2 0 0 1-3.4 0"
-        stroke="currentColor"
-        strokeWidth="2"
-        fill="none"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
+  const campana = <Bell className="size-4 shrink-0" aria-hidden="true" />;
   const etiqueta = `Avisos${sinLeer.length ? `: ${sinLeer.length} sin leer` : ""}`;
 
   return (

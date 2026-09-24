@@ -47,34 +47,6 @@ async function listBatchesImpl(
   return (data ?? []) as { id: string; name: string }[];
 }
 
-export async function reopenBatch(batchId: string): Promise<void> {
-  await requireUser();
-  const supabase = await createClient();
-  const { error } = await supabase
-    .from("batches")
-    .update({ completed_at: null })
-    .eq("id", batchId);
-  if (error) throw new Error(error.message);
-  revalidatePath("/", "layout");
-}
-
-export async function renameBatch(batchId: string, name: string): Promise<void> {
-  await requireUser();
-  const trimmed = name.trim();
-  if (!trimmed) throw new Error("El nombre no puede ir vacío.");
-
-  const supabase = await createClient();
-  const { error, count } = await supabase
-    .from("batches")
-    .update({ name: trimmed }, { count: "exact" })
-    .eq("id", batchId);
-
-  if (error) throw new Error(error.message);
-  if (!count) throw new Error("Solo quien creó el batch o un admin puede renombrarlo.");
-
-  revalidatePath("/", "layout");
-}
-
 export type BatchNamingInput = {
   campaignCode: string | null;
   adsetCode: string | null;

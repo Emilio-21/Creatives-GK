@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
-import { createPortal } from "react-dom";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,6 +21,7 @@ import { unwrapped } from "@/lib/action-result";
 import { docLabel } from "@/lib/brief-flow";
 import { formatBytes, materialKindLabel, titleFromFileName } from "@/lib/material";
 import { uploadToR2 } from "@/lib/upload-xhr";
+import { Modal } from "@/components/modal";
 
 // Las acciones regresan el error como dato; esto lo vuelve a lanzar con su mensaje real.
 const addMaterialFile = unwrapped(addMaterialFileAction);
@@ -43,12 +43,17 @@ export function MaterialsSection({ clientId }: { clientId: string }) {
   const [adding, setAdding] = useState(false);
   const [editing, setEditing] = useState<Material | null>(null);
 
-  const reload = () => listMaterials(clientId).then(setItems).catch(() => setItems([]));
+  const reload = useCallback(
+    () =>
+      listMaterials(clientId)
+        .then(setItems)
+        .catch(() => setItems([])),
+    [clientId],
+  );
 
   useEffect(() => {
     void reload();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [clientId]);
+  }, [reload]);
 
   return (
     <section className="space-y-3">
@@ -483,7 +488,7 @@ function EditDialog({
   );
 }
 
-/** Ventana flotante. Por portal: dentro de un panel con blur, `fixed` se queda atrapado. */
+/** Ventana con titulo; mientras algo sube no se cierra. */
 function Dialog({
   title,
   onClose,
@@ -495,29 +500,10 @@ function Dialog({
   busy: boolean;
   children: React.ReactNode;
 }) {
-  useEffect(() => {
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && !busy) onClose();
-    };
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [busy, onClose]);
-
-  return createPortal(
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-label={title}
-      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/60 p-4 backdrop-blur-sm sm:p-8"
-      onClick={(event) => {
-        if (event.target === event.currentTarget && !busy) onClose();
-      }}
-    >
-      <div className="w-full max-w-lg rounded-xl border bg-card p-5 shadow-2xl">
-        <h2 className="mb-4 text-base font-semibold">{title}</h2>
-        {children}
-      </div>
-    </div>,
-    document.body,
+  return (
+    <Modal label={title} onClose={onClose} canClose={!busy} className="max-w-lg">
+      <h2 className="mb-4 text-base font-semibold">{title}</h2>
+      {children}
+    </Modal>
   );
 }

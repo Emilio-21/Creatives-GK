@@ -30,18 +30,6 @@ async function listNotificationsImpl(limit = 30): Promise<Notification[]> {
   return (data ?? []) as Notification[];
 }
 
-export async function unreadCount(): Promise<number> {
-  await requireUser();
-  const supabase = await createClient();
-
-  const { count } = await supabase
-    .from("notifications")
-    .select("id", { count: "exact", head: true })
-    .is("read_at", null);
-
-  return count ?? 0;
-}
-
 async function markReadImpl(ids: string[]): Promise<void> {
   await requireUser();
   if (ids.length === 0) return;

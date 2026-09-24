@@ -17,8 +17,8 @@ const MAX_BATCH = 25;
 /**
  * Firma las descargas y las registra en `downloads`.
  *
- * El zip se genera en el cliente a partir de estas URLs: en el servidor no cabe,
- * Vercel Hobby corta a los 10 s (§8).
+ * El zip se genera en el cliente a partir de estas URLs: armarlo en el Worker
+ * seria cargar cientos de MB en sus 128 MB de memoria.
  */
 async function requestDownloadsImpl(creativeIds: string[]): Promise<DownloadTarget[]> {
   const user = await requireUser();
@@ -79,44 +79,6 @@ async function requestDownloadsImpl(creativeIds: string[]): Promise<DownloadTarg
   }
 
   return targets;
-}
-
-export type DownloadLogEntry = {
-  id: string;
-  downloaded_at: string;
-  userName: string;
-};
-
-export async function getDownloadHistory(creativeId: string): Promise<DownloadLogEntry[]> {
-  await requireUser();
-  const supabase = await createClient();
-
-  const { data } = await supabase
-    .from("downloads")
-    .select("id, downloaded_at, user_id")
-    .eq("creative_id", creativeId)
-    .order("downloaded_at", { ascending: false })
-    .limit(50);
-
-  const rows = data ?? [];
-  const userIds = [...new Set(rows.map((row) => row.user_id as string))];
-
-  const names = new Map<string, string>();
-  if (userIds.length > 0) {
-    const { data: profiles } = await supabase
-      .from("profiles")
-      .select("id, full_name")
-      .in("id", userIds);
-    for (const profile of profiles ?? []) {
-      names.set(profile.id as string, (profile.full_name as string | null) ?? "sin nombre");
-    }
-  }
-
-  return rows.map((row) => ({
-    id: row.id as string,
-    downloaded_at: row.downloaded_at as string,
-    userName: names.get(row.user_id as string) ?? "sin nombre",
-  }));
 }
 
 // ---- Acciones expuestas al navegador ----

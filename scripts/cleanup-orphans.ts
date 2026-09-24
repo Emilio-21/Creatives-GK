@@ -1,5 +1,6 @@
 /**
- * Borra objetos de R2 que no tienen registro en `creatives`.
+ * Borra objetos de R2 que ninguna fila de la base referencia: creativos y sus
+ * posters, material de clientes y fotos de perfil.
  *
  * Un PUT exitoso seguido de un insert fallido deja el archivo ocupando espacio
  * sin que nada lo referencie (§3.1). El free tier son 10 GB acumulados, asi que
@@ -10,7 +11,7 @@
  *   npm run cleanup:orphans -- --delete --bucket creatives-prod
  *   npm run cleanup:orphans -- --min-age-hours 0     # ignora el margen de 24 h
  *
- * Usa la service role key: tiene que ver TODOS los creativos, no solo los del
+ * Usa la service role key: tiene que ver TODAS las filas, no solo las del
  * usuario, o borraria archivos vivos.
  */
 import dotenv from "dotenv";
@@ -27,6 +28,9 @@ const args = process.argv.slice(2);
 const shouldDelete = args.includes("--delete");
 const bucketArg = args.indexOf("--bucket");
 const BUCKET = bucketArg >= 0 ? args[bucketArg + 1] : process.env.R2_BUCKET_NAME!;
+
+/** Las carpetas que arma lib/storage.ts. Lo que este fuera de ellas no se toca. */
+const PREFIXES = ["creatives/", "posters/", "material/", "avatars/"];
 
 /** Margen para no borrar un upload que esta a la mitad ahorita mismo. */
 const minAgeArg = args.indexOf("--min-age-hours");
@@ -56,20 +60,32 @@ async function main() {
     { auth: { persistSession: false } },
   );
 
-  const { data: creatives, error } = await supabase
-    .from("creatives")
-    .select("storage_path, poster_path");
-  if (error) {
-    console.error(`No se pudo leer creatives: ${error.message}`);
-    process.exit(1);
+  // Todo lo que la base apunta a R2. Los archivados tambien cuentan: siguen
+  // teniendo su archivo. Una tabla nueva con archivos en R2 tiene que entrar
+  // aqui Y en PREFIXES, o sus archivos se verian huerfanos.
+  const [creatives, materials, profiles] = await Promise.all([
+    supabase.from("creatives").select("storage_path, poster_path"),
+    supabase.from("client_materials").select("storage_path").not("storage_path", "is", null),
+    supabase.from("profiles").select("avatar_path").not("avatar_path", "is", null),
+  ]);
+  for (const [tabla, result] of [
+    ["creatives", creatives],
+    ["client_materials", materials],
+    ["profiles", profiles],
+  ] as const) {
+    if (result.error) {
+      console.error(`No se pudo leer ${tabla}: ${result.error.message}`);
+      process.exit(1);
+    }
   }
 
-  // Los archivados tambien cuentan: siguen teniendo su archivo en R2.
   const referenced = new Set<string>();
-  for (const row of creatives ?? []) {
+  for (const row of creatives.data ?? []) {
     referenced.add(row.storage_path as string);
     if (row.poster_path) referenced.add(row.poster_path as string);
   }
+  for (const row of materials.data ?? []) referenced.add(row.storage_path as string);
+  for (const row of profiles.data ?? []) referenced.add(row.avatar_path as string);
 
   const r2 = new S3Client({
     region: "auto",
@@ -84,6 +100,7 @@ async function main() {
   const orphans: { key: string; size: number; modified: Date }[] = [];
   let scanned = 0;
   let tooRecent = 0;
+  let unknown = 0;
   let token: string | undefined;
 
   do {
@@ -95,6 +112,11 @@ async function main() {
       if (!key) continue;
       scanned += 1;
       if (referenced.has(key)) continue;
+      // Una carpeta que este script no conoce no se toca: no sabe que la referencia.
+      if (!PREFIXES.some((prefix) => key.startsWith(prefix))) {
+        unknown += 1;
+        continue;
+      }
 
       const modified = object.LastModified ?? new Date(0);
       if (modified.getTime() > cutoff) {
@@ -110,6 +132,9 @@ async function main() {
 
   console.log(`\nBucket ${BUCKET}`);
   console.log(`  ${scanned} objetos, ${referenced.size} referenciados en la DB`);
+  if (unknown > 0) {
+    console.log(`  ${unknown} en carpetas que este script no conoce: no se tocan`);
+  }
   if (tooRecent > 0) {
     console.log(`  ${tooRecent} huérfanos con menos de ${MIN_AGE_HOURS} h: se respetan`);
   }

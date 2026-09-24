@@ -20,8 +20,9 @@ import {
   type BriefStatus,
   type StageStatus,
 } from "@/lib/brief-flow";
-import { ROLE_LABEL, type Role } from "@/lib/team";
+import { roleLabel } from "@/lib/roles";
 import { unwrapped } from "@/lib/action-result";
+import { today } from "@/lib/dates";
 
 // Las acciones regresan el error como dato; esto lo vuelve a lanzar con su mensaje real.
 const moveBrief = unwrapped(moveBriefAction);
@@ -85,8 +86,7 @@ function TaskRow({ task, team }: { task: MyTask; team: TeamMember[] }) {
   const nextStage = STAGES.find((s) => s.status === next.to);
   const faltaSiguiente = next.owner !== null && !task[next.owner];
   const href = `/client/${task.clientId}?brief=${task.id}`;
-  const hoy = new Date().toISOString().slice(0, 10);
-  const atrasado = task.dueDate !== null && task.dueDate < hoy;
+  const atrasado = task.dueDate !== null && task.dueDate < today();
 
   // Producir un ad es subir los diseños y publicarlos: eso cierra el batch, y
   // se hace dentro del brief. Terminar desde aqui lo dejaria sin cerrar.
@@ -179,10 +179,11 @@ function TaskRow({ task, team }: { task: MyTask; team: TeamMember[] }) {
 
       {eligiendo ? (
         <div className="mt-3 flex flex-wrap items-center gap-2 rounded-md border bg-muted/30 p-2">
-          <label className="text-xs text-muted-foreground">
+          <label htmlFor={`siguiente-${task.id}`} className="text-xs text-muted-foreground">
             ¿Quién sigue en {nextStage?.label.toLowerCase()}?
           </label>
           <select
+            id={`siguiente-${task.id}`}
             value={persona}
             onChange={(event) => setPersona(event.target.value)}
             className="h-8 min-w-0 flex-1 rounded-md border border-input bg-transparent px-2 text-xs"
@@ -190,7 +191,7 @@ function TaskRow({ task, team }: { task: MyTask; team: TeamMember[] }) {
             <option value="">Elige a alguien…</option>
             {team.map((member) => (
               <option key={member.id} value={member.id}>
-                {member.name} · {ROLE_LABEL[member.role as Role] ?? member.role}
+                {member.name} · {roleLabel(member.role)}
               </option>
             ))}
           </select>

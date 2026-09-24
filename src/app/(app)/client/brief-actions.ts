@@ -192,19 +192,6 @@ async function saveBriefImpl(input: {
   return data.id as string;
 }
 
-/** Archiva, no borra: un brief es el historial de por qué se pidió cada ad. */
-export async function archiveBrief(briefId: string): Promise<void> {
-  await requireUser();
-  const supabase = await createClient();
-  const { error } = await supabase
-    .from("briefs")
-    .update({ archived_at: new Date().toISOString() })
-    .eq("id", briefId);
-
-  if (error) throw new Error(error.message);
-  revalidatePath("/", "layout");
-}
-
 /**
  * Diseño publica: los creativos ya subidos quedan en "sin lanzar" con su batch,
  * el brief queda ligado a ese batch y el batch se marca como completado.

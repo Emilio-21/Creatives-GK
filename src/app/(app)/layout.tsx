@@ -7,11 +7,9 @@ import { getPreviewUrl } from "@/lib/storage";
 import { createClient, type Profile } from "@/lib/supabase/server";
 
 /**
- * El shell vive aqui y no dentro de cada pagina.
- *
- * Antes se re-montaba en cada navegacion: cambiar de cliente reemplazaba la
- * pantalla entera, sidebar incluido, y se sentia como recargar. Como layout,
- * React lo conserva y solo cambia el contenido.
+ * El shell vive aqui y no dentro de cada pagina: como layout, React lo conserva
+ * entre navegaciones y cambiar de cliente solo cambia el contenido, no la
+ * pantalla entera.
  */
 export default async function AppLayout({
   children,

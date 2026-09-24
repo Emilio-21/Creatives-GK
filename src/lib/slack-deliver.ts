@@ -1,7 +1,13 @@
 import "server-only";
-import { createClient as createServiceClient } from "@supabase/supabase-js";
-import { CHANNEL_LABEL, STAGES, type BriefStatus, type Channel } from "@/lib/brief-flow";
-import { publicEnv, serverEnv } from "@/lib/env";
+import { appUrl } from "@/lib/app-url";
+import {
+  BRIEF_STATUSES,
+  CHANNEL_LABEL,
+  STAGES,
+  type BriefStatus,
+  type Channel,
+} from "@/lib/brief-flow";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { esc, lookupSlackUser, sendDirectMessage, slackToken } from "@/lib/slack";
 
 /**
@@ -21,19 +27,6 @@ const MAX_INTENTOS = 3;
 /** Un reclamo mas viejo que esto es de un proceso que murio: se puede retomar. */
 const RECLAMO_MINUTOS = 5;
 
-export function appUrl(): string {
-  return (process.env.APP_URL || "https://relevo.growth-kingdom.workers.dev").replace(
-    /\/$/,
-    "",
-  );
-}
-
-function admin() {
-  return createServiceClient(publicEnv.supabaseUrl, serverEnv.supabaseServiceRoleKey, {
-    auth: { persistSession: false },
-  });
-}
-
 export type SlackDeliveryReport = {
   skipped?: string;
   sent: number;
@@ -45,7 +38,7 @@ export async function deliverPendingSlack(limit = 25): Promise<SlackDeliveryRepo
   const report: SlackDeliveryReport = { sent: 0, failed: 0, errors: [] };
   if (!slackToken()) return { ...report, skipped: "Sin SLACK_BOT_TOKEN: Slack apagado." };
 
-  const db = admin();
+  const db = createAdminClient();
   const desde = new Date(Date.now() - VENTANA_HORAS * 3_600_000).toISOString();
   const reclamoViejo = new Date(Date.now() - RECLAMO_MINUTOS * 60_000).toISOString();
 
@@ -157,7 +150,7 @@ export async function deliverPendingSlack(limit = 25): Promise<SlackDeliveryRepo
 class Final extends Error {}
 
 async function slackIdFor(
-  db: ReturnType<typeof admin>,
+  db: ReturnType<typeof createAdminClient>,
   perfil: Record<string, unknown>,
 ): Promise<string | null> {
   if (perfil.slack_user_id) return perfil.slack_user_id as string;
@@ -234,13 +227,12 @@ function flowLine(
   recipientId: string,
   nombres: Map<string, string>,
 ): string {
-  const orden: BriefStatus[] = ["borrador", "en_revision", "en_produccion", "en_lanzamiento", "lanzado"];
-  const actual = orden.indexOf(brief.status as BriefStatus);
+  const actual = BRIEF_STATUSES.indexOf(brief.status as BriefStatus);
 
   return STAGES.map((stage) => {
     const owner = brief[stage.field] as string | null;
     const quien = !owner ? "sin asignar" : owner === recipientId ? "tú" : (nombres.get(owner) ?? "—");
-    const i = orden.indexOf(stage.status);
+    const i = BRIEF_STATUSES.indexOf(stage.status);
     if (i === actual) return `▶ *${stage.label} — ${esc(quien)}*`;
     return `${i < actual ? "✓" : "○"} ${stage.label} — ${esc(quien)}`;
   }).join("   →   ");

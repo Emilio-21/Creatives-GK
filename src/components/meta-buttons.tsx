@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import {
 } from "@/app/(app)/client/meta-actions";
 import type { SyncReport } from "@/lib/meta-sync";
 import { unwrapped } from "@/lib/action-result";
+import { Modal } from "@/components/modal";
 
 // Las acciones regresan el error como dato; esto lo vuelve a lanzar con su mensaje real.
 const setMetaAdAccount = unwrapped(setMetaAdAccountAction);
@@ -38,15 +39,6 @@ export function MetaButtons({
   const [until, setUntil] = useState("");
   const [report, setReport] = useState<SyncReport | null>(null);
   const [pending, startTransition] = useTransition();
-
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setOpen(false);
-    };
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [open]);
 
   function runSync() {
     startTransition(async () => {
@@ -88,87 +80,77 @@ export function MetaButtons({
       </div>
 
       {open ? (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-label="Configuración de Meta"
-          className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/60 p-4 backdrop-blur-sm sm:p-8"
-          onClick={(event) => {
-            if (event.target === event.currentTarget) setOpen(false);
-          }}
-        >
-          <div className="w-full max-w-lg rounded-xl border bg-card p-5 shadow-2xl">
-            <h2 className="text-base font-semibold">Cuenta de Meta</h2>
-            <p className="mt-0.5 text-xs text-muted-foreground">
-              El token vive en el servidor. Aquí solo va el ad account, que no es secreto.
-            </p>
+        <Modal label="Configuración de Meta" onClose={() => setOpen(false)} className="max-w-lg">
+          <h2 className="text-base font-semibold">Cuenta de Meta</h2>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            El token vive en el servidor. Aquí solo va el ad account, que no es secreto.
+          </p>
 
-            <div className="mt-4 space-y-4">
+          <div className="mt-4 space-y-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="ad-account">Ad account id</Label>
+              <Input
+                id="ad-account"
+                value={value}
+                placeholder="act_123456789012345"
+                onChange={(event) => setValue(event.target.value)}
+                className="font-mono text-sm"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label htmlFor="ad-account">Ad account id</Label>
+                <Label htmlFor="since">Desde</Label>
                 <Input
-                  id="ad-account"
-                  value={value}
-                  placeholder="act_123456789012345"
-                  onChange={(event) => setValue(event.target.value)}
-                  className="font-mono text-sm"
+                  id="since"
+                  type="date"
+                  value={since}
+                  onChange={(event) => setSince(event.target.value)}
                 />
               </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <Label htmlFor="since">Desde</Label>
-                  <Input
-                    id="since"
-                    type="date"
-                    value={since}
-                    onChange={(event) => setSince(event.target.value)}
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="until">Hasta</Label>
-                  <Input
-                    id="until"
-                    type="date"
-                    value={until}
-                    onChange={(event) => setUntil(event.target.value)}
-                  />
-                </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="until">Hasta</Label>
+                <Input
+                  id="until"
+                  type="date"
+                  value={until}
+                  onChange={(event) => setUntil(event.target.value)}
+                />
               </div>
-
-              <p className="text-xs text-muted-foreground">
-                {since && until
-                  ? `SYNC va a jalar del ${since} al ${until}.`
-                  : "Sin fechas, SYNC jala todo el histórico. Cada rango queda como su propio periodo, así que no los encimes."}
-                {syncedAt
-                  ? ` Último sync: ${new Date(syncedAt).toLocaleString("es-MX")}.`
-                  : " Nunca sincronizado."}
-              </p>
             </div>
 
-            <div className="mt-5 flex justify-end gap-2">
-              <Button variant="ghost" onClick={() => setOpen(false)}>
-                Cerrar
-              </Button>
-              <Button
-                disabled={pending || value === (adAccountId ?? "")}
-                onClick={() =>
-                  startTransition(async () => {
-                    try {
-                      await setMetaAdAccount(clientId, value);
-                      toast.success("Cuenta guardada");
-                      router.refresh();
-                    } catch (error) {
-                      toast.error((error as Error).message);
-                    }
-                  })
-                }
-              >
-                Guardar
-              </Button>
-            </div>
+            <p className="text-xs text-muted-foreground">
+              {since && until
+                ? `SYNC va a jalar del ${since} al ${until}.`
+                : "Sin fechas, SYNC jala todo el histórico. Cada rango queda como su propio periodo, así que no los encimes."}
+              {syncedAt
+                ? ` Último sync: ${new Date(syncedAt).toLocaleString("es-MX")}.`
+                : " Nunca sincronizado."}
+            </p>
           </div>
-        </div>
+
+          <div className="mt-5 flex justify-end gap-2">
+            <Button variant="ghost" onClick={() => setOpen(false)}>
+              Cerrar
+            </Button>
+            <Button
+              disabled={pending || value === (adAccountId ?? "")}
+              onClick={() =>
+                startTransition(async () => {
+                  try {
+                    await setMetaAdAccount(clientId, value);
+                    toast.success("Cuenta guardada");
+                    router.refresh();
+                  } catch (error) {
+                    toast.error((error as Error).message);
+                  }
+                })
+              }
+            >
+              Guardar
+            </Button>
+          </div>
+        </Modal>
       ) : null}
 
       {report ? (

@@ -35,6 +35,7 @@ import { formatMoney, formatPercent, statusOf, STATUS_LABEL } from "@/lib/metric
 import { adCodeFor } from "@/lib/ad-code";
 import type { CreativeCard as Card } from "@/lib/creatives";
 import { unwrapped } from "@/lib/action-result";
+import { today } from "@/lib/dates";
 
 // Las acciones regresan el error como dato; esto lo vuelve a lanzar con su mensaje real.
 const requestDownloads = unwrapped(requestDownloadsAction);
@@ -208,7 +209,7 @@ export function LibraryResults({
         const toastId = toast.loading(`Armando el zip… 0/${targets.length}`);
         await downloadZip(
           targets,
-          `${zipBaseName}-${new Date().toISOString().slice(0, 10)}.zip`,
+          `${zipBaseName}-${today()}.zip`,
           (done, total) => toast.loading(`Armando el zip… ${done}/${total}`, { id: toastId }),
         );
         toast.success(`${targets.length} archivos descargados`, { id: toastId });
@@ -339,7 +340,7 @@ export function LibraryResults({
             const scope = selected.size > 0 ? cards.filter((c) => selected.has(c.id)) : cards;
             exportReportCsv(
               scope,
-              `${reportName}-${new Date().toISOString().slice(0, 10)}.csv`,
+              `${reportName}-${today()}.csv`,
             );
             toast.success(`Informe de ${scope.length} creativos exportado`);
           }}

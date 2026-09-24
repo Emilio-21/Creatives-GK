@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ChevronRight } from "lucide-react";
 import { logout } from "@/app/login/actions";
 import { MobileNav } from "@/components/mobile-nav";
 import { MobileTabBar } from "@/components/mobile-tabbar";
@@ -52,9 +53,8 @@ export function AppShell({
             <RelevoBrand href="/" />
           </div>
 
-          {/* La tarjeta ES la entrada al equipo. Antes el enlace vivia hasta
-              abajo de la barra, detras de la lista de clientes: para llegar
-              habia que hacer scroll por algo que no tiene nada que ver. */}
+          {/* La tarjeta ES la entrada al equipo: arriba y a la vista, no al
+              final de la lista de clientes. */}
           <Link
             href="/equipo"
             className="glass group flex items-center gap-3 rounded-2xl border p-3 transition-colors hover:border-primary/40"
@@ -74,20 +74,10 @@ export function AppShell({
                 </p>
               ) : null}
             </div>
-            <svg
-              viewBox="0 0 24 24"
+            <ChevronRight
               className="size-3.5 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100"
               aria-hidden="true"
-            >
-              <path
-                d="m9 6 6 6-6 6"
-                stroke="currentColor"
-                strokeWidth="2"
-                fill="none"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
+            />
           </Link>
 
           <div className="glass flex min-h-0 flex-1 flex-col gap-4 rounded-2xl border p-3">
@@ -140,5 +130,3 @@ export function AppShell({
     </div>
   );
 }
-
-export { Link };

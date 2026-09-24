@@ -143,13 +143,14 @@ type RawInsight = {
   actions?: { action_type: string; value: string }[];
 };
 
+export type DateRange = { since: string; until: string };
+
 /**
  * Insights a nivel ad de toda la cuenta, en una sola consulta paginada.
  *
- * Se pide asi y no ad por ad porque Vercel Hobby corta a los 60 s: una cuenta
- * con 200 anuncios serian 200 requests.
+ * Se pide asi y no ad por ad porque una cuenta con 200 anuncios serian 200
+ * requests: lento, y cerca del limite de subrequests del Worker.
  */
-export type DateRange = { since: string; until: string };
 
 export async function fetchAccountInsights(
   adAccountId: string,

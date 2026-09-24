@@ -1,5 +1,7 @@
+import "server-only";
 import { createClient } from "@/lib/supabase/server";
-import type { BriefStatus, Channel } from "@/lib/brief-flow";
+import { OPEN_STATUSES, type BriefStatus, type Channel, type StageStatus } from "@/lib/brief-flow";
+import { today } from "@/lib/dates";
 
 /**
  * Lo que alimenta el inicio: que hago ahora y que esta atorado.
@@ -11,8 +13,6 @@ import type { BriefStatus, Channel } from "@/lib/brief-flow";
 
 /** Cuanto puede esperar algo sin que nadie lo toque antes de contar como atorado. */
 export const DIAS_ATORADO = 2;
-
-const ABIERTAS: BriefStatus[] = ["en_revision", "en_produccion", "en_lanzamiento"];
 
 export type HomeBrief = {
   id: string;
@@ -83,7 +83,7 @@ export async function getHomeData(userId: string): Promise<HomeData> {
   const sent = briefs
     .filter(
       (b) =>
-        ABIERTAS.includes(b.status as BriefStatus) &&
+        OPEN_STATUSES.includes(b.status as StageStatus) &&
         b.assigned_to !== userId &&
         (b.created_by === userId || mios.has(b.id as string)),
     )
@@ -99,12 +99,12 @@ export async function getHomeData(userId: string): Promise<HomeData> {
   };
   for (const b of briefs) pipeline[b.status as BriefStatus] += 1;
 
-  const hoy = new Date().toISOString().slice(0, 10);
+  const hoy = today();
   const limite = Date.now() - DIAS_ATORADO * 86_400_000;
   const stuck: Stuck[] = [];
   for (const b of briefs) {
     const brief = toHome(b);
-    if (!ABIERTAS.includes(brief.status)) continue;
+    if (!OPEN_STATUSES.includes(brief.status as StageStatus)) continue;
     const esperando = brief.enteredAt ? new Date(brief.enteredAt).getTime() < limite : false;
 
     // Una razon por brief, la mas grave: tres renglones del mismo brief son ruido.

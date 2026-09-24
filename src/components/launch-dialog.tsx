@@ -23,6 +23,7 @@ import {
 } from "@/app/(app)/creative/launch-actions";
 import type { LaunchRow } from "@/lib/launches";
 import { unwrapped } from "@/lib/action-result";
+import { today } from "@/lib/dates";
 
 // Las acciones regresan el error como dato; esto lo vuelve a lanzar con su mensaje real.
 const createLaunch = unwrapped(createLaunchAction);
@@ -42,7 +43,7 @@ type Draft = {
 
 function emptyDraft(): Draft {
   return {
-    launchedAt: new Date().toISOString().slice(0, 10),
+    launchedAt: today(),
     endedAt: "",
     platform: "meta",
     campaignName: "",

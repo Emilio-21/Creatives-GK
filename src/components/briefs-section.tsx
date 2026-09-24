@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { BriefCard } from "@/components/brief-card";
@@ -9,9 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { docEmbedUrl, docLabel } from "@/lib/brief-flow";
 import { UploadDropzone } from "@/app/(app)/upload/upload-dropzone";
-import {
-  createBatch as createBatchAction,
-} from "@/app/(app)/client/batch-actions";
+import { createBatch as createBatchAction } from "@/app/(app)/client/batch-actions";
 import {
   listBriefs as listBriefsAction,
   publishBrief as publishBriefAction,
@@ -19,6 +17,7 @@ import {
   type BriefWithMeta,
 } from "@/app/(app)/client/brief-actions";
 import { unwrapped } from "@/lib/action-result";
+import { Modal } from "@/components/modal";
 
 // Las acciones regresan el error como dato; esto lo vuelve a lanzar con su mensaje real.
 const createBatch = unwrapped(createBatchAction);
@@ -42,15 +41,17 @@ export function BriefsSection({
   // ?brief= abre ese brief: es como llega alguien desde "Mi trabajo" o desde Slack.
   const [openId, setOpenId] = useState<string | null>(useSearchParams().get("brief"));
 
-  const reload = () =>
-    listBriefs(clientId)
-      .then(setBriefs)
-      .catch(() => setBriefs([]));
+  const reload = useCallback(
+    () =>
+      listBriefs(clientId)
+        .then(setBriefs)
+        .catch(() => setBriefs([])),
+    [clientId],
+  );
 
   useEffect(() => {
     void reload();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [clientId]);
+  }, [reload]);
 
   const open = briefs?.find((brief) => brief.id === openId) ?? null;
   const pending =
@@ -178,236 +179,216 @@ function BriefModal({
 
   const completed = brief.batchCompletedAt !== null;
 
-  useEffect(() => {
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
-    };
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [onClose]);
-
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-label={brief.title}
-      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/60 p-4 backdrop-blur-sm sm:p-8"
-      onClick={(event) => {
-        if (event.target === event.currentTarget) onClose();
-      }}
-    >
-      <div
-        className={`relative w-full ${brief.doc_url ? "max-w-5xl" : "max-w-3xl"} rounded-xl border bg-card p-5 shadow-2xl`}
+    <Modal label={brief.title} onClose={onClose} className={brief.doc_url ? "max-w-5xl" : "max-w-3xl"}>
+      <button
+        type="button"
+        aria-label="Cerrar"
+        onClick={onClose}
+        className="absolute right-3 top-3 flex size-7 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
       >
-        <button
-          type="button"
-          aria-label="Cerrar"
-          onClick={onClose}
-          className="absolute right-3 top-3 flex size-7 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
-        >
-          ✕
-        </button>
+        ✕
+      </button>
 
-        {editing ? (
-          <div className="space-y-3">
-            <Input
-              value={draft.title}
-              onChange={(event) =>
-                setDraft({ ...draft, title: event.target.value })
+      {editing ? (
+        <div className="space-y-3">
+          <Input
+            value={draft.title}
+            onChange={(event) =>
+              setDraft({ ...draft, title: event.target.value })
+            }
+            maxLength={140}
+          />
+          <Input
+            type="date"
+            value={draft.briefDate}
+            onChange={(event) =>
+              setDraft({ ...draft, briefDate: event.target.value })
+            }
+            className="w-44"
+          />
+          <Input
+            type="url"
+            inputMode="url"
+            value={draft.docUrl}
+            onChange={(event) =>
+              setDraft({ ...draft, docUrl: event.target.value })
+            }
+            placeholder="Link al Google Doc"
+          />
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              disabled={pending}
+              onClick={() =>
+                startTransition(async () => {
+                  try {
+                    await saveBrief({
+                      id: brief.id,
+                      clientId,
+                      title: draft.title,
+                      docUrl: draft.docUrl,
+                      briefDate: draft.briefDate,
+                    });
+                    toast.success("Brief guardado");
+                    setEditing(false);
+                    await onChanged();
+                  } catch (error) {
+                    toast.error((error as Error).message);
+                  }
+                })
               }
-              maxLength={140}
-            />
-            <Input
-              type="date"
-              value={draft.briefDate}
-              onChange={(event) =>
-                setDraft({ ...draft, briefDate: event.target.value })
-              }
-              className="w-44"
-            />
-            <Input
-              type="url"
-              inputMode="url"
-              value={draft.docUrl}
-              onChange={(event) =>
-                setDraft({ ...draft, docUrl: event.target.value })
-              }
-              placeholder="Link al Google Doc"
-            />
-            <div className="flex gap-2">
-              <Button
-                size="sm"
-                disabled={pending}
-                onClick={() =>
-                  startTransition(async () => {
-                    try {
-                      await saveBrief({
-                        id: brief.id,
-                        clientId,
-                        title: draft.title,
-                        docUrl: draft.docUrl,
-                        briefDate: draft.briefDate,
-                      });
-                      toast.success("Brief guardado");
-                      setEditing(false);
-                      await onChanged();
-                    } catch (error) {
-                      toast.error((error as Error).message);
-                    }
-                  })
-                }
-              >
-                Guardar
-              </Button>
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => setEditing(false)}
-              >
-                Cancelar
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <>
-            <div className="mb-3 pr-8">
-              <h2 className="text-base font-semibold">{brief.title}</h2>
-              <p className="mt-0.5 font-mono text-[11px] text-muted-foreground">
-                {clientName} · {brief.brief_date} · {brief.authorName ?? "—"}
-                {completed ? " · batch completado" : ""}
-              </p>
-            </div>
-
-            <div className="mb-3">
-              <BriefWorkflow brief={brief} onChanged={onChanged} />
-            </div>
-
-            {brief.doc_url ? (
-              <DocPanel docUrl={brief.doc_url} />
-            ) : brief.body ? (
-              // Briefs de antes del Doc: el texto se queda, solo ya no se escribe aqui.
-              <p className="whitespace-pre-wrap rounded-md border bg-muted/30 p-3 text-sm">
-                {brief.body}
-              </p>
-            ) : (
-              <p className="rounded-md border border-dashed p-3 text-sm text-muted-foreground">
-                Sin Google Doc todavía.
-              </p>
-            )}
-
+            >
+              Guardar
+            </Button>
             <Button
               size="sm"
               variant="ghost"
-              className="mt-2"
-              onClick={() => setEditing(true)}
+              onClick={() => setEditing(false)}
             >
-              {brief.doc_url ? "Editar" : "Pegar link del Doc"}
+              Cancelar
             </Button>
+          </div>
+        </div>
+      ) : (
+        <>
+          <div className="mb-3 pr-8">
+            <h2 className="text-base font-semibold">{brief.title}</h2>
+            <p className="mt-0.5 font-mono text-[11px] text-muted-foreground">
+              {clientName} · {brief.brief_date} · {brief.authorName ?? "—"}
+              {completed ? " · batch completado" : ""}
+            </p>
+          </div>
 
-            {/* Solo Ads sube a la biblioteca: es la que se mide contra Meta. Un
-                email o un SMS se produce y se lanza fuera; aqui solo se sigue. */}
-            {brief.channel === "ads" ? (
-              <div className="mt-5 border-t pt-4">
-                <h3 className="text-sm font-semibold">Diseños de este brief</h3>
+          <div className="mb-3">
+            <BriefWorkflow brief={brief} onChanged={onChanged} />
+          </div>
 
-                {!batchId ? (
-                  <div className="mt-2 space-y-2">
-                    <p className="text-xs text-muted-foreground">
-                      Ponle nombre al batch para empezar a subir. Es la tanda
-                      con la que se va a probar.
-                    </p>
-                    <div className="flex gap-2">
-                      <Input
-                        value={batchName}
-                        onChange={(event) => setBatchName(event.target.value)}
-                        placeholder="Nombre del batch"
-                        maxLength={80}
-                      />
-                      <Button
-                        size="sm"
-                        disabled={pending || !batchName.trim()}
-                        onClick={() =>
-                          startTransition(async () => {
-                            try {
-                              const id = await createBatch(clientId, batchName);
-                              setBatchId(id);
-                              await saveBrief({
-                                id: brief.id,
-                                clientId,
-                                batchId: id,
-                                title: brief.title,
-                                docUrl: brief.doc_url,
-                                briefDate: brief.brief_date,
-                              });
-                              await onChanged();
-                            } catch (error) {
-                              toast.error((error as Error).message);
-                            }
-                          })
-                        }
-                      >
-                        Crear batch
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="mt-3 space-y-4">
-                    <p className="font-mono text-[11px] text-muted-foreground">
-                      Batch: {brief.batchName ?? batchName} ·{" "}
-                      {brief.creativeCount} diseño
-                      {brief.creativeCount === 1 ? "" : "s"}
-                    </p>
+          {brief.doc_url ? (
+            <DocPanel docUrl={brief.doc_url} />
+          ) : brief.body ? (
+            // Briefs de antes del Doc: el texto se queda, solo ya no se escribe aqui.
+            <p className="whitespace-pre-wrap rounded-md border bg-muted/30 p-3 text-sm">
+              {brief.body}
+            </p>
+          ) : (
+            <p className="rounded-md border border-dashed p-3 text-sm text-muted-foreground">
+              Sin Google Doc todavía.
+            </p>
+          )}
 
-                    <UploadDropzone
-                      clients={[{ id: clientId, name: clientName }]}
-                      lockedClientId={clientId}
-                      lockedBatchId={batchId}
-                      onUploaded={onChanged}
+          <Button
+            size="sm"
+            variant="ghost"
+            className="mt-2"
+            onClick={() => setEditing(true)}
+          >
+            {brief.doc_url ? "Editar" : "Pegar link del Doc"}
+          </Button>
+
+          {/* Solo Ads sube a la biblioteca: es la que se mide contra Meta. Un
+              email o un SMS se produce y se lanza fuera; aqui solo se sigue. */}
+          {brief.channel === "ads" ? (
+            <div className="mt-5 border-t pt-4">
+              <h3 className="text-sm font-semibold">Diseños de este brief</h3>
+
+              {!batchId ? (
+                <div className="mt-2 space-y-2">
+                  <p className="text-xs text-muted-foreground">
+                    Ponle nombre al batch para empezar a subir. Es la tanda
+                    con la que se va a probar.
+                  </p>
+                  <div className="flex gap-2">
+                    <Input
+                      value={batchName}
+                      onChange={(event) => setBatchName(event.target.value)}
+                      placeholder="Nombre del batch"
+                      maxLength={80}
                     />
-
-                    <div className="flex items-center gap-3">
-                      <Button
-                        size="sm"
-                        disabled={pending || completed}
-                        onClick={() =>
-                          startTransition(async () => {
-                            try {
-                              const result = await publishBrief(
-                                brief.id,
-                                batchId,
-                              );
-                              if (result.handedOff) {
-                                toast.success(
-                                  "Publicado y mandado a lanzamiento.",
-                                );
-                              } else {
-                                // Los diseños ya estan arriba; solo falta el relevo.
-                                toast.warning(
-                                  `Diseños publicados, pero no pasó a lanzamiento: ${result.reason}`,
-                                );
-                              }
-                              await onChanged();
-                              onClose();
-                            } catch (error) {
-                              toast.error((error as Error).message);
-                            }
-                          })
-                        }
-                      >
-                        {completed ? "Ya publicado" : "Publicar diseños"}
-                      </Button>
-                      <p className="text-xs text-muted-foreground">
-                        Publicar cierra el batch y le avisa a quien lanza.
-                      </p>
-                    </div>
+                    <Button
+                      size="sm"
+                      disabled={pending || !batchName.trim()}
+                      onClick={() =>
+                        startTransition(async () => {
+                          try {
+                            const id = await createBatch(clientId, batchName);
+                            setBatchId(id);
+                            await saveBrief({
+                              id: brief.id,
+                              clientId,
+                              batchId: id,
+                              title: brief.title,
+                              docUrl: brief.doc_url,
+                              briefDate: brief.brief_date,
+                            });
+                            await onChanged();
+                          } catch (error) {
+                            toast.error((error as Error).message);
+                          }
+                        })
+                      }
+                    >
+                      Crear batch
+                    </Button>
                   </div>
-                )}
-              </div>
-            ) : null}
-          </>
-        )}
-      </div>
-    </div>
+                </div>
+              ) : (
+                <div className="mt-3 space-y-4">
+                  <p className="font-mono text-[11px] text-muted-foreground">
+                    Batch: {brief.batchName ?? batchName} ·{" "}
+                    {brief.creativeCount} diseño
+                    {brief.creativeCount === 1 ? "" : "s"}
+                  </p>
+
+                  <UploadDropzone
+                    clients={[{ id: clientId, name: clientName }]}
+                    lockedClientId={clientId}
+                    lockedBatchId={batchId}
+                    onUploaded={onChanged}
+                  />
+
+                  <div className="flex items-center gap-3">
+                    <Button
+                      size="sm"
+                      disabled={pending || completed}
+                      onClick={() =>
+                        startTransition(async () => {
+                          try {
+                            const result = await publishBrief(
+                              brief.id,
+                              batchId,
+                            );
+                            if (result.handedOff) {
+                              toast.success(
+                                "Publicado y mandado a lanzamiento.",
+                              );
+                            } else {
+                              // Los diseños ya estan arriba; solo falta el relevo.
+                              toast.warning(
+                                `Diseños publicados, pero no pasó a lanzamiento: ${result.reason}`,
+                              );
+                            }
+                            await onChanged();
+                            onClose();
+                          } catch (error) {
+                            toast.error((error as Error).message);
+                          }
+                        })
+                      }
+                    >
+                      {completed ? "Ya publicado" : "Publicar diseños"}
+                    </Button>
+                    <p className="text-xs text-muted-foreground">
+                      Publicar cierra el batch y le avisa a quien lanza.
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : null}
+        </>
+      )}
+    </Modal>
   );
 }
 

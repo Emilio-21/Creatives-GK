@@ -25,7 +25,7 @@ import {
   STATUS_LABEL,
   type BriefStatus,
 } from "@/lib/brief-flow";
-import { ROLE_LABEL, type Role } from "@/lib/team";
+import { roleLabel } from "@/lib/roles";
 import { unwrapped } from "@/lib/action-result";
 
 // Las acciones regresan el error como dato; esto lo vuelve a lanzar con su mensaje real.
@@ -64,15 +64,14 @@ export function BriefWorkflow({
     getBriefHistory(brief.id).then(setHistory).catch(() => setHistory([]));
   }, [brief.id]);
 
-  const ownerOf = (to: BriefStatus) => {
+  /** Entrar a una etapa que no tiene responsable. */
+  const faltaResponsable = (to: BriefStatus) => {
     const stage = STAGES.find((s) => s.status === to);
-    return stage ? brief[stage.field] : null;
+    return stage !== undefined && !brief[stage.field];
   };
 
   // Entrar a una etapa sin responsable pide persona; regresar pide motivo.
-  const pidePersona =
-    pendiente !== null && !pendiente.back && STAGES.some((s) => s.status === pendiente.to) &&
-    !ownerOf(pendiente.to);
+  const pidePersona = pendiente !== null && !pendiente.back && faltaResponsable(pendiente.to);
   const pideMotivo = pendiente?.back ?? false;
 
   function run(action: () => Promise<unknown>, done?: string) {
@@ -113,10 +112,11 @@ export function BriefWorkflow({
         </div>
 
         <div className="flex items-center gap-1.5">
-          <label className="font-mono text-xs text-muted-foreground">
+          <label htmlFor="brief-entrega" className="font-mono text-xs text-muted-foreground">
             Entrega
           </label>
           <Input
+            id="brief-entrega"
             type="date"
             defaultValue={brief.due_date ?? ""}
             disabled={pending}
@@ -163,7 +163,7 @@ export function BriefWorkflow({
                 <option value="">Sin asignar</option>
                 {team.map((member) => (
                   <option key={member.id} value={member.id}>
-                    {member.name} · {ROLE_LABEL[member.role as Role] ?? member.role}
+                    {member.name} · {roleLabel(member.role)}
                   </option>
                 ))}
               </select>
@@ -208,9 +208,7 @@ export function BriefWorkflow({
             onClick={() => {
               // Si no hace falta nada mas, se mueve de una: un paso extra para
               // confirmar lo que ya se decidio solo estorba.
-              const faltaPersona =
-                !step.back && STAGES.some((s) => s.status === step.to) && !ownerOf(step.to);
-              if (step.back || faltaPersona) setPendiente({ to: step.to, back: !!step.back });
+              if (step.back || faltaResponsable(step.to)) setPendiente({ to: step.to, back: !!step.back });
               else mover(step.to);
             }}
           >
@@ -223,10 +221,11 @@ export function BriefWorkflow({
         <div className="mt-3 space-y-2 rounded-md border bg-muted/30 p-3">
           {pidePersona ? (
             <div className="space-y-1">
-              <label className="font-mono text-xs text-muted-foreground">
+              <label htmlFor="brief-siguiente" className="font-mono text-xs text-muted-foreground">
                 Responsable de {STAGES.find((s) => s.status === pendiente.to)?.label}
               </label>
               <select
+                id="brief-siguiente"
                 value={persona}
                 onChange={(event) => setPersona(event.target.value)}
                 className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm"
@@ -234,7 +233,7 @@ export function BriefWorkflow({
                 <option value="">Elige a alguien…</option>
                 {team.map((member) => (
                   <option key={member.id} value={member.id}>
-                    {member.name} · {ROLE_LABEL[member.role as Role] ?? member.role}
+                    {member.name} · {roleLabel(member.role)}
                   </option>
                 ))}
               </select>
@@ -243,10 +242,11 @@ export function BriefWorkflow({
 
           {pideMotivo ? (
             <div className="space-y-1">
-              <label className="font-mono text-xs text-muted-foreground">
+              <label htmlFor="brief-motivo" className="font-mono text-xs text-muted-foreground">
                 ¿Por qué lo regresas?
               </label>
               <Textarea
+                id="brief-motivo"
                 rows={2}
                 value={motivo}
                 onChange={(event) => setMotivo(event.target.value)}

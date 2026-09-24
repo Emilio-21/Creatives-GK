@@ -15,7 +15,8 @@ export function downloadOne(target: DownloadTarget) {
 
 /**
  * Zip armado en el navegador a partir de las presigned URLs.
- * Nunca en el servidor: Vercel Hobby corta a los 10 s (§8).
+ * Nunca en el servidor: el Worker tiene 128 MB de memoria y un lote de videos
+ * pesa mas que eso.
  */
 export async function downloadZip(
   targets: DownloadTarget[],
@@ -36,12 +37,16 @@ export async function downloadZip(
     onProgress?.(done, targets.length);
   }
 
-  const blob = await zip.generateAsync({ type: "blob" });
+  saveBlob(await zip.generateAsync({ type: "blob" }), zipName);
+}
+
+/** Guarda un archivo armado en el navegador (zip, CSV) con ese nombre. */
+export function saveBlob(blob: Blob, filename: string): void {
   const url = URL.createObjectURL(blob);
   try {
     const anchor = document.createElement("a");
     anchor.href = url;
-    anchor.download = zipName;
+    anchor.download = filename;
     document.body.appendChild(anchor);
     anchor.click();
     anchor.remove();

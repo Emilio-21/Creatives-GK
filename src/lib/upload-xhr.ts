@@ -2,8 +2,8 @@
  * PUT directo del navegador a R2 con barra de progreso.
  *
  * Se usa XHR y no fetch porque fetch no expone progreso de subida (§6 /upload).
- * El archivo nunca pasa por Next: Vercel limita el body a ~4.5 MB y un video de
- * Meta pesa 30–100 MB (§3.1).
+ * El archivo nunca pasa por el Worker: un video de Meta pesa 30–100 MB, y el
+ * Worker tiene limite de body y 128 MB de memoria (§3.1).
  */
 export type UploadHandle = {
   promise: Promise<void>;

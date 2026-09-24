@@ -3,6 +3,7 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { appUrl } from "@/lib/app-url";
 import { createClient } from "@/lib/supabase/server";
 import { ALLOWED_EMAIL_DOMAIN, SIGNUP_ROLES, type Role } from "@/lib/roles";
 
@@ -13,7 +14,7 @@ async function confirmUrl() {
   const h = await headers();
   const host = h.get("x-forwarded-host") ?? h.get("host");
   const proto = h.get("x-forwarded-proto") ?? (host?.startsWith("localhost") ? "http" : "https");
-  const origin = h.get("origin") ?? (host ? `${proto}://${host}` : "https://relevo.growth-kingdom.workers.dev");
+  const origin = h.get("origin") ?? (host ? `${proto}://${host}` : appUrl());
   return `${origin}/auth/confirm`;
 }
 

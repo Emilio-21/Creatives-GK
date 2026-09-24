@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { deliverSlackSoon } from "@/lib/slack-after";
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import type { BriefStatus, Channel, StageStatus } from "@/lib/brief-flow";
+import { OPEN_STATUSES, type BriefStatus, type Channel, type StageStatus } from "@/lib/brief-flow";
 import { attempt, type ActionResult } from "@/lib/action-result";
 
 export type TeamMember = { id: string; name: string; role: string; isMe: boolean };
@@ -170,8 +170,6 @@ export type MyTask = {
   launcherId: string | null;
 };
 
-const ETAPAS_ABIERTAS = ["en_revision", "en_produccion", "en_lanzamiento"];
-
 /**
  * Lo que me toca, de todos los clientes. Una etapa es de quien la tiene
  * asignada ahora: lo que viene despues todavia no es pendiente de nadie.
@@ -186,7 +184,7 @@ export async function listMyTasks(): Promise<MyTask[]> {
       "id, title, channel, status, client_id, doc_url, due_date, stage_entered_at, stage_started_at, reviewer_id, producer_id, launcher_id, clients(name)",
     )
     .eq("assigned_to", user.id)
-    .in("status", ETAPAS_ABIERTAS)
+    .in("status", OPEN_STATUSES)
     .is("archived_at", null);
 
   const tasks = (data ?? []).map((row) => ({
@@ -223,7 +221,7 @@ export async function myTaskCount(): Promise<number> {
     .from("briefs")
     .select("id", { count: "exact", head: true })
     .eq("assigned_to", user.id)
-    .in("status", ETAPAS_ABIERTAS)
+    .in("status", OPEN_STATUSES)
     .is("archived_at", null);
 
   return count ?? 0;

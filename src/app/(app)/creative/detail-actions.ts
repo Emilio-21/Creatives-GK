@@ -8,6 +8,7 @@ import { aspectLabel } from "@/lib/aspect";
 import type { CreativeRow, CreativeStats, CreativeVariant } from "@/lib/creatives";
 import type { LaunchRow } from "@/lib/launches";
 import { attempt, type ActionResult } from "@/lib/action-result";
+import { today } from "@/lib/dates";
 
 export type CreativeDetail = {
   creative: CreativeRow;
@@ -95,7 +96,7 @@ async function quickLaunchImpl(creativeId: string): Promise<void> {
 
   const { error } = await supabase.from("launches").insert({
     creative_id: creativeId,
-    launched_at: new Date().toISOString().slice(0, 10),
+    launched_at: today(),
     platform: "meta",
     metrics_source: "manual",
     created_by: user.id,

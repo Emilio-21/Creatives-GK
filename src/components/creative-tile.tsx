@@ -1,7 +1,7 @@
 "use client";
 
 import { Checkbox } from "@/components/ui/checkbox";
-import { formatMoney, formatPercent, statusOf, STATUS_LABEL } from "@/lib/metrics";
+import { formatCount, formatMoney, formatPercent, statusOf, STATUS_LABEL } from "@/lib/metrics";
 import type { CreativeCard } from "@/lib/creatives";
 
 /**
@@ -228,8 +228,4 @@ function TileAction({
 function formatDuration(seconds: number): string {
   const total = Math.round(seconds);
   return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, "0")}`;
-}
-
-function formatCount(value: number | null): string {
-  return value === null ? "—" : new Intl.NumberFormat("es-MX").format(value);
 }

@@ -35,6 +35,9 @@ export const STAGES: { status: StageStatus; field: OwnerField; label: string; hi
   { status: "en_lanzamiento", field: "launcher_id", label: "Lanzamiento", hint: "Sube la campaña" },
 ];
 
+/** Las etapas en las que el brief esta en manos de alguien: lo "abierto". */
+export const OPEN_STATUSES: StageStatus[] = STAGES.map((stage) => stage.status);
+
 /** `back`: regresar trabajo pide motivo, y la base lo exige. */
 export const NEXT_STEPS: Record<BriefStatus, { to: BriefStatus; label: string; back?: boolean }[]> = {
   borrador: [

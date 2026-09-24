@@ -1,8 +1,8 @@
 /**
  * Extraccion de metadata y poster frame — todo en el cliente.
  *
- * En Vercel Hobby el servidor tiene 10s de timeout y el body limitado a ~4.5 MB,
- * asi que nada de esto puede vivir del otro lado (§8).
+ * El archivo nunca llega al servidor (sube directo a R2), asi que el servidor no
+ * tiene de donde leer dimensiones ni sacar el poster: se hace aqui.
  */
 
 export type MediaMetadata = {

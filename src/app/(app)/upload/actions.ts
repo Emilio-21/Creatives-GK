@@ -143,12 +143,6 @@ async function findDuplicateNamesImpl(filenames: string[]): Promise<string[]> {
   return (data ?? []).map((row) => row.original_filename as string);
 }
 
-export async function revalidateLibrary(clientId: string) {
-  await requireUser();
-  revalidatePath("/");
-  revalidatePath(`/client/${clientId}`);
-}
-
 // ---- Acciones expuestas al navegador ----
 // Regresan el error en vez de lanzarlo: en produccion Next oculta el mensaje de
 // lo que se lanza. Ver src/lib/action-result.ts.

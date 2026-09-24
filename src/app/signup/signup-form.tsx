@@ -7,7 +7,7 @@ import { MailCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ALLOWED_EMAIL_DOMAIN, ROLES, SIGNUP_ROLES } from "@/lib/roles";
+import { ALLOWED_EMAIL_DOMAIN, ROLE_LABEL, SIGNUP_ROLES } from "@/lib/roles";
 import { signup, type SignupState } from "./actions";
 import { ResendForm } from "./resend-form";
 
@@ -91,7 +91,7 @@ export function SignupForm() {
           </option>
           {SIGNUP_ROLES.map((role) => (
             <option key={role} value={role}>
-              {ROLES[role]}
+              {ROLE_LABEL[role]}
             </option>
           ))}
         </select>

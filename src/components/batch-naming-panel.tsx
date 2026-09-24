@@ -13,6 +13,7 @@ import {
 } from "@/app/(app)/client/batch-actions";
 import { adName, adsetName, campaignName } from "@/lib/naming";
 import { unwrapped } from "@/lib/action-result";
+import { Modal } from "@/components/modal";
 
 // Las acciones regresan el error como dato; esto lo vuelve a lanzar con su mensaje real.
 const getBatchCreatives = unwrapped(getBatchCreativesAction);
@@ -51,139 +52,121 @@ export function BatchNamingPanel({
       });
   }, [batchId, onClose]);
 
-  useEffect(() => {
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
-    };
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [onClose]);
-
   const campaña = naming ? campaignName(naming) : null;
   const adset = naming ? adsetName(naming) : null;
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-label="Nomenclatura del batch"
-      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/60 p-4 backdrop-blur-sm sm:p-8"
-      onClick={(event) => {
-        if (event.target === event.currentTarget) onClose();
-      }}
-    >
-      <div className="relative w-full max-w-3xl rounded-xl border bg-card p-5 shadow-2xl">
-        <button
-          type="button"
-          aria-label="Cerrar"
-          onClick={onClose}
-          className="absolute right-3 top-3 flex size-7 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
-        >
-          ✕
-        </button>
+    <Modal label="Nomenclatura del batch" onClose={onClose} className="max-w-3xl">
+      <button
+        type="button"
+        aria-label="Cerrar"
+        onClick={onClose}
+        className="absolute right-3 top-3 flex size-7 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
+      >
+        ✕
+      </button>
 
-        {!naming ? (
-          <p className="py-10 text-center text-sm text-muted-foreground">Cargando…</p>
-        ) : (
-          <>
-            <h2 className="pr-8 text-base font-semibold">Nomenclatura · {naming.name}</h2>
-            <p className="mt-0.5 text-xs text-muted-foreground">
-              Un batch es un ad set. Llena esto una vez y copia los nombres de los tres
-              niveles.
-            </p>
+      {!naming ? (
+        <p className="py-10 text-center text-sm text-muted-foreground">Cargando…</p>
+      ) : (
+        <>
+          <h2 className="pr-8 text-base font-semibold">Nomenclatura · {naming.name}</h2>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            Un batch es un ad set. Llena esto una vez y copia los nombres de los tres
+            niveles.
+          </p>
 
-            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            <Field
+              label="Código de campaña"
+              placeholder="C020"
+              value={naming.campaignCode ?? ""}
+              onChange={(v) => setNaming({ ...naming, campaignCode: v })}
+            />
+            <Field
+              label="Código de ad set"
+              placeholder="A01"
+              value={naming.adsetCode ?? ""}
+              onChange={(v) => setNaming({ ...naming, adsetCode: v })}
+            />
+            <Field
+              label="Resto del nombre de campaña"
+              placeholder="VSL | Testing | Broad | CBO"
+              value={naming.campaignLabel ?? ""}
+              onChange={(v) => setNaming({ ...naming, campaignLabel: v })}
+            />
+            <Field
+              label="Resto del nombre de ad set"
+              placeholder="Broad | MF | 30-65+ | USA | FB-IG-NoAN"
+              value={naming.adsetLabel ?? ""}
+              onChange={(v) => setNaming({ ...naming, adsetLabel: v })}
+            />
+            <div className="sm:col-span-2">
               <Field
-                label="Código de campaña"
-                placeholder="C020"
-                value={naming.campaignCode ?? ""}
-                onChange={(v) => setNaming({ ...naming, campaignCode: v })}
+                label="Resto del nombre de los anuncios"
+                placeholder="VSL | Copy 01.1 | Intro 1.1"
+                value={naming.adLabel ?? ""}
+                onChange={(v) => setNaming({ ...naming, adLabel: v })}
               />
-              <Field
-                label="Código de ad set"
-                placeholder="A01"
-                value={naming.adsetCode ?? ""}
-                onChange={(v) => setNaming({ ...naming, adsetCode: v })}
-              />
-              <Field
-                label="Resto del nombre de campaña"
-                placeholder="VSL | Testing | Broad | CBO"
-                value={naming.campaignLabel ?? ""}
-                onChange={(v) => setNaming({ ...naming, campaignLabel: v })}
-              />
-              <Field
-                label="Resto del nombre de ad set"
-                placeholder="Broad | MF | 30-65+ | USA | FB-IG-NoAN"
-                value={naming.adsetLabel ?? ""}
-                onChange={(v) => setNaming({ ...naming, adsetLabel: v })}
-              />
-              <div className="sm:col-span-2">
-                <Field
-                  label="Resto del nombre de los anuncios"
-                  placeholder="VSL | Copy 01.1 | Intro 1.1"
-                  value={naming.adLabel ?? ""}
-                  onChange={(v) => setNaming({ ...naming, adLabel: v })}
-                />
-              </div>
             </div>
+          </div>
 
-            <Button
-              size="sm"
-              className="mt-3"
-              disabled={pending}
-              onClick={() =>
-                startTransition(async () => {
-                  try {
-                    await setBatchNaming(batchId, naming);
-                    toast.success("Nomenclatura guardada");
-                  } catch (error) {
-                    toast.error((error as Error).message);
-                  }
-                })
-              }
-            >
-              {pending ? "Guardando…" : "Guardar"}
-            </Button>
+          <Button
+            size="sm"
+            className="mt-3"
+            disabled={pending}
+            onClick={() =>
+              startTransition(async () => {
+                try {
+                  await setBatchNaming(batchId, naming);
+                  toast.success("Nomenclatura guardada");
+                } catch (error) {
+                  toast.error((error as Error).message);
+                }
+              })
+            }
+          >
+            {pending ? "Guardando…" : "Guardar"}
+          </Button>
 
-            <div className="mt-6 space-y-4 border-t pt-4">
-              <Copiable etiqueta="Campaña" valor={campaña} />
-              <Copiable etiqueta="Ad set" valor={adset} />
+          <div className="mt-6 space-y-4 border-t pt-4">
+            <Copiable etiqueta="Campaña" valor={campaña} />
+            <Copiable etiqueta="Ad set" valor={adset} />
 
-              <div>
-                <div className="mb-1.5 flex items-baseline justify-between gap-2">
-                  <p className="font-mono text-xs text-muted-foreground">
-                    Anuncios · {creativos.length}
-                  </p>
-                  {creativos.length > 0 ? (
-                    <CopiarTodos
-                      lineas={creativos.map((c, i) => adName(naming, c.id, i))}
-                    />
-                  ) : null}
-                </div>
-
-                {creativos.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">
-                    Este batch todavía no tiene creativos.
-                  </p>
-                ) : (
-                  <ul className="space-y-1.5">
-                    {creativos.map((creativo, index) => (
-                      <li key={creativo.id}>
-                        <Copiable
-                          etiqueta={creativo.displayName}
-                          valor={adName(naming, creativo.id, index)}
-                          compacta
-                        />
-                      </li>
-                    ))}
-                  </ul>
-                )}
+            <div>
+              <div className="mb-1.5 flex items-baseline justify-between gap-2">
+                <p className="font-mono text-xs text-muted-foreground">
+                  Anuncios · {creativos.length}
+                </p>
+                {creativos.length > 0 ? (
+                  <CopiarTodos
+                    lineas={creativos.map((c, i) => adName(naming, c.id, i))}
+                  />
+                ) : null}
               </div>
+
+              {creativos.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  Este batch todavía no tiene creativos.
+                </p>
+              ) : (
+                <ul className="space-y-1.5">
+                  {creativos.map((creativo, index) => (
+                    <li key={creativo.id}>
+                      <Copiable
+                        etiqueta={creativo.displayName}
+                        valor={adName(naming, creativo.id, index)}
+                        compacta
+                      />
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
-          </>
-        )}
-      </div>
-    </div>
+          </div>
+        </>
+      )}
+    </Modal>
   );
 }
 

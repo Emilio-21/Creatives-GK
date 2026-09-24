@@ -31,12 +31,10 @@ export function formatPercent(value: number | null): string {
 }
 
 /**
- * El dinero SIEMPRE se formatea con la moneda de la cuenta que lo gasto.
- *
- * Antes esto decia MXN fijo y las tres cuentas de Meta facturan en USD: el
- * gasto real se mostraba con la etiqueta equivocada, y con el los CPA y CPM que
- * se usan para decidir si un creativo sigue al aire. El default es USD porque
- * es lo que hay; cuando entre una cuenta en otra moneda, viene en los datos.
+ * El dinero SIEMPRE se formatea con la moneda de la cuenta que lo gasto: con
+ * la etiqueta equivocada, los CPA y CPM con los que se decide si un creativo
+ * sigue al aire mienten. El default es USD porque en USD facturan las cuentas
+ * de Meta de hoy; una cuenta en otra moneda la trae en los datos.
  */
 export function formatMoney(value: number | null, currency = "USD"): string {
   return value === null
@@ -46,6 +44,11 @@ export function formatMoney(value: number | null, currency = "USD"): string {
         currency,
         maximumFractionDigits: 2,
       }).format(value);
+}
+
+/** Una fecha sin hora ("2026-09-24") en formato local, sin que la zona horaria la corra un dia. */
+export function formatDate(value: string): string {
+  return new Date(`${value}T00:00:00`).toLocaleDateString("es-MX");
 }
 
 export function formatCount(value: number | null): string {
