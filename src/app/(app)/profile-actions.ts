@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { attempt, type ActionResult } from "@/lib/action-result";
 import { requireUser } from "@/lib/auth";
+import { BACKGROUNDS } from "@/lib/backgrounds";
 import { buildAvatarPath, deleteFile, getUploadUrl, statFile } from "@/lib/storage";
 import { createClient } from "@/lib/supabase/server";
 
@@ -67,6 +68,17 @@ async function updateNameImpl(name: string): Promise<void> {
   revalidatePath("/", "layout");
 }
 
+/** El fondo de mi pantalla. Solo el propio: la policy deja tocar solo mi perfil. */
+async function setBackgroundImpl(id: string): Promise<void> {
+  const user = await requireUser();
+  if (!BACKGROUNDS.some((bg) => bg.id === id)) throw new Error("Ese fondo no existe.");
+
+  const supabase = await createClient();
+  const { error } = await supabase.from("profiles").update({ background: id }).eq("id", user.id);
+  if (error) throw new Error(error.message);
+  revalidatePath("/", "layout");
+}
+
 // ---- Acciones expuestas al navegador ----
 // Regresan el error en vez de lanzarlo: en produccion Next oculta el mensaje de
 // lo que se lanza. Ver src/lib/action-result.ts.
@@ -85,6 +97,12 @@ export async function setAvatar(
 
 export async function removeAvatar(): Promise<ActionResult<void>> {
   return attempt(() => removeAvatarImpl());
+}
+
+export async function setBackground(
+  ...args: Parameters<typeof setBackgroundImpl>
+): Promise<ActionResult<Awaited<ReturnType<typeof setBackgroundImpl>>>> {
+  return attempt(() => setBackgroundImpl(...args));
 }
 
 export async function updateName(

@@ -186,13 +186,15 @@
   inset: 0;
   z-index: -1;
   pointer-events: none;
-  /* El fondo de la marca: la reticula naranja. Fija y a pantalla completa; los
-     paneles de vidrio la difuminan, asi que se lee como textura y no compite
-     con el contenido. El color de respaldo es su naranja, por si tarda en cargar. */
-  background: oklch(0.5 0.17 38) url("/fondo-cutting-mat.webp") center / cover no-repeat;
+  /* La reticula de fondo. Fija y a pantalla completa; los paneles la tapan casi
+     toda, asi que se lee como textura y no compite con el contenido. Cada quien
+     elige la suya (src/lib/backgrounds.ts); sin eleccion, la naranja de la
+     marca. El color de respaldo cubre mientras la imagen carga. */
+  background: var(--aura-color, #a6380b) var(--aura-image, url("/fondos/naranja.webp")) center /
+    cover no-repeat;
 }
 
-/* En claro se aclara: los paneles ya son casi solidos, pero el naranja a toda
+/* En claro se aclara: los paneles ya son casi solidos, pero un fondo a toda
    intensidad alrededor de un panel blanco cansa la vista. */
 :root:not(.dark) .app-aura {
   opacity: 0.6;

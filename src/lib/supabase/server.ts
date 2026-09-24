@@ -47,4 +47,6 @@ export type Profile = {
   role: Role;
   created_at: string;
   avatar_path?: string | null;
+  /** El fondo que eligio (src/lib/backgrounds.ts). Null = el de la marca. */
+  background?: string | null;
 };

@@ -11,6 +11,7 @@ import { NotificationBell } from "@/components/notification-bell";
 import { Button } from "@/components/ui/button";
 import { UserAvatar } from "@/components/user-avatar";
 import { RelevoBrand } from "@/components/relevo-brand";
+import { auraStyle } from "@/lib/backgrounds";
 import { roleLabel } from "@/lib/roles";
 import type { Profile } from "@/lib/supabase/server";
 
@@ -45,7 +46,13 @@ export function AppShell({
 
   return (
     <div className="min-h-svh p-3 sm:p-4">
-      <div className="app-aura" aria-hidden="true" />
+      {/* data-aura: el selector de fondo lo cambia al instante, sin esperar al servidor. */}
+      <div
+        className="app-aura"
+        data-aura
+        aria-hidden="true"
+        style={auraStyle(profile?.background) as React.CSSProperties}
+      />
 
       <div className="flex gap-4">
         <aside className="hidden w-56 shrink-0 flex-col gap-4 md:flex">

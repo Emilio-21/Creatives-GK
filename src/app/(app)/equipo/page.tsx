@@ -14,7 +14,7 @@ export default async function EquipoPage() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("role")
+    .select("role, background")
     .eq("id", user.id)
     .maybeSingle();
 
@@ -29,7 +29,13 @@ export default async function EquipoPage() {
   return (
     <div className="space-y-5">
       {/* Arriba, porque la tarjeta del usuario en la barra lateral trae aqui. */}
-      {yo ? <ProfileEditor name={yo.name} avatarUrl={yo.avatarUrl} /> : null}
+      {yo ? (
+        <ProfileEditor
+          name={yo.name}
+          avatarUrl={yo.avatarUrl}
+          background={(profile?.background as string | null) ?? null}
+        />
+      ) : null}
 
       <div>
         <h1 className="font-heading font-extralight tracking-tight text-3xl">{(org?.name as string) ?? "Equipo"}</h1>

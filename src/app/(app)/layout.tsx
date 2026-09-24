@@ -32,7 +32,7 @@ export default async function AppLayout({
   ] = await Promise.all([
     supabase
       .from("profiles")
-      .select("id, full_name, role, created_at, avatar_path")
+      .select("id, full_name, role, created_at, avatar_path, background")
       .eq("id", user.id)
       .single(),
     getClientsWithCounts(),

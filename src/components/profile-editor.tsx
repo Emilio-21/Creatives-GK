@@ -10,15 +10,18 @@ import {
   removeAvatar as removeAvatarAction,
   requestAvatarUpload as requestAvatarUploadAction,
   setAvatar as setAvatarAction,
+  setBackground as setBackgroundAction,
   updateName as updateNameAction,
 } from "@/app/(app)/profile-actions";
 import { unwrapped } from "@/lib/action-result";
+import { auraStyle, BACKGROUNDS, DEFAULT_BACKGROUND } from "@/lib/backgrounds";
 import { uploadToR2 } from "@/lib/upload-xhr";
 
 // Las acciones regresan el error como dato; esto lo vuelve a lanzar con su mensaje real.
 const removeAvatar = unwrapped(removeAvatarAction);
 const requestAvatarUpload = unwrapped(requestAvatarUploadAction);
 const setAvatar = unwrapped(setAvatarAction);
+const setBackground = unwrapped(setBackgroundAction);
 const updateName = unwrapped(updateNameAction);
 
 const LADO = 256;
@@ -57,8 +60,26 @@ async function toSquareJpeg(file: File): Promise<Blob> {
   );
 }
 
-export function ProfileEditor({ name, avatarUrl }: { name: string; avatarUrl: string | null }) {
+/** Pinta el fondo ya, en el shell: la respuesta del servidor llega despues. */
+function pintarFondo(id: string) {
+  const aura = document.querySelector<HTMLElement>("[data-aura]");
+  if (!aura) return;
+  for (const [variable, valor] of Object.entries(auraStyle(id))) {
+    aura.style.setProperty(variable, valor);
+  }
+}
+
+export function ProfileEditor({
+  name,
+  avatarUrl,
+  background,
+}: {
+  name: string;
+  avatarUrl: string | null;
+  background: string | null;
+}) {
   const router = useRouter();
+  const [fondo, setFondo] = useState(background ?? DEFAULT_BACKGROUND);
   const [nombre, setNombre] = useState(name);
   const [preview, setPreview] = useState<string | null>(avatarUrl);
   const [pending, startTransition] = useTransition();
@@ -89,6 +110,22 @@ export function ProfileEditor({ name, avatarUrl }: { name: string; avatarUrl: st
       await uploadToR2(uploadUrl, jpeg, undefined, "image/jpeg").promise;
       await setAvatar(path);
     }, "Foto actualizada");
+  };
+
+  const elegirFondo = (id: string) => {
+    const anterior = fondo;
+    setFondo(id);
+    pintarFondo(id);
+    startTransition(async () => {
+      try {
+        await setBackground(id);
+        router.refresh();
+      } catch (error) {
+        toast.error((error as Error).message);
+        setFondo(anterior);
+        pintarFondo(anterior);
+      }
+    });
   };
 
   return (
@@ -154,6 +191,42 @@ export function ProfileEditor({ name, avatarUrl }: { name: string; avatarUrl: st
           </Button>
         ) : null}
       </form>
+
+      {/* El fondo es de cada quien: se guarda en su perfil y lo sigue en cualquier equipo. */}
+      <div className="w-full border-t pt-3">
+        <p id="perfil-fondo" className="mb-2 text-xs text-muted-foreground">
+          Tu fondo
+        </p>
+        <div role="radiogroup" aria-labelledby="perfil-fondo" className="flex flex-wrap gap-2">
+          {BACKGROUNDS.map((bg) => (
+            <button
+              key={bg.id}
+              type="button"
+              role="radio"
+              aria-checked={fondo === bg.id}
+              aria-label={bg.label}
+              title={bg.label}
+              onClick={() => fondo !== bg.id && elegirFondo(bg.id)}
+              className={`group flex flex-col items-center gap-1 rounded-lg p-1 text-[11px] transition-colors ${
+                fondo === bg.id ? "text-foreground" : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={`/fondos/mini/${bg.id}.webp`}
+                alt=""
+                width={72}
+                height={47}
+                className={`h-[47px] w-[72px] rounded-md object-cover ring-offset-2 ring-offset-background transition ${
+                  fondo === bg.id ? "ring-2 ring-primary" : "ring-1 ring-border group-hover:ring-foreground/40"
+                }`}
+                style={{ backgroundColor: bg.color }}
+              />
+              {bg.label}
+            </button>
+          ))}
+        </div>
+      </div>
     </section>
   );
 }
