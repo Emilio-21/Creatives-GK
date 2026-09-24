@@ -41,7 +41,15 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const { pathname } = request.nextUrl;
+  const { pathname, searchParams } = request.nextUrl;
+
+  // Si "/auth/confirm" no esta en las Redirect URLs de Supabase, el enlace del
+  // correo cae en el Site URL (la raiz) con el code: se lo pasamos a quien lo canjea.
+  if (pathname === "/" && (searchParams.has("code") || searchParams.has("error_code"))) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/auth/confirm";
+    return NextResponse.redirect(url);
+  }
 
   if (!user && !isPublic(pathname)) {
     const url = request.nextUrl.clone();

@@ -3,11 +3,13 @@
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import Link from "next/link";
+import { MailCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ALLOWED_EMAIL_DOMAIN, ROLES, SIGNUP_ROLES } from "@/lib/roles";
 import { signup, type SignupState } from "./actions";
+import { ResendForm } from "./resend-form";
 
 function Submit() {
   const { pending } = useFormStatus();
@@ -26,14 +28,29 @@ export function SignupForm() {
 
   if (state.check) {
     return (
-      <div className="space-y-3 text-sm">
-        <p>Cuenta creada. Te llegó un correo para confirmarla.</p>
-        <p className="text-muted-foreground">
-          Ábrelo y sigue el enlace; después entra desde el login.
+      <div className="space-y-4 text-sm">
+        <div className="flex size-11 items-center justify-center rounded-full bg-primary/12 text-primary">
+          <MailCheck className="size-5" aria-hidden="true" />
+        </div>
+        <div className="space-y-1.5">
+          <h2 className="font-heading text-xl font-extralight tracking-tight">Revisa tu correo</h2>
+          <p>
+            Te mandamos un enlace a <strong className="font-medium">{state.email}</strong> para
+            confirmar tu cuenta.
+          </p>
+          <p className="text-muted-foreground">
+            Ábrelo en este mismo navegador y entras directo a Relevo. Si no llega en unos minutos,
+            busca en spam o promociones.
+          </p>
+        </div>
+        <ResendForm email={state.email} />
+        <p className="text-xs text-muted-foreground">
+          ¿Ya lo confirmaste?{" "}
+          <Link href="/login" className="underline">
+            Entra aquí
+          </Link>
+          .
         </p>
-        <Link href="/login" className="inline-block underline">
-          Ir al login
-        </Link>
       </div>
     );
   }

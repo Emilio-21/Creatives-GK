@@ -1,11 +1,21 @@
 "use server";
 
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { ALLOWED_EMAIL_DOMAIN, SIGNUP_ROLES, type Role } from "@/lib/roles";
 
-export type SignupState = { error: string | null; check: boolean };
+export type SignupState = { error: string | null; check: boolean; email?: string };
+
+/** A donde regresa el enlace del correo: el mismo host desde el que se registro. */
+async function confirmUrl() {
+  const h = await headers();
+  const host = h.get("x-forwarded-host") ?? h.get("host");
+  const proto = h.get("x-forwarded-proto") ?? (host?.startsWith("localhost") ? "http" : "https");
+  const origin = h.get("origin") ?? (host ? `${proto}://${host}` : "https://relevo.growth-kingdom.workers.dev");
+  return `${origin}/auth/confirm`;
+}
 
 /**
  * Alta del equipo.
@@ -37,7 +47,7 @@ export async function signup(_prev: SignupState, formData: FormData): Promise<Si
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
-    options: { data: { full_name: fullName, role } },
+    options: { data: { full_name: fullName, role }, emailRedirectTo: await confirmUrl() },
   });
 
   if (error) {
@@ -53,9 +63,31 @@ export async function signup(_prev: SignupState, formData: FormData): Promise<Si
 
   // Con confirmacion de correo activada no viene sesion: hay que revisar el mail.
   if (!data.session) {
-    return { error: null, check: true };
+    return { error: null, check: true, email };
   }
 
   revalidatePath("/", "layout");
   redirect("/");
+}
+
+export type ResendState = { error: string | null; sent: boolean };
+
+/** Vuelve a mandar el correo de confirmacion (se perdio, cayo en spam o caduco). */
+export async function resendConfirmation(_prev: ResendState, formData: FormData): Promise<ResendState> {
+  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  if (!email) return { error: "Escribe tu correo.", sent: false };
+
+  const supabase = await createClient();
+  const { error } = await supabase.auth.resend({
+    type: "signup",
+    email,
+    options: { emailRedirectTo: await confirmUrl() },
+  });
+  if (error) {
+    if (/rate limit|seconds/i.test(error.message)) {
+      return { error: "Ya te mandamos uno hace poco. Espera un minuto y vuelve a intentar.", sent: false };
+    }
+    return { error: error.message, sent: false };
+  }
+  return { error: null, sent: true };
 }
