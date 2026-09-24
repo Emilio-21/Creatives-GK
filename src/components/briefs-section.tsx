@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { Pencil, PencilLine } from "lucide-react";
 import { toast } from "sonner";
 import { BriefCard } from "@/components/brief-card";
 import { BriefComments } from "@/components/brief-comments";
@@ -187,6 +188,9 @@ function BriefModal({
   const batchName = nombreEscrito ?? brief.batchName ?? brief.angle ?? brief.title;
   // El canal solo se cambia en copy: despues ya hay etapas que dependen de el.
   const enCopy = brief.status === "borrador";
+  const faltan = [!brief.angle && "el ángulo", !brief.doc_url && "el link del Doc"].filter(
+    (item): item is string => Boolean(item),
+  );
   const [pending, startTransition] = useTransition();
 
   const completed = brief.batchCompletedAt !== null;
@@ -317,6 +321,24 @@ function BriefModal({
             </p>
           ) : null}
 
+          {/* En copy, definir la tarea ES el trabajo: va arriba y como accion principal. */}
+          {enCopy ? (
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-primary/40 bg-primary/5 p-3">
+              <div className="min-w-0 text-sm">
+                <p className="font-medium">Define la tarea</p>
+                <p className="text-xs text-muted-foreground">
+                  {faltan.length > 0
+                    ? `Falta ${faltan.join(" y ")}. Confirma también el canal (${CHANNEL_LABEL[brief.channel]}).`
+                    : `Canal ${CHANNEL_LABEL[brief.channel]}, ángulo y Doc listos. Cuando quieras, mándala.`}
+                </p>
+              </div>
+              <Button size="sm" onClick={() => setEditing(true)}>
+                <PencilLine aria-hidden="true" />
+                Definir canal, Doc y ángulo
+              </Button>
+            </div>
+          ) : null}
+
           <div className="mb-3">
             <BriefWorkflow brief={brief} onChanged={onChanged} />
           </div>
@@ -334,14 +356,12 @@ function BriefModal({
             </p>
           )}
 
-          <Button
-            size="sm"
-            variant="ghost"
-            className="mt-2"
-            onClick={() => setEditing(true)}
-          >
-            {enCopy ? "Definir canal, Doc y ángulo" : "Editar"}
-          </Button>
+          {!enCopy ? (
+            <Button size="sm" variant="outline" className="mt-2" onClick={() => setEditing(true)}>
+              <Pencil aria-hidden="true" />
+              Editar tarea
+            </Button>
+          ) : null}
 
           {/* Solo Ads sube a la biblioteca: es la que se mide contra Meta. Un
               email o un mensaje se arma y se lanza fuera; aqui solo se sigue. */}
