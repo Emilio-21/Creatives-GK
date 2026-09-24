@@ -1,6 +1,6 @@
-# Dashboard de Creativos
+# Relevo
 
-Inventario y control de producción de creativos: qué existe, qué ya se lanzó, y cómo le fue.
+Del brief al lanzamiento: quién tiene cada entrega, qué sigue, qué ya salió y cómo le fue. Empezó como la biblioteca de creativos de Growth Kingdom.
 
 Stack: Next.js 15 (App Router) + Tailwind 4 + shadcn/ui · Supabase (auth + Postgres) · Cloudflare R2 (archivos privados) · Vercel.
 

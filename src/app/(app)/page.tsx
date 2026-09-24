@@ -7,7 +7,7 @@ import { CHANNEL_LABEL, elapsed, STATUS_LABEL, type BriefStatus } from "@/lib/br
 import { DIAS_ATORADO, getHomeData, type HomeBrief } from "@/lib/home";
 import { createClient } from "@/lib/supabase/server";
 
-export const metadata = { title: "Mi trabajo · Creativos" };
+export const metadata = { title: "Mi trabajo · Relevo" };
 
 /**
  * "Mi trabajo": lo que alguien se pregunta al abrir la app, que hago ahora y

@@ -2,7 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { getClientsWithCounts } from "@/lib/clients";
 import { UploadDropzone } from "./upload-dropzone";
 
-export const metadata = { title: "Subir · Creativos" };
+export const metadata = { title: "Subir · Relevo" };
 
 export default async function UploadPage({
   searchParams,

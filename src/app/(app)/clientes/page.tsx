@@ -2,7 +2,7 @@ import Link from "next/link";
 import { getClientsWithCounts } from "@/lib/clients";
 import { myClientIds } from "@/app/(app)/team-actions";
 
-export const metadata = { title: "Clientes · Creativos" };
+export const metadata = { title: "Clientes · Relevo" };
 
 /**
  * La entrada a los creativos: se consultan por cliente, no todos revueltos. En

@@ -25,8 +25,8 @@ const stackSansNotch = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Creativos",
-  description: "Inventario y control de producción de creativos.",
+  title: "Relevo",
+  description: "Del brief al lanzamiento: cada entrega, a la vista.",
 };
 
 export default function RootLayout({

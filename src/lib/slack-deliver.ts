@@ -220,7 +220,7 @@ export function buildMessage({
       text: { type: "mrkdwn", text: flowLine(brief, recipientId, nombres) },
     });
 
-    const links = [`<${appUrl()}/client/${brief.client_id}?brief=${brief.id}|Abrir en Creativos>`];
+    const links = [`<${appUrl()}/client/${brief.client_id}?brief=${brief.id}|Abrir en Relevo>`];
     if (brief.doc_url) links.push(`<${brief.doc_url as string}|Abrir el Doc>`);
     blocks.push({ type: "context", elements: [{ type: "mrkdwn", text: links.join("  ·  ") }] });
   }

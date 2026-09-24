@@ -22,7 +22,7 @@ import {
 import { formatMoney, formatPercent } from "@/lib/metrics";
 import { createClient } from "@/lib/supabase/server";
 
-export const metadata = { title: "Resumen · Creativos" };
+export const metadata = { title: "Resumen · Relevo" };
 
 export default async function DashboardPage() {
   const supabase = await createClient();

@@ -1,7 +1,7 @@
 import { SignupForm } from "./signup-form";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
-export const metadata = { title: "Crear cuenta · Creativos" };
+export const metadata = { title: "Crear cuenta · Relevo" };
 
 export default function SignupPage() {
   return (

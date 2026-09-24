@@ -1,12 +1,12 @@
-# App de Slack para los avisos de Creativos GK.
+# App de Slack para los avisos de Relevo.
 # api.slack.com/apps → Create New App → From a manifest → pega esto.
 display_information:
-  name: Creativos GK
+  name: Relevo
   description: Te avisa por mensaje directo cuando te toca una etapa de un brief.
   background_color: "#b4481f"
 features:
   bot_user:
-    display_name: Creativos GK
+    display_name: Relevo
     always_online: true
   app_home:
     messages_tab_enabled: true
