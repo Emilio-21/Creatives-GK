@@ -18,6 +18,7 @@ import {
   type BriefWithMeta,
 } from "@/app/(app)/client/brief-actions";
 import { unwrapped } from "@/lib/action-result";
+import { onTasksChanged } from "@/lib/task-events";
 import { Modal } from "@/components/modal";
 
 // Las acciones regresan el error como dato; esto lo vuelve a lanzar con su mensaje real.
@@ -53,6 +54,9 @@ export function BriefsSection({
   useEffect(() => {
     void reload();
   }, [reload]);
+
+  // Una tarea creada desde la barra lateral: aparece sin recargar la pagina.
+  useEffect(() => onTasksChanged(clientId, () => void reload()), [clientId, reload]);
 
   const open = briefs?.find((brief) => brief.id === openId) ?? null;
   const pending =

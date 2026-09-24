@@ -18,6 +18,7 @@ import { CHANNELS, CHANNEL_LABEL, stagesFor, type Channel, type OwnerField } fro
 import { roleLabel } from "@/lib/roles";
 import { unwrapped } from "@/lib/action-result";
 import { today } from "@/lib/dates";
+import { announceTasksChanged } from "@/lib/task-events";
 import { Modal } from "@/components/modal";
 
 // Las acciones regresan el error como dato; esto lo vuelve a lanzar con su mensaje real.
@@ -93,6 +94,8 @@ export function BriefDialog({
         }
 
         onOpenChange(false);
+        // Si ya estas en ese cliente, su lista se recarga sola con la tarea nueva.
+        announceTasksChanged(draft.clientId);
         router.push(`/client/${draft.clientId}`);
         router.refresh();
       } catch (error) {
