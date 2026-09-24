@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { BriefCard } from "@/components/brief-card";
+import { BriefComments } from "@/components/brief-comments";
 import { BriefWorkflow } from "@/components/brief-workflow";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -178,6 +179,9 @@ function BriefModal({
   const [pending, startTransition] = useTransition();
 
   const completed = brief.batchCompletedAt !== null;
+  // Si pidieron cambios, la tarea regresa a producción con el batch ya
+  // cerrado: se tiene que poder publicar otra vez.
+  const yaPublicada = completed && brief.status !== "en_produccion";
 
   return (
     <Modal label={brief.title} onClose={onClose} className={brief.doc_url ? "max-w-5xl" : "max-w-3xl"}>
@@ -287,7 +291,7 @@ function BriefModal({
           </Button>
 
           {/* Solo Ads sube a la biblioteca: es la que se mide contra Meta. Un
-              email o un SMS se produce y se lanza fuera; aqui solo se sigue. */}
+              email o un mensaje se arma y se lanza fuera; aqui solo se sigue. */}
           {brief.channel === "ads" ? (
             <div className="mt-5 border-t pt-4">
               <h3 className="text-sm font-semibold">Diseños de esta tarea</h3>
@@ -350,7 +354,7 @@ function BriefModal({
                   <div className="flex items-center gap-3">
                     <Button
                       size="sm"
-                      disabled={pending || completed}
+                      disabled={pending || yaPublicada}
                       onClick={() =>
                         startTransition(async () => {
                           try {
@@ -359,13 +363,11 @@ function BriefModal({
                               batchId,
                             );
                             if (result.handedOff) {
-                              toast.success(
-                                "Publicada y mandada a lanzamiento.",
-                              );
+                              toast.success("Publicada y mandada a aprobación.");
                             } else {
                               // Los diseños ya estan arriba; solo falta el relevo.
                               toast.warning(
-                                `Diseños publicados, pero la tarea no pasó a lanzamiento: ${result.reason}`,
+                                `Diseños publicados, pero la tarea no pasó a aprobación: ${result.reason}`,
                               );
                             }
                             await onChanged();
@@ -376,16 +378,18 @@ function BriefModal({
                         })
                       }
                     >
-                      {completed ? "Ya publicada" : "Publicar diseños"}
+                      {yaPublicada ? "Ya publicada" : completed ? "Publicar otra vez" : "Publicar diseños"}
                     </Button>
                     <p className="text-xs text-muted-foreground">
-                      Publicar cierra el batch y le avisa a quien lanza.
+                      Publicar cierra el batch y la manda a que copy y media la aprueben.
                     </p>
                   </div>
                 </div>
               )}
             </div>
           ) : null}
+
+          <BriefComments briefId={brief.id} stamp={`${brief.status}-${brief.updated_at}`} />
         </>
       )}
     </Modal>

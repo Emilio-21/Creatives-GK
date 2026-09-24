@@ -1,6 +1,12 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
-import { OPEN_STATUSES, type BriefStatus, type Channel, type StageStatus } from "@/lib/brief-flow";
+import {
+  approvalState,
+  OPEN_STATUSES,
+  type BriefStatus,
+  type Channel,
+  type StageStatus,
+} from "@/lib/brief-flow";
 import { today } from "@/lib/dates";
 
 /**
@@ -45,7 +51,7 @@ export async function getHomeData(userId: string): Promise<HomeData> {
     supabase
       .from("briefs")
       .select(
-        "id, title, channel, status, client_id, created_by, assigned_to, stage_entered_at, stage_started_at, due_date, clients(name)",
+        "id, title, channel, status, client_id, created_by, assigned_to, reviewer_id, launcher_id, copy_ok_at, media_ok_at, stage_entered_at, stage_started_at, due_date, clients(name)",
       )
       .is("archived_at", null)
       // Lanzados solo los recientes: los viejos no le piden nada a nadie.
@@ -55,9 +61,12 @@ export async function getHomeData(userId: string): Promise<HomeData> {
   ]);
 
   const briefs = rows ?? [];
-  const assigneeIds = [
-    ...new Set(briefs.map((b) => b.assigned_to as string | null).filter(Boolean)),
-  ] as string[];
+  // Quien la tiene: la persona de la etapa, o en aprobación quienes faltan de aprobar.
+  const holders = (b: (typeof briefs)[number]): string[] =>
+    b.status === "en_aprobacion"
+      ? approvalState(b as Parameters<typeof approvalState>[0]).pending
+      : ([b.assigned_to].filter(Boolean) as string[]);
+  const assigneeIds = [...new Set(briefs.flatMap(holders))];
   const { data: profiles } = assigneeIds.length
     ? await supabase.from("profiles").select("id, full_name").in("id", assigneeIds)
     : { data: [] };
@@ -72,7 +81,7 @@ export async function getHomeData(userId: string): Promise<HomeData> {
     status: b.status as BriefStatus,
     clientId: b.client_id as string,
     clientName: (b.clients as unknown as { name: string } | null)?.name ?? "—",
-    assigneeName: b.assigned_to ? (names.get(b.assigned_to as string) ?? null) : null,
+    assigneeName: holders(b).map((id) => names.get(id) ?? "sin nombre").join(" y ") || null,
     enteredAt: (b.stage_entered_at as string | null) ?? null,
     startedAt: (b.stage_started_at as string | null) ?? null,
     dueDate: (b.due_date as string | null) ?? null,
@@ -84,7 +93,7 @@ export async function getHomeData(userId: string): Promise<HomeData> {
     .filter(
       (b) =>
         OPEN_STATUSES.includes(b.status as StageStatus) &&
-        b.assigned_to !== userId &&
+        !holders(b).includes(userId) &&
         (b.created_by === userId || mios.has(b.id as string)),
     )
     .map(toHome)
@@ -94,6 +103,7 @@ export async function getHomeData(userId: string): Promise<HomeData> {
     borrador: 0,
     en_revision: 0,
     en_produccion: 0,
+    en_aprobacion: 0,
     en_lanzamiento: 0,
     lanzado: 0,
   };
@@ -107,13 +117,16 @@ export async function getHomeData(userId: string): Promise<HomeData> {
     if (!OPEN_STATUSES.includes(brief.status as StageStatus)) continue;
     const esperando = brief.enteredAt ? new Date(brief.enteredAt).getTime() < limite : false;
 
-    // Una razon por brief, la mas grave: tres renglones del mismo brief son ruido.
+    // Una razon por tarea, la mas grave: tres renglones de la misma tarea son ruido.
     // Sin responsable va primero: no hay a quien esperar.
     let reason: string | null = null;
     if (!brief.assigneeName) reason = "Nadie la tiene";
     else if (brief.dueDate && brief.dueDate < hoy) reason = `Vencida desde el ${brief.dueDate}`;
+    else if (brief.status === "en_aprobacion" && esperando) reason = "Esperando visto bueno";
     else if (brief.status === "en_lanzamiento" && esperando) reason = "Lista y sin lanzar";
-    else if (!brief.startedAt && esperando) reason = "Nadie la ha empezado";
+    else if (brief.status !== "en_aprobacion" && !brief.startedAt && esperando) {
+      reason = "Nadie la ha empezado";
+    }
     if (reason) stuck.push({ ...brief, reason });
   }
   stuck.sort((a, b) => (a.enteredAt ?? "").localeCompare(b.enteredAt ?? ""));

@@ -14,7 +14,7 @@ import {
   moveBrief as moveBriefAction,
   type TeamMember,
 } from "@/app/(app)/client/assignment-actions";
-import { CHANNELS, CHANNEL_LABEL, STAGES, type Channel, type OwnerField } from "@/lib/brief-flow";
+import { CHANNELS, CHANNEL_LABEL, stagesFor, type Channel, type OwnerField } from "@/lib/brief-flow";
 import { roleLabel } from "@/lib/roles";
 import { unwrapped } from "@/lib/action-result";
 import { today } from "@/lib/dates";
@@ -74,7 +74,8 @@ export function BriefDialog({
           channel: draft.channel,
           owners: {
             reviewer_id: owners.reviewer_id || null,
-            producer_id: owners.producer_id || null,
+            // Email y mensaje no pasan por producción.
+            producer_id: (draft.channel === "ads" && owners.producer_id) || null,
             launcher_id: owners.launcher_id || null,
           },
         });
@@ -84,7 +85,7 @@ export function BriefDialog({
             await moveBrief(id, "en_revision");
             toast.success("Tarea creada y enviada a revisión");
           } catch (error) {
-            // El brief ya existe; solo no se movio. Se dice, no se esconde.
+            // La tarea ya existe; solo no se movio. Se dice, no se esconde.
             toast.warning(`Tarea creada en borrador: ${(error as Error).message}`);
           }
         } else {
@@ -101,6 +102,11 @@ export function BriefDialog({
   }
 
   if (!open) return null;
+
+  // Las etapas con responsable del canal elegido (aprobación no tiene: la dan copy y media).
+  const etapas = stagesFor(draft.channel).flatMap((stage) =>
+    stage.field ? [{ field: stage.field, label: stage.label }] : [],
+  );
 
   return (
     <Modal label="Nueva tarea" onClose={() => onOpenChange(false)} className="max-w-2xl">
@@ -192,15 +198,13 @@ export function BriefDialog({
             que nadie tenga que acordarse de etiquetar a la siguiente persona. */}
         <div className="space-y-1.5">
           <Label>¿Quién se encarga?</Label>
-          <div className="grid gap-2 sm:grid-cols-3">
-            {STAGES.map((stage) => (
-              <label key={stage.field} className="space-y-1">
-                <span className="block text-xs text-muted-foreground">{stage.label}</span>
+          <div className={`grid gap-2 ${etapas.length === 3 ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}>
+            {etapas.map(({ field, label }) => (
+              <label key={field} className="space-y-1">
+                <span className="block text-xs text-muted-foreground">{label}</span>
                 <select
-                  value={owners[stage.field]}
-                  onChange={(event) =>
-                    setOwners({ ...owners, [stage.field]: event.target.value })
-                  }
+                  value={owners[field]}
+                  onChange={(event) => setOwners({ ...owners, [field]: event.target.value })}
                   className="h-9 w-full rounded-md border border-input bg-transparent px-2 text-sm"
                 >
                   <option value="">Sin asignar</option>
@@ -214,8 +218,9 @@ export function BriefDialog({
             ))}
           </div>
           <p className="text-xs text-muted-foreground">
-            Los avisos van en orden: primero a quien revisa; al aprobar, a quien
-            produce; al terminar, a quien lanza.
+            {draft.channel === "ads"
+              ? "Los avisos van en orden: primero a quien revisa; al aprobar, a quien produce; al terminar, copy y media aprueban los diseños, y al final, a quien lanza."
+              : "Los avisos van en orden: primero a quien revisa; al aprobar, a quien lanza."}
           </p>
         </div>
       </div>

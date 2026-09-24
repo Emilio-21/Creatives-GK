@@ -12,6 +12,7 @@ export const BRIEF_STATUSES = [
   "borrador",
   "en_revision",
   "en_produccion",
+  "en_aprobacion",
   "en_lanzamiento",
   "lanzado",
 ] as const;
@@ -21,43 +22,107 @@ export const STATUS_LABEL: Record<BriefStatus, string> = {
   borrador: "Borrador",
   en_revision: "En revisión",
   en_produccion: "En producción",
+  en_aprobacion: "En aprobación",
   en_lanzamiento: "Por lanzar",
   lanzado: "Lanzada",
 };
 
-/** Las tres manos por las que pasa un brief, en orden. */
-export type StageStatus = "en_revision" | "en_produccion" | "en_lanzamiento";
+/** Las etapas con una persona a cargo. */
+export type OwnerStatus = "en_revision" | "en_produccion" | "en_lanzamiento";
+/** Las etapas en las que la tarea esta en manos de alguien. */
+export type StageStatus = OwnerStatus | "en_aprobacion";
 export type OwnerField = "reviewer_id" | "producer_id" | "launcher_id";
 
-export const STAGES: { status: StageStatus; field: OwnerField; label: string; hint: string }[] = [
+export type Stage = {
+  status: StageStatus;
+  /** Quien la hace. Aprobación no tiene campo propio: la dan copy (revisión) y media (lanzamiento). */
+  field: OwnerField | null;
+  label: string;
+  hint: string;
+};
+
+/** Las manos por las que pasa una tarea de ads, en orden. */
+export const STAGES: Stage[] = [
   { status: "en_revision", field: "reviewer_id", label: "Revisión", hint: "Aprueba el copy" },
   { status: "en_produccion", field: "producer_id", label: "Producción", hint: "Diseña o arma la pieza" },
+  { status: "en_aprobacion", field: null, label: "Aprobación", hint: "Copy y media dan el visto bueno" },
   { status: "en_lanzamiento", field: "launcher_id", label: "Lanzamiento", hint: "Sube la campaña" },
 ];
 
-/** Las etapas en las que el brief esta en manos de alguien: lo "abierto". */
+/** Las etapas en las que la tarea esta en manos de alguien: lo "abierto". */
 export const OPEN_STATUSES: StageStatus[] = STAGES.map((stage) => stage.status);
 
-/** `back`: regresar trabajo pide motivo, y la base lo exige. */
-export const NEXT_STEPS: Record<BriefStatus, { to: BriefStatus; label: string; back?: boolean }[]> = {
-  borrador: [
-    { to: "en_revision", label: "Mandar a revisión" },
-    { to: "en_produccion", label: "Saltar a producción" },
-  ],
-  en_revision: [
-    { to: "en_produccion", label: "Aprobar y mandar a producción" },
-    { to: "borrador", label: "Regresar a copy", back: true },
-  ],
-  en_produccion: [
-    { to: "en_lanzamiento", label: "Lista, mandar a lanzamiento" },
-    { to: "en_revision", label: "Regresar a revisión", back: true },
-  ],
-  en_lanzamiento: [
-    { to: "lanzado", label: "Marcar como lanzada" },
-    { to: "en_produccion", label: "Regresar a producción", back: true },
-  ],
-  lanzado: [{ to: "en_lanzamiento", label: "Reabrir", back: true }],
-};
+/**
+ * Las etapas de cada canal. Email y mensaje son solo copy: se arman directo en
+ * la herramienta de envio, asi que no hay pieza que producir ni que aprobar.
+ */
+export function stagesFor(channel: Channel): Stage[] {
+  return channel === "ads"
+    ? STAGES
+    : STAGES.filter((stage) => stage.status === "en_revision" || stage.status === "en_lanzamiento");
+}
+
+export type NextStep = { to: BriefStatus; label: string; back?: boolean };
+
+/**
+ * Lo que se ofrece desde cada estado, por canal. `back`: regresar trabajo pide
+ * motivo, y la base lo exige. De aprobación a lanzamiento no hay boton: se
+ * pasa sola con los dos vistos buenos. La base decide lo que vale
+ * (brief_step_ok); esto es el orden en que se ofrece.
+ */
+export function nextSteps(channel: Channel, status: BriefStatus): NextStep[] {
+  if (channel !== "ads") {
+    const corto: Partial<Record<BriefStatus, NextStep[]>> = {
+      borrador: [{ to: "en_revision", label: "Mandar a revisión" }],
+      en_revision: [
+        { to: "en_lanzamiento", label: "Aprobar y mandar a lanzamiento" },
+        { to: "borrador", label: "Regresar a copy", back: true },
+      ],
+      en_lanzamiento: [
+        { to: "lanzado", label: "Marcar como lanzada" },
+        { to: "en_revision", label: "Regresar a revisión", back: true },
+      ],
+      lanzado: [{ to: "en_lanzamiento", label: "Reabrir", back: true }],
+    };
+    return corto[status] ?? [];
+  }
+  const ads: Record<BriefStatus, NextStep[]> = {
+    borrador: [
+      { to: "en_revision", label: "Mandar a revisión" },
+      { to: "en_produccion", label: "Saltar a producción" },
+    ],
+    en_revision: [
+      { to: "en_produccion", label: "Aprobar y mandar a producción" },
+      { to: "borrador", label: "Regresar a copy", back: true },
+    ],
+    en_produccion: [
+      { to: "en_aprobacion", label: "Listo, mandar a aprobación" },
+      { to: "en_revision", label: "Regresar a revisión", back: true },
+    ],
+    en_aprobacion: [{ to: "en_produccion", label: "Pedir cambios", back: true }],
+    en_lanzamiento: [
+      { to: "lanzado", label: "Marcar como lanzada" },
+      { to: "en_produccion", label: "Regresar a producción", back: true },
+    ],
+    lanzado: [{ to: "en_lanzamiento", label: "Reabrir", back: true }],
+  };
+  return ads[status];
+}
+
+/** Quienes aprueban y quien falta. Si copy y media son la misma persona, una sola. */
+export function approvalState(brief: {
+  reviewer_id: string | null;
+  launcher_id: string | null;
+  copy_ok_at: string | null;
+  media_ok_at: string | null;
+}): { copyOk: boolean; mediaOk: boolean; pending: string[] } {
+  const copyOk = brief.copy_ok_at !== null;
+  const mediaOk = brief.media_ok_at !== null;
+  const pending = new Set<string>();
+  if (!copyOk && brief.reviewer_id) pending.add(brief.reviewer_id);
+  if (!mediaOk && brief.launcher_id) pending.add(brief.launcher_id);
+  return { copyOk, mediaOk, pending: [...pending] };
+}
 
 export const CHANNELS = ["ads", "email", "sms"] as const;
 export type Channel = (typeof CHANNELS)[number];
@@ -65,7 +130,7 @@ export type Channel = (typeof CHANNELS)[number];
 export const CHANNEL_LABEL: Record<Channel, string> = {
   ads: "Ads",
   email: "Email",
-  sms: "SMS",
+  sms: "Mensaje",
 };
 
 /**
@@ -136,5 +201,6 @@ export function elapsed(iso: string, now = Date.now()): string {
 export const FINISH_LABEL: Record<StageStatus, string> = {
   en_revision: "Aprobar",
   en_produccion: "Terminar",
+  en_aprobacion: "Aprobar",
   en_lanzamiento: "Marcar lanzada",
 };

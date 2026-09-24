@@ -28,6 +28,11 @@ export type BriefRow = {
   stage_entered_at: string | null;
   stage_started_at: string | null;
   due_date: string | null;
+  /** Vistos buenos de aprobación. Se borran al salir de la etapa. */
+  copy_ok_by: string | null;
+  copy_ok_at: string | null;
+  media_ok_by: string | null;
+  media_ok_at: string | null;
   created_at: string;
   updated_at: string;
   updated_by: string | null;
@@ -194,10 +199,11 @@ async function saveBriefImpl(input: {
 
 /**
  * Diseño publica: los creativos ya subidos quedan en "sin lanzar" con su batch,
- * el brief queda ligado a ese batch y el batch se marca como completado.
+ * la tarea queda ligada a ese batch y el batch se marca como completado.
  *
  * Publicar no mueve archivos: los creativos ya se subieron con ese batch_id.
- * Lo que hace es cerrar el ciclo del brief.
+ * Lo que hace es mandar los diseños a aprobación. Si pidieron cambios, se
+ * vuelve a publicar igual: la tarea regresa a aprobación.
  */
 async function publishBriefImpl(
   briefId: string,
@@ -228,14 +234,14 @@ async function publishBriefImpl(
     .eq("id", briefId);
   if (error) throw new Error(error.message);
 
-  // Publicar ES producción diciendo "ya está": pasa a lanzamiento por la misma
-  // funcion que el resto, para que quede en el historial y avise a quien lanza.
+  // Publicar ES producción diciendo "ya está": pasa a aprobación por la misma
+  // funcion que el resto, para que quede en el historial y avise a copy y media.
   //
-  // Si no se puede (el brief no estaba en producción, o nadie tiene el
-  // lanzamiento) los diseños ya estan arriba: no se deshace, se dice por que.
+  // Si no se puede (la tarea no estaba en producción, o falta copy o media)
+  // los diseños ya estan arriba: no se deshace, se dice por que.
   const { error: pasoError } = await supabase.rpc("transition_brief", {
     p_brief: briefId,
-    p_to: "en_lanzamiento",
+    p_to: "en_aprobacion",
     p_assigned: null,
     p_note: null,
   });

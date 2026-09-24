@@ -15,9 +15,17 @@ Producción: <https://relevo.growth-kingdom.workers.dev>. Plan original: `docs/p
 - **Mi trabajo** (`/`) — lo que te toca ahora, lo que mandaste y sigue en manos de alguien
   más, y lo que está atorado en el equipo.
 - **Tareas** — cada cliente tiene sus tareas. Una tarea es un Google Doc (se incrusta en la
-  app) con canal (ads, email o SMS) y tres responsables: revisión → producción →
-  lanzamiento. Al terminar una etapa pasa sola a la siguiente persona y le llega el aviso.
-  En pantalla se llaman "tareas"; en el código y la base siguen siendo `briefs`.
+  app) con canal y responsables por etapa. Al terminar una etapa pasa sola a la siguiente
+  persona y le llega el aviso. En pantalla se llaman "tareas"; en el código y la base
+  siguen siendo `briefs`.
+  - **Ads:** revisión → producción → aprobación → lanzamiento. En aprobación dan el visto
+    bueno copy (quien revisó) y media (quien lanza); con los dos pasa sola a lanzamiento.
+    Si alguien pide cambios, regresa a producción y las aprobaciones se borran.
+  - **Email y mensaje:** revisión → lanzamiento. Son solo copy; se arman en la
+    herramienta de envío.
+  - Un admin puede mover una tarea a cualquier etapa o aprobar por todos; queda como
+    salto en el historial.
+  - Cada tarea tiene un hilo de comentarios que avisa a quienes están en ella.
 - **Creativos** — biblioteca por cliente: subida múltiple directa a R2, pares de formatos
   (1:1 + 9:16 = un anuncio), batches con la nomenclatura de Meta, descarga en zip,
   lanzamientos y métricas.
@@ -32,7 +40,7 @@ Producción: <https://relevo.growth-kingdom.workers.dev>. Plan original: `docs/p
 
 ### 1. Supabase
 1. Crear el proyecto y, en el SQL Editor, correr **en orden** todo `supabase/migrations/`
-   (`0001_schema.sql` … `0027_tarea.sql`).
+   (`0001_schema.sql` … `0028_aprobacion.sql`).
 2. Settings → API: copiar `Project URL`, `anon key` y `service_role key`.
 3. Authentication → URL Configuration: *Site URL* con la URL de la app y, en *Redirect URLs*,
    `https://<dominio>/**`. El enlace del correo de confirmación regresa a `/auth/confirm`.
@@ -116,10 +124,11 @@ Un archivo `"use server"` solo puede exportar funciones async: las constantes y 
 compartidos viven en `src/lib/` (`brief-flow.ts`, `roles.ts`, `material.ts`…).
 
 ### Flujo de tareas
-Las reglas viven en la base, no en la pantalla: `transition_brief`, `set_brief_owner` y
-`start_brief_stage` (migraciones 0022–0023) deciden qué transición vale, exigen responsable
-al entrar a una etapa y motivo al regresar trabajo, y escriben el aviso en la misma
-transacción. Un trigger impide cambiar el estado de un brief por fuera de esas funciones.
+Las reglas viven en la base, no en la pantalla: `transition_brief`, `approve_brief`,
+`set_brief_owner`, `start_brief_stage` y `add_brief_comment` (migraciones 0022, 0023 y 0028)
+deciden qué transición vale según el canal (`brief_step_ok`), exigen responsable al entrar
+a una etapa y motivo al regresar trabajo, y escriben el aviso en la misma transacción. Un
+trigger impide cambiar el estado, las aprobaciones o el canal por fuera de esas funciones.
 
 Slack es otra salida del mismo aviso: `src/lib/slack-deliver.ts` manda lo pendiente justo
 después de cada cambio (`after()`) y el cron reintenta lo que falló.

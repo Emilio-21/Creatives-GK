@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
 import { getPreviewUrl } from "@/lib/storage";
 import { createClient } from "@/lib/supabase/server";
-import { OPEN_STATUSES } from "@/lib/brief-flow";
+import { approvalState, OPEN_STATUSES } from "@/lib/brief-flow";
 import type { Role } from "@/lib/roles";
 import type { Member } from "@/lib/team";
 import { attempt, type ActionResult } from "@/lib/action-result";
@@ -20,10 +20,11 @@ export async function listMembers(): Promise<Member[]> {
       .select("id, full_name, role, slack_user_id, slack_notify, avatar_path")
       .order("full_name"),
     supabase.from("client_members").select("client_id, profile_id"),
-    // Lo que tiene encima cada quien: la etapa en curso de cada brief abierto.
+    // Lo que tiene encima cada quien: la etapa en curso de cada tarea abierta,
+    // y las aprobaciones donde falta su visto bueno.
     supabase
       .from("briefs")
-      .select("assigned_to")
+      .select("status, assigned_to, reviewer_id, launcher_id, copy_ok_at, media_ok_at")
       .in("status", OPEN_STATUSES)
       .is("archived_at", null),
   ]);
@@ -36,8 +37,11 @@ export async function listMembers(): Promise<Member[]> {
 
   const pendientes = new Map<string, number>();
   for (const row of briefs ?? []) {
-    const key = row.assigned_to as string | null;
-    if (key) pendientes.set(key, (pendientes.get(key) ?? 0) + 1);
+    const quienes =
+      row.status === "en_aprobacion"
+        ? approvalState(row as Parameters<typeof approvalState>[0]).pending
+        : [row.assigned_to as string | null].filter(Boolean);
+    for (const key of quienes as string[]) pendientes.set(key, (pendientes.get(key) ?? 0) + 1);
   }
 
   return Promise.all((profiles ?? []).map(async (row) => ({

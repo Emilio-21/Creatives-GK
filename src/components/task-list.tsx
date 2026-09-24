@@ -28,12 +28,25 @@ import { today } from "@/lib/dates";
 const moveBrief = unwrapped(moveBriefAction);
 const startBriefStage = unwrapped(startBriefStageAction);
 
-/** A donde pasa cada etapa al terminarla, y quien la recibe. */
-const NEXT: Record<StageStatus, { to: BriefStatus; owner: keyof MyTask | null }> = {
-  en_revision: { to: "en_produccion", owner: "producerId" },
-  en_produccion: { to: "en_lanzamiento", owner: "launcherId" },
-  en_lanzamiento: { to: "lanzado", owner: null },
-};
+/**
+ * A donde pasa cada etapa al terminarla, y quien la recibe (si hay que elegirlo).
+ * Email y mensaje van de revisión directo a lanzamiento. Aprobación no se
+ * termina desde aqui: se aprueba dentro de la tarea, viendo los diseños.
+ */
+function nextFor(task: MyTask): { to: BriefStatus; owner: "producerId" | "launcherId" | null } | null {
+  switch (task.status) {
+    case "en_revision":
+      return task.channel === "ads"
+        ? { to: "en_produccion", owner: "producerId" }
+        : { to: "en_lanzamiento", owner: "launcherId" };
+    case "en_produccion":
+      return { to: "en_aprobacion", owner: null };
+    case "en_lanzamiento":
+      return { to: "lanzado", owner: null };
+    default:
+      return null;
+  }
+}
 
 export function TaskList({ tasks, team }: { tasks: MyTask[]; team: TeamMember[] }) {
   if (tasks.length === 0) {
@@ -82,15 +95,16 @@ function TaskRow({ task, team }: { task: MyTask; team: TeamMember[] }) {
   const [persona, setPersona] = useState("");
 
   const stage = task.status as StageStatus;
-  const next = NEXT[stage];
-  const nextStage = STAGES.find((s) => s.status === next.to);
-  const faltaSiguiente = next.owner !== null && !task[next.owner];
+  const next = nextFor(task);
+  const nextStage = STAGES.find((s) => s.status === next?.to);
+  const faltaSiguiente = next?.owner != null && !task[next.owner];
   const href = `/client/${task.clientId}?brief=${task.id}`;
   const atrasado = task.dueDate !== null && task.dueDate < today();
 
   // Producir un ad es subir los diseños y publicarlos: eso cierra el batch, y
   // se hace dentro del brief. Terminar desde aqui lo dejaria sin cerrar.
   const terminaDentro = stage === "en_produccion" && task.channel === "ads";
+  const aprobando = stage === "en_aprobacion";
 
   function run(action: () => Promise<unknown>, done: string) {
     startTransition(async () => {
@@ -105,11 +119,13 @@ function TaskRow({ task, team }: { task: MyTask; team: TeamMember[] }) {
     });
   }
 
-  const terminar = () =>
+  const terminar = () => {
+    if (!next) return;
     run(
       () => moveBrief(task.id, next.to, faltaSiguiente ? persona || null : null),
       next.to === "lanzado" ? "Marcada como lanzada" : `Pasó a ${STATUS_LABEL[next.to]}`,
     );
+  };
 
   return (
     <li className="surface rounded-xl border p-3">
@@ -125,7 +141,11 @@ function TaskRow({ task, team }: { task: MyTask; team: TeamMember[] }) {
           </p>
           <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
             <span>{STAGES.find((s) => s.status === stage)?.label}</span>
-            {task.startedAt ? (
+            {aprobando ? (
+              <span>
+                ○ Falta tu visto bueno{task.enteredAt ? ` · esperando ${elapsed(task.enteredAt)}` : ""}
+              </span>
+            ) : task.startedAt ? (
               <span className="text-foreground">● En progreso · {elapsed(task.startedAt)}</span>
             ) : (
               <span>
@@ -151,9 +171,13 @@ function TaskRow({ task, team }: { task: MyTask; team: TeamMember[] }) {
         </div>
 
         {/* Un solo boton: la accion siguiente. Con diez tareas, dos botones por
-            renglon eran veinte. Terminar sin haber empezado sigue dentro del brief. */}
+            renglon eran veinte. Terminar sin haber empezado sigue dentro de la tarea. */}
         <div className="flex shrink-0 gap-2">
-          {!task.startedAt ? (
+          {aprobando ? (
+            <Link href={href} className={buttonVariants({ size: "sm" })}>
+              Revisar y aprobar
+            </Link>
+          ) : !task.startedAt ? (
             <Button
               size="sm"
               disabled={pending}

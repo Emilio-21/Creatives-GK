@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { deliverSlackSoon } from "@/lib/slack-after";
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { OPEN_STATUSES, type BriefStatus, type Channel, type StageStatus } from "@/lib/brief-flow";
+import { type BriefStatus, type Channel, type OwnerStatus } from "@/lib/brief-flow";
 import { attempt, type ActionResult } from "@/lib/action-result";
 
 export type TeamMember = { id: string; name: string; role: string; isMe: boolean };
@@ -63,7 +63,7 @@ async function moveBriefImpl(
  */
 async function setBriefOwnerImpl(
   briefId: string,
-  stage: StageStatus,
+  stage: OwnerStatus,
   profileId: string | null,
 ): Promise<void> {
   await requireUser();
@@ -98,7 +98,7 @@ export type BriefEvent = {
   from_status: string | null;
   to_status: string;
   note: string | null;
-  kind: "paso" | "relevo" | "empezo";
+  kind: "paso" | "relevo" | "empezo" | "aprobo" | "salto";
   actorName: string;
   assigneeName: string | null;
   created_at: string;
@@ -154,6 +154,25 @@ async function startBriefStageImpl(briefId: string): Promise<void> {
   revalidatePath("/", "layout");
 }
 
+/**
+ * Visto bueno en aprobación. La base decide de que lado cuenta (copy, media o
+ * los dos si es la misma persona) y la pasa sola a lanzamiento con los dos.
+ */
+async function approveBriefImpl(briefId: string, note?: string | null): Promise<BriefStatus> {
+  await requireUser();
+  const supabase = await createClient();
+
+  const { data, error } = await supabase.rpc("approve_brief", {
+    p_brief: briefId,
+    p_note: note ?? null,
+  });
+  if (error) throw new Error(error.message);
+
+  revalidatePath("/", "layout");
+  deliverSlackSoon();
+  return data as BriefStatus;
+}
+
 export type MyTask = {
   id: string;
   title: string;
@@ -168,11 +187,30 @@ export type MyTask = {
   reviewerId: string | null;
   producerId: string | null;
   launcherId: string | null;
+  /** En aprobación: si ya dio su visto bueno cada lado. */
+  copyOk: boolean;
+  mediaOk: boolean;
 };
+
+const TASK_COLUMNS =
+  "id, title, channel, status, client_id, doc_url, due_date, stage_entered_at, stage_started_at, reviewer_id, producer_id, launcher_id, copy_ok_at, media_ok_at, clients(name)";
+
+/**
+ * Lo que es mio: la etapa que tengo a cargo, o una aprobación donde falta mi
+ * visto bueno (en aprobación nadie tiene la tarea sola: la tienen copy y media).
+ */
+function mineFilter(userId: string): string {
+  return [
+    `and(assigned_to.eq.${userId},status.in.(en_revision,en_produccion,en_lanzamiento))`,
+    `and(status.eq.en_aprobacion,reviewer_id.eq.${userId},copy_ok_at.is.null)`,
+    `and(status.eq.en_aprobacion,launcher_id.eq.${userId},media_ok_at.is.null)`,
+  ].join(",");
+}
 
 /**
  * Lo que me toca, de todos los clientes. Una etapa es de quien la tiene
- * asignada ahora: lo que viene despues todavia no es pendiente de nadie.
+ * asignada ahora (o de quien falta que apruebe): lo que viene despues todavia
+ * no es pendiente de nadie.
  */
 export async function listMyTasks(): Promise<MyTask[]> {
   const user = await requireUser();
@@ -180,11 +218,8 @@ export async function listMyTasks(): Promise<MyTask[]> {
 
   const { data } = await supabase
     .from("briefs")
-    .select(
-      "id, title, channel, status, client_id, doc_url, due_date, stage_entered_at, stage_started_at, reviewer_id, producer_id, launcher_id, clients(name)",
-    )
-    .eq("assigned_to", user.id)
-    .in("status", OPEN_STATUSES)
+    .select(TASK_COLUMNS)
+    .or(mineFilter(user.id))
     .is("archived_at", null);
 
   const tasks = (data ?? []).map((row) => ({
@@ -202,6 +237,8 @@ export async function listMyTasks(): Promise<MyTask[]> {
     reviewerId: (row.reviewer_id as string | null) ?? null,
     producerId: (row.producer_id as string | null) ?? null,
     launcherId: (row.launcher_id as string | null) ?? null,
+    copyOk: row.copy_ok_at !== null,
+    mediaOk: row.media_ok_at !== null,
   }));
 
   // Lo que vence primero, arriba; sin fecha, al final por lo que lleva esperando.
@@ -220,8 +257,7 @@ export async function myTaskCount(): Promise<number> {
   const { count } = await supabase
     .from("briefs")
     .select("id", { count: "exact", head: true })
-    .eq("assigned_to", user.id)
-    .in("status", OPEN_STATUSES)
+    .or(mineFilter(user.id))
     .is("archived_at", null);
 
   return count ?? 0;
@@ -230,6 +266,12 @@ export async function myTaskCount(): Promise<number> {
 // ---- Acciones expuestas al navegador ----
 // Regresan el error en vez de lanzarlo: en produccion Next oculta el mensaje de
 // lo que se lanza. Ver src/lib/action-result.ts.
+
+export async function approveBrief(
+  ...args: Parameters<typeof approveBriefImpl>
+): Promise<ActionResult<Awaited<ReturnType<typeof approveBriefImpl>>>> {
+  return attempt(() => approveBriefImpl(...args));
+}
 
 export async function getBriefHistory(
   ...args: Parameters<typeof getBriefHistoryImpl>

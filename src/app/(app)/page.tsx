@@ -152,7 +152,7 @@ function Empty({ children }: { children: React.ReactNode }) {
   );
 }
 
-/** Un brief en una linea: donde va, con quien y desde cuando. */
+/** Una tarea en una linea: donde va, con quien y desde cuando. */
 function BriefLine({ brief, reason }: { brief: HomeBrief; reason?: string }) {
   return (
     <li>
@@ -173,6 +173,8 @@ function BriefLine({ brief, reason }: { brief: HomeBrief; reason?: string }) {
           <span className="text-xs text-destructive">{reason}</span>
         ) : !brief.assigneeName ? (
           <span className="text-xs text-destructive">sin responsable</span>
+        ) : brief.status === "en_aprobacion" ? (
+          <span className="text-xs text-muted-foreground">○ falta su visto bueno</span>
         ) : (
           <span className={`text-xs ${brief.startedAt ? "text-foreground" : "text-muted-foreground"}`}>
             {brief.startedAt ? "● en progreso" : "○ sin empezar"}
@@ -187,12 +189,13 @@ const PIPELINE: { status: BriefStatus; label: string }[] = [
   { status: "borrador", label: STATUS_LABEL.borrador },
   { status: "en_revision", label: STATUS_LABEL.en_revision },
   { status: "en_produccion", label: STATUS_LABEL.en_produccion },
+  { status: "en_aprobacion", label: STATUS_LABEL.en_aprobacion },
   { status: "en_lanzamiento", label: STATUS_LABEL.en_lanzamiento },
   { status: "lanzado", label: "Lanzadas esta semana" },
 ];
 
 /**
- * La linea completa en una franja: cuantos briefs hay en cada etapa. Es
+ * La linea completa en una franja: cuantas tareas hay en cada etapa. Es
  * contexto, no tarea, asi que no lleva cajas ni numeros grandes que compitan
  * con los pendientes. Los ceros se apagan.
  */

@@ -3,7 +3,7 @@ import { appUrl } from "@/lib/app-url";
 import {
   BRIEF_STATUSES,
   CHANNEL_LABEL,
-  STAGES,
+  stagesFor,
   type BriefStatus,
   type Channel,
 } from "@/lib/brief-flow";
@@ -78,7 +78,7 @@ export async function deliverPendingSlack(limit = 25): Promise<SlackDeliveryRepo
       ? db
           .from("briefs")
           .select(
-            "id, title, status, channel, client_id, doc_url, due_date, reviewer_id, producer_id, launcher_id, clients(name)",
+            "id, title, status, channel, client_id, doc_url, due_date, reviewer_id, producer_id, launcher_id, copy_ok_at, media_ok_at, clients(name)",
           )
           .in("id", briefIds as string[])
       : Promise.resolve({ data: [] as Record<string, unknown>[] }),
@@ -202,8 +202,9 @@ export function buildMessage({
     });
   }
 
-  // "Te regresaron": el motivo es lo importante, va citado y arriba del flujo.
-  if (kind === "devuelto" && body) {
+  // "Te regresaron" o un comentario: lo que dijeron es lo importante, va citado
+  // y arriba del flujo.
+  if ((kind === "devuelto" || kind === "comentario") && body) {
     blocks.push({ type: "section", text: { type: "mrkdwn", text: `> ${esc(body)}` } });
   }
 
@@ -221,19 +222,37 @@ export function buildMessage({
   return { text: title, blocks };
 }
 
-/** ✓ Revisión — Catalina  →  ▶ *Producción — tú*  →  ○ Lanzamiento — Chris */
+/**
+ * ✓ Revisión — Catalina  →  ▶ *Producción — tú*  →  ○ Aprobación — Catalina y Chris  →  ○ Lanzamiento — Chris
+ *
+ * En aprobación, cada quien con su visto bueno: "Catalina ✓ y tú".
+ */
 function flowLine(
   brief: Record<string, unknown>,
   recipientId: string,
   nombres: Map<string, string>,
 ): string {
   const actual = BRIEF_STATUSES.indexOf(brief.status as BriefStatus);
+  const nombre = (id: string | null) =>
+    !id ? "sin asignar" : id === recipientId ? "tú" : (nombres.get(id) ?? "—");
 
-  return STAGES.map((stage) => {
-    const owner = brief[stage.field] as string | null;
-    const quien = !owner ? "sin asignar" : owner === recipientId ? "tú" : (nombres.get(owner) ?? "—");
-    const i = BRIEF_STATUSES.indexOf(stage.status);
-    if (i === actual) return `▶ *${stage.label} — ${esc(quien)}*`;
-    return `${i < actual ? "✓" : "○"} ${stage.label} — ${esc(quien)}`;
-  }).join("   →   ");
+  return stagesFor(brief.channel as Channel)
+    .map((stage) => {
+      const i = BRIEF_STATUSES.indexOf(stage.status);
+      let quien: string;
+      if (stage.field) {
+        quien = nombre(brief[stage.field] as string | null);
+      } else {
+        const copy = brief.reviewer_id as string | null;
+        const media = brief.launcher_id as string | null;
+        const marca = (ok: unknown) => (i === actual && ok ? " ✓" : "");
+        quien =
+          copy === media
+            ? `${nombre(copy)}${marca(brief.copy_ok_at && brief.media_ok_at)}`
+            : `${nombre(copy)}${marca(brief.copy_ok_at)} y ${nombre(media)}${marca(brief.media_ok_at)}`;
+      }
+      if (i === actual) return `▶ *${stage.label} — ${esc(quien)}*`;
+      return `${i < actual ? "✓" : "○"} ${stage.label} — ${esc(quien)}`;
+    })
+    .join("   →   ");
 }

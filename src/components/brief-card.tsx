@@ -1,6 +1,12 @@
 "use client";
 
-import { CHANNEL_LABEL, docLabel, STATUS_LABEL, type BriefStatus } from "@/lib/brief-flow";
+import {
+  approvalState,
+  CHANNEL_LABEL,
+  docLabel,
+  STATUS_LABEL,
+  type BriefStatus,
+} from "@/lib/brief-flow";
 import type { BriefWithMeta } from "@/app/(app)/client/brief-actions";
 import { UserAvatar } from "@/components/user-avatar";
 import { today } from "@/lib/dates";
@@ -14,6 +20,7 @@ const STATUS_STYLE: Record<BriefStatus, string> = {
   borrador: "border-muted-foreground/30 text-muted-foreground",
   en_revision: "border-foreground/30 text-foreground",
   en_produccion: "border-foreground/30 text-foreground",
+  en_aprobacion: "border-foreground/30 text-foreground",
   en_lanzamiento: "border-foreground/50 text-foreground font-medium",
   lanzado: "border-muted-foreground/30 text-muted-foreground",
 };
@@ -57,7 +64,9 @@ export function BriefCard({
       <div className="mt-auto space-y-1 text-[11px] text-muted-foreground">
         {/* Quien tiene la pelota, que es lo que uno busca al mirar el tablero. */}
         <p className="flex items-center gap-1.5">
-          {brief.assigneeName ? (
+          {status === "en_aprobacion" ? (
+            <Approvals brief={brief} />
+          ) : brief.assigneeName ? (
             <>
               <UserAvatar
                 name={brief.assigneeName}
@@ -94,7 +103,22 @@ export function BriefCard({
   );
 }
 
-/** Solo lo que sigue pendiente puede ir tarde: un brief lanzado ya no debe nada. */
+/** En aprobación la tarea la tienen dos: se ve quien ya dio su visto bueno. */
+function Approvals({ brief }: { brief: BriefWithMeta }) {
+  const { copyOk, mediaOk } = approvalState(brief);
+  if (brief.reviewer_id && brief.reviewer_id === brief.launcher_id) {
+    return <span>{copyOk ? "✓" : "○"} Visto bueno</span>;
+  }
+  return (
+    <>
+      <span className={copyOk ? "text-foreground" : undefined}>{copyOk ? "✓" : "○"} Copy</span>
+      <span aria-hidden>·</span>
+      <span className={mediaOk ? "text-foreground" : undefined}>{mediaOk ? "✓" : "○"} Media</span>
+    </>
+  );
+}
+
+/** Solo lo que sigue pendiente puede ir tarde: una tarea lanzada ya no debe nada. */
 function isLate(dueDate: string | null, status: BriefStatus): boolean {
   if (!dueDate || status === "lanzado") return false;
   return dueDate < today();
