@@ -2,11 +2,19 @@
   {
     "AllowedOrigins": [
       "http://localhost:3000",
-      "https://creativos-gk.growth-kingdom.workers.dev"
+      "https://relevo.growth-kingdom.workers.dev"
     ],
-    "AllowedMethods": ["GET", "PUT", "HEAD"],
-    "AllowedHeaders": ["content-type"],
-    "ExposeHeaders": ["etag"],
+    "AllowedMethods": [
+      "GET",
+      "PUT",
+      "HEAD"
+    ],
+    "AllowedHeaders": [
+      "content-type"
+    ],
+    "ExposeHeaders": [
+      "etag"
+    ],
     "MaxAgeSeconds": 3600
   }
 ]

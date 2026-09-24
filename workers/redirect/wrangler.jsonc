@@ -1,0 +1,7 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  // Mismo nombre que tenia la app: ocupa la URL vieja y redirige a relevo.
+  "name": "creativos-gk",
+  "main": "index.ts",
+  "compatibility_date": "2026-09-01"
+}

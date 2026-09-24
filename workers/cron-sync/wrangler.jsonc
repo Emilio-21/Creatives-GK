@@ -14,6 +14,6 @@
     "crons": ["*/10 * * * *"]
   },
   "vars": {
-    "APP_URL": "https://creativos-gk.growth-kingdom.workers.dev"
+    "APP_URL": "https://relevo.growth-kingdom.workers.dev"
   }
 }

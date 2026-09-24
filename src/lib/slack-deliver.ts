@@ -22,7 +22,7 @@ const MAX_INTENTOS = 3;
 const RECLAMO_MINUTOS = 5;
 
 export function appUrl(): string {
-  return (process.env.APP_URL || "https://creativos-gk.growth-kingdom.workers.dev").replace(
+  return (process.env.APP_URL || "https://relevo.growth-kingdom.workers.dev").replace(
     /\/$/,
     "",
   );
