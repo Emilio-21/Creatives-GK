@@ -14,12 +14,14 @@ export function uploadToR2(
   uploadUrl: string,
   file: Blob,
   onProgress?: (percent: number) => void,
+  /** Tiene que ser el mismo con el que se firmo. Algunos archivos llegan sin tipo. */
+  contentType: string = file.type,
 ): UploadHandle {
   const xhr = new XMLHttpRequest();
 
   const promise = new Promise<void>((resolve, reject) => {
     xhr.open("PUT", uploadUrl, true);
-    xhr.setRequestHeader("content-type", file.type);
+    xhr.setRequestHeader("content-type", contentType);
 
     xhr.upload.onprogress = (event) => {
       if (event.lengthComputable && onProgress) {

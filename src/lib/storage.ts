@@ -153,3 +153,12 @@ function contentDisposition(filename: string): string {
   const fallback = sanitizeFilename(filename);
   return `attachment; filename="${fallback}"; filename*=UTF-8''${encodeURIComponent(filename)}`;
 }
+
+/**
+ * `material/{clientId}/{uuid}/{filename}` — material del cliente que no es un
+ * ad. El clientId en la ruta deja que el servidor verifique, al confirmar, que
+ * el archivo subido es de ese cliente y no de otro.
+ */
+export function buildMaterialPath(clientId: string, filename: string, uuid: string = randomUUID()) {
+  return `material/${clientId}/${uuid}/${sanitizeFilename(filename)}`;
+}
