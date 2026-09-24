@@ -162,3 +162,8 @@ function contentDisposition(filename: string): string {
 export function buildMaterialPath(clientId: string, filename: string, uuid: string = randomUUID()) {
   return `material/${clientId}/${uuid}/${sanitizeFilename(filename)}`;
 }
+
+/** `avatars/{userId}/{uuid}.jpg` — la base solo acepta fotos bajo la carpeta de cada quien. */
+export function buildAvatarPath(userId: string, uuid: string = randomUUID()): string {
+  return `avatars/${userId}/${uuid}.jpg`;
+}

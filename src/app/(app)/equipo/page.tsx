@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { ProfileEditor } from "@/components/profile-editor";
 import { TeamBoard } from "@/components/team-board";
 import { listMembers } from "@/app/(app)/team-actions";
 import { getClientsWithCounts } from "@/lib/clients";
@@ -23,13 +24,18 @@ export default async function EquipoPage() {
     supabase.from("orgs").select("name").maybeSingle(),
   ]);
 
+  const yo = members.find((member) => member.isMe);
+
   return (
     <div className="space-y-5">
+      {/* Arriba, porque la tarjeta del usuario en la barra lateral trae aqui. */}
+      {yo ? <ProfileEditor name={yo.name} avatarUrl={yo.avatarUrl} /> : null}
+
       <div>
         <h1 className="font-heading font-extralight tracking-tight text-3xl">{(org?.name as string) ?? "Equipo"}</h1>
         <p className="text-sm text-muted-foreground">
-          {members.length} persona{members.length === 1 ? "" : "s"} · el rol decide a quién
-          le llegan los avisos
+          {members.length} persona{members.length === 1 ? "" : "s"} · los avisos le llegan a
+          quien elijas en cada etapa del brief
         </p>
       </div>
 

@@ -10,22 +10,16 @@ type Option = { id: string; name: string; count: number };
  * desplaza: se ve a que cliente estas entrando y cuantos creativos tiene sin
  * abrir nada.
  *
- * Solo dentro de Creativos (la biblioteca y cada cliente). En el resto de las
- * pantallas era una segunda navegacion encima de la barra de abajo.
+ * Solo dentro de un cliente, para saltar a otro. En el resto de las pantallas
+ * era una segunda navegacion encima de la barra de abajo.
  */
 export function MobileNav({ clients }: { clients: Option[] }) {
   const pathname = usePathname();
-  const total = clients.reduce((sum, client) => sum + client.count, 0);
-  const allActive = pathname === "/creativos";
-
-  if (!pathname.startsWith("/creativos") && !pathname.startsWith("/client")) return null;
+  if (!pathname.startsWith("/client/")) return null;
 
   return (
     <div className="-ml-4 min-w-0 flex-1 overflow-x-auto pb-1 pl-4 md:hidden">
       <div className="flex w-max gap-2">
-        <Chip href="/creativos" active={allActive}>
-          Todos · {total}
-        </Chip>
         {clients.map((client) => (
           <Chip
             key={client.id}

@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
+import { getPreviewUrl } from "@/lib/storage";
 import { createClient } from "@/lib/supabase/server";
 import type { Member, Role } from "@/lib/team";
 import { attempt, type ActionResult } from "@/lib/action-result";
@@ -14,7 +15,7 @@ export async function listMembers(): Promise<Member[]> {
   const [{ data: profiles }, { data: members }, { data: briefs }] = await Promise.all([
     supabase
       .from("profiles")
-      .select("id, full_name, role, slack_user_id, slack_notify")
+      .select("id, full_name, role, slack_user_id, slack_notify, avatar_path")
       .order("full_name"),
     supabase.from("client_members").select("client_id, profile_id"),
     // Lo que tiene encima cada quien: la etapa en curso de cada brief abierto.
@@ -37,7 +38,7 @@ export async function listMembers(): Promise<Member[]> {
     if (key) pendientes.set(key, (pendientes.get(key) ?? 0) + 1);
   }
 
-  return (profiles ?? []).map((row) => ({
+  return Promise.all((profiles ?? []).map(async (row) => ({
     id: row.id as string,
     name: (row.full_name as string | null) ?? "sin nombre",
     role: ((row.role as string) ?? "member") as Role,
@@ -46,7 +47,8 @@ export async function listMembers(): Promise<Member[]> {
     openBriefs: pendientes.get(row.id as string) ?? 0,
     slackLinked: Boolean(row.slack_user_id),
     slackNotify: row.slack_notify !== false,
-  }));
+    avatarUrl: row.avatar_path ? await getPreviewUrl(row.avatar_path as string) : null,
+  })));
 }
 
 async function setRoleImpl(profileId: string, role: Role): Promise<void> {

@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { UserAvatar } from "@/components/user-avatar";
 import { Button } from "@/components/ui/button";
 import {
   setClientMember as setClientMemberAction,
@@ -21,8 +22,8 @@ const setSlackNotify = unwrapped(setSlackNotifyAction);
  * El equipo, sus roles y sus clientes.
  *
  * El rol no bloquea nada — son tres personas y la agencia se mueve rapido —
- * pero si decide a quien le llegan los avisos, asi que se muestra el efecto
- * junto al selector en vez de dejarlo como una etiqueta sin consecuencia.
+ * y ya no decide los avisos: desde las etapas (0022) le llegan a quien se
+ * eligio en cada brief. El rol es una etiqueta para saber quien hace que.
  */
 export function TeamBoard({
   members,
@@ -33,18 +34,8 @@ export function TeamBoard({
   clients: { id: string; name: string }[];
   isAdmin: boolean;
 }) {
-  const hayMedia = members.some((member) => member.role === "media");
-
   return (
     <div className="space-y-4">
-      {!hayMedia ? (
-        <p className="rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs">
-          Nadie tiene el rol de <strong>media buying</strong>. Los avisos de «listo para
-          lanzar» están cayendo en los admin como respaldo; asígnale el rol a quien lance
-          y dejan de depender de eso.
-        </p>
-      ) : null}
-
       <ul className="space-y-3">
         {members.map((member) => (
           <MemberRow
@@ -79,9 +70,7 @@ function MemberRow({
   return (
     <li className="surface rounded-xl border p-4">
       <div className="flex flex-wrap items-center gap-3">
-        <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/15 text-xs font-medium text-primary">
-          {initials(member.name)}
-        </span>
+        <UserAvatar name={member.name} url={member.avatarUrl} />
 
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-medium">
@@ -226,12 +215,4 @@ function MemberRow({
       ) : null}
     </li>
   );
-}
-
-function initials(name: string): string {
-  return name
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase() ?? "")
-    .join("");
 }

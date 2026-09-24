@@ -20,16 +20,12 @@ export function SidebarNav({
   taskCount?: number;
 }) {
   const pathname = usePathname();
-  const total = clients.reduce((sum, client) => sum + client.count, 0);
 
   return (
     <>
       <nav className="space-y-1">
         <SidebarLink href="/" active={pathname === "/"} badge={taskCount}>
           Mi trabajo
-        </SidebarLink>
-        <SidebarLink href="/creativos" active={pathname === "/creativos"} count={total}>
-          Todos los creativos
         </SidebarLink>
         <SidebarLink href="/dashboard" active={pathname.startsWith("/dashboard")}>
           Resumen

@@ -8,6 +8,7 @@ import { SidebarNav, type ClientOption } from "@/components/sidebar-nav";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { NotificationBell } from "@/components/notification-bell";
 import { Button } from "@/components/ui/button";
+import { UserAvatar } from "@/components/user-avatar";
 import { roleLabel } from "@/lib/roles";
 import type { Profile } from "@/lib/supabase/server";
 
@@ -22,6 +23,7 @@ export function AppShell({
   orgName,
   teamSize,
   taskCount = 0,
+  avatarUrl = null,
 }: {
   profile: Profile | null;
   email: string;
@@ -29,6 +31,8 @@ export function AppShell({
   teamSize?: number;
   /** Etapas de briefs que tiene esta persona en sus manos. */
   taskCount?: number;
+  /** Foto de perfil firmada; sin foto, iniciales. */
+  avatarUrl?: string | null;
   clients: ClientOption[];
   children: React.ReactNode;
   /** Se está mostrando solo una parte de los clientes de la organización. */
@@ -50,9 +54,7 @@ export function AppShell({
             href="/equipo"
             className="glass group flex items-center gap-3 rounded-2xl border p-3 transition-colors hover:border-primary/40"
           >
-            <span className="brand-gradient flex size-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold text-white">
-              {name.slice(0, 2).toUpperCase()}
-            </span>
+            <UserAvatar name={name} url={avatarUrl} />
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-semibold">{name}</p>
               <p className="truncate text-xs text-muted-foreground">

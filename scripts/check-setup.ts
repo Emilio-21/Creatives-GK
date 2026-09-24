@@ -133,6 +133,7 @@ async function main() {
       ["briefs", "stage_started_at", "0023_pendientes.sql"],
       ["profiles", "slack_notify", "0024_slack.sql"],
       ["client_materials", "id", "0025_material.sql"],
+      ["profiles", "avatar_path", "0026_perfil.sql"],
       ["creative_stats", "paused_launch_count", "0014_pausados.sql"],
     ];
     for (const [table, column, migration] of columns) {

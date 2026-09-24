@@ -10,9 +10,9 @@ export function MobileTabBar() {
   const tabs = [
     { href: "/", label: "Mi trabajo", match: (p: string) => p === "/" },
     {
-      href: "/creativos",
-      label: "Creativos",
-      match: (p: string) => p.startsWith("/creativos") || p.startsWith("/client"),
+      href: "/clientes",
+      label: "Clientes",
+      match: (p: string) => p.startsWith("/client"),
     },
     { href: "/upload", label: "Subir", match: (p: string) => p.startsWith("/upload") },
     { href: "/equipo", label: "Equipo", match: (p: string) => p.startsWith("/equipo") },

@@ -34,4 +34,6 @@ export type Member = {
   /** Ya se encontro su usuario de Slack (por correo, al mandarle el primer aviso). */
   slackLinked: boolean;
   slackNotify: boolean;
+  /** Foto firmada (dura una hora) o null: se pintan las iniciales. */
+  avatarUrl: string | null;
 };

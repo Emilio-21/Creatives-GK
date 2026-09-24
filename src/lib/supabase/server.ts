@@ -45,6 +45,7 @@ export type Profile = {
   full_name: string | null;
   role: "admin" | "member";
   created_at: string;
+  avatar_path?: string | null;
 };
 
 export async function getCurrentProfile(): Promise<Profile | null> {

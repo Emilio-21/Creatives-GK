@@ -3,6 +3,7 @@ import { AppShell } from "@/components/app-shell";
 import { getClientsWithCounts } from "@/lib/clients";
 import { myClientIds } from "@/app/(app)/team-actions";
 import { myTaskCount } from "@/app/(app)/client/assignment-actions";
+import { getPreviewUrl } from "@/lib/storage";
 import { createClient, type Profile } from "@/lib/supabase/server";
 
 /**
@@ -33,7 +34,7 @@ export default async function AppLayout({
   ] = await Promise.all([
     supabase
       .from("profiles")
-      .select("id, full_name, role, created_at")
+      .select("id, full_name, role, created_at, avatar_path")
       .eq("id", user.id)
       .single(),
     getClientsWithCounts(),
@@ -43,6 +44,9 @@ export default async function AppLayout({
     supabase.from("profiles").select("id", { count: "exact", head: true }),
     myTaskCount(),
   ]);
+
+  const avatarPath = (profile?.avatar_path as string | null | undefined) ?? null;
+  const avatarUrl = avatarPath ? await getPreviewUrl(avatarPath) : null;
 
   // Filtro de vista, no permiso: sin clientes asignados se ven todos. Asi la
   // app sigue sirviendo aunque nadie se acuerde de repartir.
@@ -58,6 +62,7 @@ export default async function AppLayout({
       orgName={(org?.name as string | undefined) ?? null}
       teamSize={equipo ?? 0}
       taskCount={pendientes}
+      avatarUrl={avatarUrl}
       clients={visibles.map((client) => ({
         id: client.id,
         name: client.name,
