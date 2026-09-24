@@ -5,10 +5,13 @@
   "compatibility_date": "2026-09-01",
   "observability": { "enabled": true },
   "triggers": {
-    // Diario a las 13:00 UTC: sync de Meta.
     // Cada 10 minutos: reintento de avisos de Slack que no salieron al momento.
     // Si cambias este, cambia SLACK_CRON en index.ts.
-    "crons": ["0 13 * * *", "*/10 * * * *"]
+    //
+    // Sync de Meta PAUSADO (2026-09-23): la cuenta de Meta esta en revision y
+    // el sync diario llevaba desde el 16-sep fallando contra ella. Para
+    // reactivarlo, agrega de vuelta "0 13 * * *" (diario 13:00 UTC).
+    "crons": ["*/10 * * * *"]
   },
   "vars": {
     "APP_URL": "https://creativos-gk.growth-kingdom.workers.dev"
