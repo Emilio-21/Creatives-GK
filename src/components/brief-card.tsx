@@ -2,6 +2,7 @@
 
 import { CHANNEL_LABEL, docLabel, STATUS_LABEL, type BriefStatus } from "@/lib/brief-flow";
 import type { BriefWithMeta } from "@/app/(app)/client/brief-actions";
+import { UserAvatar } from "@/components/user-avatar";
 
 /**
  * Neutro: el estado se lee en la palabra, no en el color. El color de alerta
@@ -57,9 +58,11 @@ export function BriefCard({
         <p className="flex items-center gap-1.5">
           {brief.assigneeName ? (
             <>
-              <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-primary/15 text-[10px] font-medium text-primary">
-                {initials(brief.assigneeName)}
-              </span>
+              <UserAvatar
+                name={brief.assigneeName}
+                url={brief.assigneeAvatarUrl}
+                className="size-5 text-[10px]"
+              />
               <span className="truncate">{brief.assigneeName}</span>
               {/* Tomado o solo recibido: lo que distingue "ya va" de "nadie lo ha abierto". */}
               <span
@@ -94,12 +97,4 @@ export function BriefCard({
 function isLate(dueDate: string | null, status: BriefStatus): boolean {
   if (!dueDate || status === "lanzado") return false;
   return dueDate < new Date().toISOString().slice(0, 10);
-}
-
-function initials(name: string): string {
-  return name
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase() ?? "")
-    .join("");
 }

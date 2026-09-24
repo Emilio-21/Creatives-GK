@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { deliverSlackSoon } from "@/lib/slack-after";
 import { requireUser } from "@/lib/auth";
 import { normalizeDocUrl, type BriefStatus, type Channel } from "@/lib/brief-flow";
+import { getPreviewUrl } from "@/lib/storage";
 import { createClient } from "@/lib/supabase/server";
 import { attempt, type ActionResult } from "@/lib/action-result";
 
@@ -38,6 +39,8 @@ export type BriefWithMeta = BriefRow & {
   creativeCount: number;
   authorName: string | null;
   assigneeName: string | null;
+  /** Foto firmada de quien la tiene, o null (se pintan sus iniciales). */
+  assigneeAvatarUrl: string | null;
 };
 
 /** Encargos de copy para diseño. Las instrucciones viven en el Google Doc enlazado. */
@@ -74,7 +77,7 @@ async function listBriefsImpl(clientId: string): Promise<BriefWithMeta[]> {
     batchIds.length
       ? supabase.from("batches").select("id, name, completed_at").in("id", batchIds)
       : Promise.resolve({ data: [] }),
-    supabase.from("profiles").select("id, full_name").in("id", authorIds),
+    supabase.from("profiles").select("id, full_name, avatar_path").in("id", authorIds),
   ]);
 
   const batchInfo = new Map(
@@ -102,6 +105,14 @@ async function listBriefsImpl(clientId: string): Promise<BriefWithMeta[]> {
   const authors = new Map(
     (profiles ?? []).map((p) => [p.id as string, (p.full_name as string | null) ?? null]),
   );
+  // Una firma por persona, no por brief: la misma cara sale en varias tarjetas.
+  const avatars = new Map(
+    await Promise.all(
+      (profiles ?? [])
+        .filter((p) => p.avatar_path)
+        .map(async (p) => [p.id as string, await getPreviewUrl(p.avatar_path as string)] as const),
+    ),
+  );
 
   return briefs.map((brief) => ({
     ...brief,
@@ -112,6 +123,7 @@ async function listBriefsImpl(clientId: string): Promise<BriefWithMeta[]> {
     creativeCount: brief.batch_id ? (counts.get(brief.batch_id) ?? 0) : 0,
     authorName: authors.get(brief.updated_by ?? brief.created_by) ?? null,
     assigneeName: brief.assigned_to ? (authors.get(brief.assigned_to) ?? null) : null,
+    assigneeAvatarUrl: brief.assigned_to ? (avatars.get(brief.assigned_to) ?? null) : null,
   }));
 }
 
