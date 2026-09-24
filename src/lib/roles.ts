@@ -20,7 +20,7 @@ export const ROLE_LABEL: Record<Role, string> = {
 export const ROLE_HINT: Record<Role, string> = {
   admin: "Puede borrar y administrar el equipo",
   media: "Lanza las campañas",
-  copy: "Escribe los briefs y elige quién sigue",
+  copy: "Escribe las tareas y elige quién sigue",
   design: "Sube los diseños",
   member: "Sin área asignada",
 };

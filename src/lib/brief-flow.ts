@@ -22,7 +22,7 @@ export const STATUS_LABEL: Record<BriefStatus, string> = {
   en_revision: "En revisión",
   en_produccion: "En producción",
   en_lanzamiento: "Por lanzar",
-  lanzado: "Lanzado",
+  lanzado: "Lanzada",
 };
 
 /** Las tres manos por las que pasa un brief, en orden. */
@@ -49,11 +49,11 @@ export const NEXT_STEPS: Record<BriefStatus, { to: BriefStatus; label: string; b
     { to: "borrador", label: "Regresar a copy", back: true },
   ],
   en_produccion: [
-    { to: "en_lanzamiento", label: "Listo, mandar a lanzamiento" },
+    { to: "en_lanzamiento", label: "Lista, mandar a lanzamiento" },
     { to: "en_revision", label: "Regresar a revisión", back: true },
   ],
   en_lanzamiento: [
-    { to: "lanzado", label: "Marcar como lanzado" },
+    { to: "lanzado", label: "Marcar como lanzada" },
     { to: "en_produccion", label: "Regresar a producción", back: true },
   ],
   lanzado: [{ to: "en_lanzamiento", label: "Reabrir", back: true }],
@@ -136,5 +136,5 @@ export function elapsed(iso: string, now = Date.now()): string {
 export const FINISH_LABEL: Record<StageStatus, string> = {
   en_revision: "Aprobar",
   en_produccion: "Terminar",
-  en_lanzamiento: "Marcar lanzado",
+  en_lanzamiento: "Marcar lanzada",
 };

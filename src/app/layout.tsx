@@ -26,7 +26,7 @@ const stackSansNotch = localFont({
 
 export const metadata: Metadata = {
   title: "Relevo",
-  description: "Del brief al lanzamiento: cada entrega, a la vista.",
+  description: "De la tarea al lanzamiento: cada entrega, a la vista.",
 };
 
 export default function RootLayout({

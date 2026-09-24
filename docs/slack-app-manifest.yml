@@ -2,7 +2,7 @@
 # api.slack.com/apps → Create New App → From a manifest → pega esto.
 display_information:
   name: Relevo
-  description: Te avisa por mensaje directo cuando te toca una etapa de un brief.
+  description: Te avisa por mensaje directo cuando te toca una etapa de una tarea.
   background_color: "#b4481f"
 features:
   bot_user:

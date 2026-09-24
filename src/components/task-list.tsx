@@ -39,7 +39,7 @@ export function TaskList({ tasks, team }: { tasks: MyTask[]; team: TeamMember[] 
   if (tasks.length === 0) {
     return (
       <p className="rounded-xl border border-dashed p-8 text-center text-sm text-muted-foreground">
-        No tienes nada pendiente. Cuando te toque una etapa de un brief, aparece aquí.
+        No tienes nada pendiente. Cuando te toque una etapa de una tarea, aparece aquí.
       </p>
     );
   }
@@ -108,7 +108,7 @@ function TaskRow({ task, team }: { task: MyTask; team: TeamMember[] }) {
   const terminar = () =>
     run(
       () => moveBrief(task.id, next.to, faltaSiguiente ? persona || null : null),
-      next.to === "lanzado" ? "Marcado como lanzado" : `Pasó a ${STATUS_LABEL[next.to]}`,
+      next.to === "lanzado" ? "Marcada como lanzada" : `Pasó a ${STATUS_LABEL[next.to]}`,
     );
 
   return (

@@ -113,7 +113,7 @@ function MemberRow({
 
         {member.openBriefs > 0 ? (
           <span className="shrink-0 rounded-full border border-foreground/25 px-2 py-0.5 text-[11px]">
-            {member.openBriefs} brief{member.openBriefs === 1 ? "" : "s"} encima
+            {member.openBriefs} tarea{member.openBriefs === 1 ? "" : "s"} encima
           </span>
         ) : null}
 

@@ -74,7 +74,7 @@ export function BriefCard({
             </>
           ) : (
             <span className="italic">
-              {brief.status === "lanzado" ? "Terminado" : "Sin responsable"}
+              {brief.status === "lanzado" ? "Terminada" : "Sin responsable"}
             </span>
           )}
         </p>

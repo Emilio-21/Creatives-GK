@@ -93,7 +93,7 @@ export function BriefWorkflow({
   const mover = (to: BriefStatus) =>
     run(
       () => moveBrief(brief.id, to, pidePersona ? persona || null : null, motivo || null),
-      `Brief en "${STATUS_LABEL[to]}"`,
+      `Tarea en "${STATUS_LABEL[to]}"`,
     );
 
   const posicion = BRIEF_STATUSES.indexOf(status);
@@ -243,7 +243,7 @@ export function BriefWorkflow({
           {pideMotivo ? (
             <div className="space-y-1">
               <label htmlFor="brief-motivo" className="font-mono text-xs text-muted-foreground">
-                ¿Por qué lo regresas?
+                ¿Por qué la regresas?
               </label>
               <Textarea
                 id="brief-motivo"
@@ -305,15 +305,15 @@ export function BriefWorkflow({
 
 /** Estados de antes de las etapas, que siguen en el historial. */
 const LEGACY_LABEL: Record<string, string> = {
-  asignado: "Asignado",
+  asignado: "Asignada",
   en_diseno: "En diseño",
-  listo: "Listo para lanzar",
+  listo: "Lista para lanzar",
 };
 
 function describe(event: BriefEvent): React.ReactNode {
   const label =
     STATUS_LABEL[event.to_status as BriefStatus] ?? LEGACY_LABEL[event.to_status] ?? event.to_status;
-  if (!event.from_status) return "creó el brief";
+  if (!event.from_status) return "creó la tarea";
   if (event.kind === "empezo") {
     return (
       <>

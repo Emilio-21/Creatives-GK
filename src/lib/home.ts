@@ -110,10 +110,10 @@ export async function getHomeData(userId: string): Promise<HomeData> {
     // Una razon por brief, la mas grave: tres renglones del mismo brief son ruido.
     // Sin responsable va primero: no hay a quien esperar.
     let reason: string | null = null;
-    if (!brief.assigneeName) reason = "Nadie lo tiene";
-    else if (brief.dueDate && brief.dueDate < hoy) reason = `Vencido desde el ${brief.dueDate}`;
-    else if (brief.status === "en_lanzamiento" && esperando) reason = "Listo y sin lanzar";
-    else if (!brief.startedAt && esperando) reason = "Nadie lo ha empezado";
+    if (!brief.assigneeName) reason = "Nadie la tiene";
+    else if (brief.dueDate && brief.dueDate < hoy) reason = `Vencida desde el ${brief.dueDate}`;
+    else if (brief.status === "en_lanzamiento" && esperando) reason = "Lista y sin lanzar";
+    else if (!brief.startedAt && esperando) reason = "Nadie la ha empezado";
     if (reason) stuck.push({ ...brief, reason });
   }
   stuck.sort((a, b) => (a.enteredAt ?? "").localeCompare(b.enteredAt ?? ""));

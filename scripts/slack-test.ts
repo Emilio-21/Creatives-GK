@@ -28,7 +28,7 @@ async function main() {
   await sendDirectMessage(
     slackId,
     buildMessage({
-      title: 'Prueba: te toca producir "Brief de ejemplo"',
+      title: 'Prueba: te toca producir "Tarea de ejemplo"',
       body: null,
       kind: "en_produccion",
       recipientId: "tu",

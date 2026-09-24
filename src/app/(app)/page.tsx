@@ -56,7 +56,7 @@ export default async function HomePage() {
       <div className="space-y-8">
         <Block title="Lo que mandaste" count={home.sent.length}>
           {home.sent.length === 0 ? (
-            <Empty>No tienes briefs en manos de alguien más.</Empty>
+            <Empty>No tienes tareas en manos de alguien más.</Empty>
           ) : (
             <ul className="divide-y rounded-xl border">
               {home.sent.map((brief) => (
@@ -79,7 +79,7 @@ export default async function HomePage() {
 
           <div className="mt-4">
             <h3 className="mb-2 text-sm font-medium">
-              Atorado{" "}
+              Atoradas{" "}
               <span className="font-mono text-xs font-normal text-muted-foreground">
                 {home.stuck.length}
               </span>
@@ -106,7 +106,7 @@ function resumen(pendientes: number, atorados: number): string {
       ? "No tienes pendientes"
       : `Tienes ${pendientes} pendiente${pendientes === 1 ? "" : "s"}`,
   ];
-  if (atorados > 0) partes.push(`${atorados} atorado${atorados === 1 ? "" : "s"} en el equipo`);
+  if (atorados > 0) partes.push(`${atorados} atorada${atorados === 1 ? "" : "s"} en el equipo`);
   return partes.join(" · ") + ".";
 }
 
@@ -188,7 +188,7 @@ const PIPELINE: { status: BriefStatus; label: string }[] = [
   { status: "en_revision", label: STATUS_LABEL.en_revision },
   { status: "en_produccion", label: STATUS_LABEL.en_produccion },
   { status: "en_lanzamiento", label: STATUS_LABEL.en_lanzamiento },
-  { status: "lanzado", label: "Lanzados esta semana" },
+  { status: "lanzado", label: "Lanzadas esta semana" },
 ];
 
 /**

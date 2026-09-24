@@ -35,7 +35,7 @@ export default async function EquipoPage() {
         <h1 className="font-heading font-extralight tracking-tight text-3xl">{(org?.name as string) ?? "Equipo"}</h1>
         <p className="text-sm text-muted-foreground">
           {members.length} persona{members.length === 1 ? "" : "s"} · los avisos le llegan a
-          quien elijas en cada etapa del brief
+          quien elijas en cada etapa de la tarea
         </p>
       </div>
 

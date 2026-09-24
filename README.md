@@ -1,6 +1,6 @@
 # Relevo
 
-Del brief al lanzamiento: quién tiene cada entrega, qué sigue, qué ya salió y cómo le fue.
+De la tarea al lanzamiento: quién tiene cada entrega, qué sigue, qué ya salió y cómo le fue.
 Empezó como la biblioteca de creativos de Growth Kingdom.
 
 Stack: Next.js 15 (App Router) + Tailwind 4 + shadcn/ui (Base UI) · Supabase (auth + Postgres) ·
@@ -14,9 +14,10 @@ Producción: <https://relevo.growth-kingdom.workers.dev>. Plan original: `docs/p
 
 - **Mi trabajo** (`/`) — lo que te toca ahora, lo que mandaste y sigue en manos de alguien
   más, y lo que está atorado en el equipo.
-- **Tareas** — cada cliente tiene sus briefs. Un brief es un Google Doc (se incrusta en la
+- **Tareas** — cada cliente tiene sus tareas. Una tarea es un Google Doc (se incrusta en la
   app) con canal (ads, email o SMS) y tres responsables: revisión → producción →
   lanzamiento. Al terminar una etapa pasa sola a la siguiente persona y le llega el aviso.
+  En pantalla se llaman "tareas"; en el código y la base siguen siendo `briefs`.
 - **Creativos** — biblioteca por cliente: subida múltiple directa a R2, pares de formatos
   (1:1 + 9:16 = un anuncio), batches con la nomenclatura de Meta, descarga en zip,
   lanzamientos y métricas.
@@ -31,7 +32,7 @@ Producción: <https://relevo.growth-kingdom.workers.dev>. Plan original: `docs/p
 
 ### 1. Supabase
 1. Crear el proyecto y, en el SQL Editor, correr **en orden** todo `supabase/migrations/`
-   (`0001_schema.sql` … `0026_perfil.sql`).
+   (`0001_schema.sql` … `0027_tarea.sql`).
 2. Settings → API: copiar `Project URL`, `anon key` y `service_role key`.
 3. Authentication → URL Configuration: *Site URL* con la URL de la app y, en *Redirect URLs*,
    `https://<dominio>/**`. El enlace del correo de confirmación regresa a `/auth/confirm`.

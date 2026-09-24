@@ -65,11 +65,11 @@ export function BriefsSection({
     <section className="space-y-3">
       <div className="flex items-end justify-between gap-4">
         <div>
-          <h2 className="font-heading font-extralight tracking-tight text-3xl">Briefs</h2>
+          <h2 className="font-heading font-extralight tracking-tight text-3xl">Tareas</h2>
           {briefs ? (
             <p className="mt-1 flex flex-wrap gap-x-4 text-sm text-muted-foreground">
               <span>
-                {briefs.length} brief{briefs.length === 1 ? "" : "s"}
+                {briefs.length} tarea{briefs.length === 1 ? "" : "s"}
               </span>
               <span>
                 {pending} pendiente{pending === 1 ? "" : "s"}
@@ -94,7 +94,7 @@ export function BriefsSection({
         <p className="text-sm text-muted-foreground">Cargando…</p>
       ) : briefs.length === 0 ? (
         <p className="rounded-xl border border-dashed p-6 text-center text-sm text-muted-foreground">
-          Sin briefs. Créalos desde &quot;Nueva tarea&quot; en el panel
+          Sin tareas. Créalas desde &quot;Nueva tarea&quot; en el panel
           izquierdo.
         </p>
       ) : (
@@ -230,7 +230,7 @@ function BriefModal({
                       docUrl: draft.docUrl,
                       briefDate: draft.briefDate,
                     });
-                    toast.success("Brief guardado");
+                    toast.success("Tarea guardada");
                     setEditing(false);
                     await onChanged();
                   } catch (error) {
@@ -290,7 +290,7 @@ function BriefModal({
               email o un SMS se produce y se lanza fuera; aqui solo se sigue. */}
           {brief.channel === "ads" ? (
             <div className="mt-5 border-t pt-4">
-              <h3 className="text-sm font-semibold">Diseños de este brief</h3>
+              <h3 className="text-sm font-semibold">Diseños de esta tarea</h3>
 
               {!batchId ? (
                 <div className="mt-2 space-y-2">
@@ -360,12 +360,12 @@ function BriefModal({
                             );
                             if (result.handedOff) {
                               toast.success(
-                                "Publicado y mandado a lanzamiento.",
+                                "Publicada y mandada a lanzamiento.",
                               );
                             } else {
                               // Los diseños ya estan arriba; solo falta el relevo.
                               toast.warning(
-                                `Diseños publicados, pero no pasó a lanzamiento: ${result.reason}`,
+                                `Diseños publicados, pero la tarea no pasó a lanzamiento: ${result.reason}`,
                               );
                             }
                             await onChanged();
@@ -376,7 +376,7 @@ function BriefModal({
                         })
                       }
                     >
-                      {completed ? "Ya publicado" : "Publicar diseños"}
+                      {completed ? "Ya publicada" : "Publicar diseños"}
                     </Button>
                     <p className="text-xs text-muted-foreground">
                       Publicar cierra el batch y le avisa a quien lanza.

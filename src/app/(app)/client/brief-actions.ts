@@ -141,7 +141,7 @@ async function saveBriefImpl(input: {
   const user = await requireUser();
 
   const title = input.title.trim();
-  if (!title) throw new Error("Ponle título al brief.");
+  if (!title) throw new Error("Ponle título a la tarea.");
   const docUrl = input.docUrl ? normalizeDocUrl(input.docUrl) : null;
 
   const supabase = await createClient();
@@ -164,7 +164,7 @@ async function saveBriefImpl(input: {
       .eq("id", input.id);
 
     if (error) throw new Error(error.message);
-    if (!count) throw new Error("No se pudo guardar el brief.");
+    if (!count) throw new Error("No se pudo guardar la tarea.");
 
     revalidatePath("/", "layout");
     return input.id;
