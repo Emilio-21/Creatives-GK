@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <mask id="muesca" maskUnits="userSpaceOnUse" x="-400" y="-400" width="800" height="800">
+      <rect x="-400" y="-400" width="800" height="800" fill="#fff"/>
+      <circle cx="24" cy="-60" r="62" fill="#000"/>
+    </mask>
+  </defs>
+  <g fill="currentColor" transform="translate(256 256) scale(1.0818) translate(-12.37 0.35) rotate(-45)">
+    <g mask="url(#muesca)"><rect x="-134" y="-108" width="160" height="96" rx="48"/></g>
+    <rect x="-24" y="-108" width="227" height="96" rx="48"/>
+    <rect x="-202" y="12" width="371" height="96" rx="48"/>
+  </g>
+</svg>

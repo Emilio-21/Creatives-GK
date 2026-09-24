@@ -9,6 +9,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { NotificationBell } from "@/components/notification-bell";
 import { Button } from "@/components/ui/button";
 import { UserAvatar } from "@/components/user-avatar";
+import { RelevoBrand } from "@/components/relevo-brand";
 import { roleLabel } from "@/lib/roles";
 import type { Profile } from "@/lib/supabase/server";
 
@@ -47,6 +48,10 @@ export function AppShell({
 
       <div className="flex gap-4">
         <aside className="hidden w-56 shrink-0 flex-col gap-4 md:flex">
+          <div className="px-2 pt-1">
+            <RelevoBrand href="/" />
+          </div>
+
           {/* La tarjeta ES la entrada al equipo. Antes el enlace vivia hasta
               abajo de la barra, detras de la lista de clientes: para llegar
               habia que hacer scroll por algo que no tiene nada que ver. */}
@@ -121,6 +126,7 @@ export function AppShell({
 
         <main className="glass min-w-0 flex-1 rounded-2xl border p-4 pb-20 sm:p-6 md:pb-6">
           <div className="mb-4 flex items-center gap-2 md:hidden">
+            <RelevoBrand href="/" size="sm" wordmark={false} />
             <MobileNav clients={clients} />
             <div className="ml-auto" />
             <ThemeToggle />
