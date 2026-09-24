@@ -78,7 +78,7 @@ export async function deliverPendingSlack(limit = 25): Promise<SlackDeliveryRepo
       ? db
           .from("briefs")
           .select(
-            "id, title, status, channel, client_id, doc_url, due_date, reviewer_id, producer_id, launcher_id, copy_ok_at, media_ok_at, clients(name)",
+            "id, title, angle, status, channel, client_id, doc_url, due_date, writer_id, reviewer_id, producer_id, launcher_id, copy_ok_at, media_ok_at, clients(name)",
           )
           .in("id", briefIds as string[])
       : Promise.resolve({ data: [] as Record<string, unknown>[] }),
@@ -88,7 +88,7 @@ export async function deliverPendingSlack(limit = 25): Promise<SlackDeliveryRepo
   const ownerIds = [
     ...new Set(
       (briefs ?? []).flatMap((b) =>
-        [b.reviewer_id, b.producer_id, b.launcher_id].filter(Boolean),
+        [b.writer_id, b.reviewer_id, b.producer_id, b.launcher_id].filter(Boolean),
       ),
     ),
   ] as string[];
@@ -195,6 +195,7 @@ export function buildMessage({
     const cliente = (brief.clients as { name?: string } | null)?.name ?? "—";
     const canal = CHANNEL_LABEL[brief.channel as Channel] ?? "Ads";
     const detalles = [esc(cliente), canal];
+    if (brief.angle) detalles.push(`ángulo: ${esc(brief.angle as string)}`);
     if (brief.due_date) detalles.push(`entrega ${brief.due_date as string}`);
     blocks.push({
       type: "context",

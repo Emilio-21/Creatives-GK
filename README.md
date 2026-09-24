@@ -18,11 +18,15 @@ Producción: <https://relevo.growth-kingdom.workers.dev>. Plan original: `docs/p
   app) con canal y responsables por etapa. Al terminar una etapa pasa sola a la siguiente
   persona y le llega el aviso. En pantalla se llaman "tareas"; en el código y la base
   siguen siendo `briefs`.
-  - **Ads:** revisión → producción → aprobación → lanzamiento. En aprobación dan el visto
+  - **Pedir copy:** cualquiera pide ("necesito copy para…") con cliente, una nota y a quién.
+    Copy recibe el pedido y en su etapa define canal, Doc, ángulo y quién sigue. Copy
+    también puede crear la tarea completa directo. El ángulo es el nombre del batch.
+  - **Ads:** copy → revisión → producción → aprobación → lanzamiento. En aprobación dan el visto
     bueno copy (quien revisó) y media (quien lanza); con los dos pasa sola a lanzamiento.
     Si alguien pide cambios, regresa a producción y las aprobaciones se borran.
-  - **Email y mensaje:** revisión → lanzamiento. Son solo copy; se arman en la
+  - **Email y mensaje:** copy → revisión → lanzamiento. Son solo copy; se arman en la
     herramienta de envío.
+  - Si quien escribe el copy es quien lo revisa, la revisión se salta sola.
   - Un admin puede mover una tarea a cualquier etapa o aprobar por todos; queda como
     salto en el historial.
   - Cada tarea tiene un hilo de comentarios que avisa a quienes están en ella.
@@ -40,7 +44,7 @@ Producción: <https://relevo.growth-kingdom.workers.dev>. Plan original: `docs/p
 
 ### 1. Supabase
 1. Crear el proyecto y, en el SQL Editor, correr **en orden** todo `supabase/migrations/`
-   (`0001_schema.sql` … `0028_aprobacion.sql`).
+   (`0001_schema.sql` … `0030_requerimiento.sql`).
 2. Settings → API: copiar `Project URL`, `anon key` y `service_role key`.
 3. Authentication → URL Configuration: *Site URL* con la URL de la app y, en *Redirect URLs*,
    `https://<dominio>/**`. El enlace del correo de confirmación regresa a `/auth/confirm`.
@@ -125,7 +129,8 @@ compartidos viven en `src/lib/` (`brief-flow.ts`, `roles.ts`, `material.ts`…).
 
 ### Flujo de tareas
 Las reglas viven en la base, no en la pantalla: `transition_brief`, `approve_brief`,
-`set_brief_owner`, `start_brief_stage` y `add_brief_comment` (migraciones 0022, 0023 y 0028)
+`set_brief_owner`, `start_brief_stage`, `request_copy` y `add_brief_comment` (migraciones 0022,
+0023, 0028 y 0030)
 deciden qué transición vale según el canal (`brief_step_ok`), exigen responsable al entrar
 a una etapa y motivo al regresar trabajo, y escriben el aviso en la misma transacción. Un
 trigger impide cambiar el estado, las aprobaciones o el canal por fuera de esas funciones.

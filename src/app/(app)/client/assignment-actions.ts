@@ -201,7 +201,7 @@ const TASK_COLUMNS =
  */
 function mineFilter(userId: string): string {
   return [
-    `and(assigned_to.eq.${userId},status.in.(en_revision,en_produccion,en_lanzamiento))`,
+    `and(assigned_to.eq.${userId},status.in.(borrador,en_revision,en_produccion,en_lanzamiento))`,
     `and(status.eq.en_aprobacion,reviewer_id.eq.${userId},copy_ok_at.is.null)`,
     `and(status.eq.en_aprobacion,launcher_id.eq.${userId},media_ok_at.is.null)`,
   ].join(",");

@@ -23,6 +23,7 @@ import {
   CHANNEL_LABEL,
   elapsed,
   nextSteps,
+  skipsReview,
   STATUS_LABEL,
   stagesFor,
   type BriefStatus,
@@ -102,11 +103,12 @@ export function BriefWorkflow({
     });
   }
 
+  // El aviso dice a donde llego de verdad: sin revisión, la base la pasa de largo.
   const mover = (to: BriefStatus) =>
-    run(
-      () => moveBrief(brief.id, to, pidePersona ? persona || null : null, motivo || null),
-      `Tarea en "${STATUS_LABEL[to]}"`,
-    );
+    run(async () => {
+      const llego = await moveBrief(brief.id, to, pidePersona ? persona || null : null, motivo || null);
+      toast.success(`Tarea en "${STATUS_LABEL[llego]}"`);
+    });
 
   const aprobar = () =>
     startTransition(async () => {
@@ -122,15 +124,24 @@ export function BriefWorkflow({
       }
     });
 
+  // Quien escribio el copy tambien lo revisa: desde copy se manda directo a la
+  // etapa de despues (y se pide quien la hace si falta).
+  const pasos = nextSteps(brief.channel, status).map((step) => {
+    if (status !== "borrador" || step.to !== "en_revision" || !skipsReview(brief)) return step;
+    const siguiente = brief.channel === "ads" ? "en_produccion" : "en_lanzamiento";
+    return {
+      to: siguiente as BriefStatus,
+      label: `Mandar a ${brief.channel === "ads" ? "producción" : "lanzamiento"} (sin revisión)`,
+    };
+  });
+
   const posicion = BRIEF_STATUSES.indexOf(status);
   const soyResponsable = yo !== undefined && yo.id === brief.assigned_to;
 
   // A donde puede mover un admin: cualquier etapa que el canal tenga.
-  const destinosAdmin: BriefStatus[] = [
-    "borrador",
-    ...etapas.map((stage) => stage.status),
-    "lanzado",
-  ].filter((to): to is BriefStatus => to !== status);
+  const destinosAdmin = [...etapas.map((stage) => stage.status), "lanzado" as const].filter(
+    (to) => to !== status,
+  );
 
   return (
     <section className="rounded-lg border p-3">
@@ -164,7 +175,9 @@ export function BriefWorkflow({
 
       {/* Todas las manos, de entrada: quien sigue ya esta dicho antes de que le toque. */}
       <ol
-        className={`mt-3 grid gap-2 sm:grid-cols-2 ${etapas.length === 4 ? "lg:grid-cols-4" : ""}`}
+        className={`mt-3 grid gap-2 ${
+          etapas.length === 5 ? "sm:grid-cols-3 lg:grid-cols-5" : "sm:grid-cols-3"
+        }`}
       >
         {etapas.map((stage, index) => {
           const actual = stage.status === status;
@@ -217,7 +230,7 @@ export function BriefWorkflow({
       </ol>
 
       <div className="mt-3 flex flex-wrap items-center gap-2">
-        {nextSteps(brief.channel, status).map((step) => (
+        {pasos.map((step) => (
           <Button
             key={step.to}
             size="sm"

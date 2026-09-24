@@ -35,6 +35,9 @@ const startBriefStage = unwrapped(startBriefStageAction);
  */
 function nextFor(task: MyTask): { to: BriefStatus; owner: "producerId" | "launcherId" | null } | null {
   switch (task.status) {
+    // Copy se completa dentro de la tarea: ahi se define canal, Doc y ángulo.
+    case "borrador":
+      return null;
     case "en_revision":
       return task.channel === "ads"
         ? { to: "en_produccion", owner: "producerId" }
@@ -103,7 +106,9 @@ function TaskRow({ task, team }: { task: MyTask; team: TeamMember[] }) {
 
   // Producir un ad es subir los diseños y publicarlos: eso cierra el batch, y
   // se hace dentro del brief. Terminar desde aqui lo dejaria sin cerrar.
-  const terminaDentro = stage === "en_produccion" && task.channel === "ads";
+  // Copy se define dentro de la tarea; producir un ad es subir y publicar ahi.
+  const terminaDentro =
+    stage === "borrador" || (stage === "en_produccion" && task.channel === "ads");
   const aprobando = stage === "en_aprobacion";
 
   function run(action: () => Promise<unknown>, done: string) {
@@ -187,7 +192,7 @@ function TaskRow({ task, team }: { task: MyTask; team: TeamMember[] }) {
             </Button>
           ) : terminaDentro ? (
             <Link href={href} className={buttonVariants({ size: "sm" })}>
-              Subir y publicar
+              {stage === "borrador" ? "Completar" : "Subir y publicar"}
             </Link>
           ) : (
             <Button

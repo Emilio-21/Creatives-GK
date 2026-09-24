@@ -16,11 +16,17 @@ export type BriefRow = {
   /** Texto de briefs viejos. Los nuevos viven en `doc_url`. */
   body: string;
   doc_url: string | null;
+  /** El angulo de la pieza. Tambien es el nombre de su batch. */
+  angle: string | null;
+  /** Lo que escribio quien pidio el copy. */
+  request_note: string | null;
   brief_date: string;
   status: BriefStatus;
   channel: Channel;
   /** Quien tiene la pelota ahora: el responsable de la etapa en curso. */
   assigned_to: string | null;
+  /** Quien escribe el copy: la etapa de 'borrador'. */
+  writer_id: string | null;
   reviewer_id: string | null;
   producer_id: string | null;
   launcher_id: string | null;
@@ -70,6 +76,7 @@ async function listBriefsImpl(clientId: string): Promise<BriefWithMeta[]> {
         .flatMap((b) => [
           b.updated_by ?? b.created_by,
           b.assigned_to,
+          b.writer_id,
           b.reviewer_id,
           b.producer_id,
           b.launcher_id,
@@ -140,6 +147,7 @@ async function saveBriefImpl(input: {
   docUrl: string | null;
   briefDate: string;
   channel?: Channel;
+  angle?: string | null;
   /** Solo al crear. Despues se cambian con setBriefOwner, que avisa y deja historial. */
   owners?: { reviewer_id: string | null; producer_id: string | null; launcher_id: string | null };
 }): Promise<string> {
@@ -148,6 +156,8 @@ async function saveBriefImpl(input: {
   const title = input.title.trim();
   if (!title) throw new Error("Ponle título a la tarea.");
   const docUrl = input.docUrl ? normalizeDocUrl(input.docUrl) : null;
+  const angle = input.angle === undefined ? undefined : input.angle?.trim() || null;
+  if (angle && angle.length > 80) throw new Error("El ángulo va en pocas palabras (máximo 80).");
 
   const supabase = await createClient();
 
@@ -160,6 +170,7 @@ async function saveBriefImpl(input: {
           doc_url: docUrl,
           brief_date: input.briefDate,
           ...(input.channel ? { channel: input.channel } : {}),
+          ...(angle !== undefined ? { angle } : {}),
           ...(input.batchId !== undefined ? { batch_id: input.batchId } : {}),
           updated_by: user.id,
           updated_at: new Date().toISOString(),
@@ -184,7 +195,11 @@ async function saveBriefImpl(input: {
       doc_url: docUrl,
       brief_date: input.briefDate,
       channel: input.channel ?? "ads",
+      angle: angle ?? null,
       ...(input.owners ?? {}),
+      // Quien la crea completa es copy: la escribe y arranca a su cargo.
+      writer_id: user.id,
+      assigned_to: user.id,
       created_by: user.id,
       updated_by: user.id,
     })
@@ -195,6 +210,35 @@ async function saveBriefImpl(input: {
 
   revalidatePath("/", "layout");
   return data.id as string;
+}
+
+/**
+ * Pedir copy: cliente, que se necesita, una nota y a quien. La base crea la
+ * tarea en la etapa de copy a cargo de esa persona y le avisa; canal, Doc,
+ * angulo y responsables los define copy.
+ */
+async function requestCopyImpl(input: {
+  clientId: string;
+  title: string;
+  note: string | null;
+  dueDate: string | null;
+  writerId: string;
+}): Promise<string> {
+  await requireUser();
+  const supabase = await createClient();
+
+  const { data, error } = await supabase.rpc("request_copy", {
+    p_client: input.clientId,
+    p_title: input.title,
+    p_note: input.note,
+    p_due: input.dueDate || null,
+    p_writer: input.writerId || null,
+  });
+  if (error) throw new Error(error.message);
+
+  revalidatePath("/", "layout");
+  deliverSlackSoon();
+  return data as string;
 }
 
 /**
@@ -265,6 +309,12 @@ export async function publishBrief(
   ...args: Parameters<typeof publishBriefImpl>
 ): Promise<ActionResult<Awaited<ReturnType<typeof publishBriefImpl>>>> {
   return attempt(() => publishBriefImpl(...args));
+}
+
+export async function requestCopy(
+  ...args: Parameters<typeof requestCopyImpl>
+): Promise<ActionResult<Awaited<ReturnType<typeof requestCopyImpl>>>> {
+  return attempt(() => requestCopyImpl(...args));
 }
 
 export async function saveBrief(

@@ -136,6 +136,8 @@ async function main() {
       ["profiles", "avatar_path", "0026_perfil.sql"],
       ["briefs", "copy_ok_at", "0028_aprobacion.sql"],
       ["brief_comments", "body", "0028_aprobacion.sql"],
+      ["briefs", "writer_id", "0030_requerimiento.sql"],
+      ["briefs", "angle", "0030_requerimiento.sql"],
       ["creative_stats", "paused_launch_count", "0014_pausados.sql"],
     ];
     for (const [table, column, migration] of columns) {

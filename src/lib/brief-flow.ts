@@ -19,7 +19,7 @@ export const BRIEF_STATUSES = [
 export type BriefStatus = (typeof BRIEF_STATUSES)[number];
 
 export const STATUS_LABEL: Record<BriefStatus, string> = {
-  borrador: "Borrador",
+  borrador: "En copy",
   en_revision: "En revisión",
   en_produccion: "En producción",
   en_aprobacion: "En aprobación",
@@ -27,11 +27,11 @@ export const STATUS_LABEL: Record<BriefStatus, string> = {
   lanzado: "Lanzada",
 };
 
-/** Las etapas con una persona a cargo. */
-export type OwnerStatus = "en_revision" | "en_produccion" | "en_lanzamiento";
+/** Las etapas con una persona a cargo. 'borrador' es la etapa de copy. */
+export type OwnerStatus = "borrador" | "en_revision" | "en_produccion" | "en_lanzamiento";
 /** Las etapas en las que la tarea esta en manos de alguien. */
 export type StageStatus = OwnerStatus | "en_aprobacion";
-export type OwnerField = "reviewer_id" | "producer_id" | "launcher_id";
+export type OwnerField = "writer_id" | "reviewer_id" | "producer_id" | "launcher_id";
 
 export type Stage = {
   status: StageStatus;
@@ -41,8 +41,12 @@ export type Stage = {
   hint: string;
 };
 
-/** Las manos por las que pasa una tarea de ads, en orden. */
+/**
+ * Las manos por las que pasa una tarea de ads, en orden. Empieza en copy: quien
+ * pide solo dice que necesita; copy define canal, Doc, angulo y responsables.
+ */
 export const STAGES: Stage[] = [
+  { status: "borrador", field: "writer_id", label: "Copy", hint: "Define canal, Doc y ángulo" },
   { status: "en_revision", field: "reviewer_id", label: "Revisión", hint: "Aprueba el copy" },
   { status: "en_produccion", field: "producer_id", label: "Producción", hint: "Diseña o arma la pieza" },
   { status: "en_aprobacion", field: null, label: "Aprobación", hint: "Copy y media dan el visto bueno" },
@@ -59,7 +63,7 @@ export const OPEN_STATUSES: StageStatus[] = STAGES.map((stage) => stage.status);
 export function stagesFor(channel: Channel): Stage[] {
   return channel === "ads"
     ? STAGES
-    : STAGES.filter((stage) => stage.status === "en_revision" || stage.status === "en_lanzamiento");
+    : STAGES.filter((stage) => ["borrador", "en_revision", "en_lanzamiento"].includes(stage.status));
 }
 
 export type NextStep = { to: BriefStatus; label: string; back?: boolean };
@@ -87,10 +91,7 @@ export function nextSteps(channel: Channel, status: BriefStatus): NextStep[] {
     return corto[status] ?? [];
   }
   const ads: Record<BriefStatus, NextStep[]> = {
-    borrador: [
-      { to: "en_revision", label: "Mandar a revisión" },
-      { to: "en_produccion", label: "Saltar a producción" },
-    ],
+    borrador: [{ to: "en_revision", label: "Mandar a revisión" }],
     en_revision: [
       { to: "en_produccion", label: "Aprobar y mandar a producción" },
       { to: "borrador", label: "Regresar a copy", back: true },
@@ -107,6 +108,11 @@ export function nextSteps(channel: Channel, status: BriefStatus): NextStep[] {
     lanzado: [{ to: "en_lanzamiento", label: "Reabrir", back: true }],
   };
   return ads[status];
+}
+
+/** Quien escribio el copy tambien lo revisa: la revision se salta sola. */
+export function skipsReview(brief: { writer_id: string | null; reviewer_id: string | null }): boolean {
+  return brief.reviewer_id !== null && brief.reviewer_id === brief.writer_id;
 }
 
 /** Quienes aprueban y quien falta. Si copy y media son la misma persona, una sola. */
@@ -199,6 +205,7 @@ export function elapsed(iso: string, now = Date.now()): string {
 
 /** Lo que dice el boton de terminar cada etapa desde la lista de pendientes. */
 export const FINISH_LABEL: Record<StageStatus, string> = {
+  borrador: "Completar",
   en_revision: "Aprobar",
   en_produccion: "Terminar",
   en_aprobacion: "Aprobar",

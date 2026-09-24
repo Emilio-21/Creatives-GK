@@ -56,9 +56,13 @@ export function BriefCard({
       </div>
 
       <p className="line-clamp-2 text-xs text-muted-foreground">
-        {brief.doc_url
-          ? `${docLabel(brief.doc_url)} ↗`
-          : brief.body || "Sin Google Doc todavía."}
+        {/* El angulo y el Doc; mientras copy no lo define, lo que se pidio. */}
+        {[brief.angle, brief.doc_url ? `${docLabel(brief.doc_url)} ↗` : null]
+          .filter(Boolean)
+          .join(" · ") ||
+          brief.request_note ||
+          brief.body ||
+          "Sin Google Doc todavía."}
       </p>
 
       <div className="mt-auto space-y-1 text-[11px] text-muted-foreground">

@@ -8,7 +8,7 @@ import { BriefComments } from "@/components/brief-comments";
 import { BriefWorkflow } from "@/components/brief-workflow";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { docEmbedUrl, docLabel } from "@/lib/brief-flow";
+import { CHANNELS, CHANNEL_LABEL, docEmbedUrl, docLabel } from "@/lib/brief-flow";
 import { UploadDropzone } from "@/app/(app)/upload/upload-dropzone";
 import { createBatch as createBatchAction } from "@/app/(app)/client/batch-actions";
 import {
@@ -175,11 +175,18 @@ function BriefModal({
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState({
     title: brief.title,
+    angle: brief.angle ?? "",
     docUrl: brief.doc_url ?? "",
     briefDate: brief.brief_date,
+    channel: brief.channel,
   });
   const [batchId, setBatchId] = useState(brief.batch_id);
-  const [batchName, setBatchName] = useState(brief.batchName ?? brief.title);
+  // El batch se llama como el angulo: es la tanda con la que se prueba ese
+  // angulo. Mientras nadie lo escriba a mano, sigue al angulo aunque cambie.
+  const [nombreEscrito, setBatchName] = useState<string | null>(null);
+  const batchName = nombreEscrito ?? brief.batchName ?? brief.angle ?? brief.title;
+  // El canal solo se cambia en copy: despues ya hay etapas que dependen de el.
+  const enCopy = brief.status === "borrador";
   const [pending, startTransition] = useTransition();
 
   const completed = brief.batchCompletedAt !== null;
@@ -199,29 +206,56 @@ function BriefModal({
       </button>
 
       {editing ? (
-        <div className="space-y-3">
+        <div className="space-y-3 pr-8">
           <Input
+            aria-label="Título"
             value={draft.title}
-            onChange={(event) =>
-              setDraft({ ...draft, title: event.target.value })
-            }
+            onChange={(event) => setDraft({ ...draft, title: event.target.value })}
             maxLength={140}
           />
+          <div className="flex flex-wrap gap-2">
+            <Input
+              aria-label="Ángulo"
+              value={draft.angle}
+              onChange={(event) => setDraft({ ...draft, angle: event.target.value })}
+              placeholder="Ángulo"
+              maxLength={80}
+              className="min-w-0 flex-1"
+            />
+            <Input
+              aria-label="Fecha"
+              type="date"
+              value={draft.briefDate}
+              onChange={(event) => setDraft({ ...draft, briefDate: event.target.value })}
+              className="w-44"
+            />
+          </div>
+          {enCopy ? (
+            <div role="radiogroup" aria-label="Canal" className="flex gap-1.5">
+              {CHANNELS.map((channel) => (
+                <button
+                  key={channel}
+                  type="button"
+                  role="radio"
+                  aria-checked={draft.channel === channel}
+                  onClick={() => setDraft({ ...draft, channel })}
+                  className={`h-8 flex-1 rounded-md border text-sm transition-colors ${
+                    draft.channel === channel
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "text-muted-foreground hover:bg-muted"
+                  }`}
+                >
+                  {CHANNEL_LABEL[channel]}
+                </button>
+              ))}
+            </div>
+          ) : null}
           <Input
-            type="date"
-            value={draft.briefDate}
-            onChange={(event) =>
-              setDraft({ ...draft, briefDate: event.target.value })
-            }
-            className="w-44"
-          />
-          <Input
+            aria-label="Link al Google Doc"
             type="url"
             inputMode="url"
             value={draft.docUrl}
-            onChange={(event) =>
-              setDraft({ ...draft, docUrl: event.target.value })
-            }
+            onChange={(event) => setDraft({ ...draft, docUrl: event.target.value })}
             placeholder="Link al Google Doc"
           />
           <div className="flex gap-2">
@@ -235,8 +269,10 @@ function BriefModal({
                       id: brief.id,
                       clientId,
                       title: draft.title,
+                      angle: draft.angle,
                       docUrl: draft.docUrl,
                       briefDate: draft.briefDate,
+                      ...(enCopy ? { channel: draft.channel } : {}),
                     });
                     toast.success("Tarea guardada");
                     setEditing(false);
@@ -266,7 +302,20 @@ function BriefModal({
               {clientName} · {brief.brief_date} · {brief.authorName ?? "—"}
               {completed ? " · batch completado" : ""}
             </p>
+            {brief.angle ? (
+              <p className="mt-1 text-sm">
+                <span className="text-muted-foreground">Ángulo:</span> {brief.angle}
+              </p>
+            ) : null}
           </div>
+
+          {/* Lo que pidio quien la solicito: el punto de partida de copy. */}
+          {brief.request_note ? (
+            <p className="mb-3 whitespace-pre-wrap rounded-md border bg-muted/30 p-3 text-sm">
+              <span className="mb-1 block text-xs text-muted-foreground">El pedido</span>
+              {brief.request_note}
+            </p>
+          ) : null}
 
           <div className="mb-3">
             <BriefWorkflow brief={brief} onChanged={onChanged} />
@@ -291,7 +340,7 @@ function BriefModal({
             className="mt-2"
             onClick={() => setEditing(true)}
           >
-            {brief.doc_url ? "Editar" : "Pegar link del Doc"}
+            {enCopy ? "Definir canal, Doc y ángulo" : "Editar"}
           </Button>
 
           {/* Solo Ads sube a la biblioteca: es la que se mide contra Meta. Un
