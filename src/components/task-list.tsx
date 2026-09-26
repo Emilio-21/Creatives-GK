@@ -15,10 +15,12 @@ import {
   CHANNEL_LABEL,
   elapsed,
   FINISH_LABEL,
+  hasProduction,
   STAGES,
   STATUS_LABEL,
   type BriefStatus,
   type StageStatus,
+  uploadsToLibrary,
 } from "@/lib/brief-flow";
 import { roleLabel } from "@/lib/roles";
 import { unwrapped } from "@/lib/action-result";
@@ -39,7 +41,7 @@ function nextFor(task: MyTask): { to: BriefStatus; owner: "producerId" | "launch
     case "borrador":
       return null;
     case "en_revision":
-      return task.channel === "ads"
+      return hasProduction(task.channel)
         ? { to: "en_produccion", owner: "producerId" }
         : { to: "en_lanzamiento", owner: "launcherId" };
     case "en_produccion":
@@ -108,7 +110,7 @@ function TaskRow({ task, team }: { task: MyTask; team: TeamMember[] }) {
   // se hace dentro del brief. Terminar desde aqui lo dejaria sin cerrar.
   // Copy se define dentro de la tarea; producir un ad es subir y publicar ahi.
   const terminaDentro =
-    stage === "borrador" || (stage === "en_produccion" && task.channel === "ads");
+    stage === "borrador" || (stage === "en_produccion" && uploadsToLibrary(task.channel));
   const aprobando = stage === "en_aprobacion";
 
   function run(action: () => Promise<unknown>, done: string) {

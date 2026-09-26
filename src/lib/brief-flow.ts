@@ -61,7 +61,7 @@ export const OPEN_STATUSES: StageStatus[] = STAGES.map((stage) => stage.status);
  * la herramienta de envio, asi que no hay pieza que producir ni que aprobar.
  */
 export function stagesFor(channel: Channel): Stage[] {
-  return channel === "ads"
+  return hasProduction(channel)
     ? STAGES
     : STAGES.filter((stage) => ["borrador", "en_revision", "en_lanzamiento"].includes(stage.status));
 }
@@ -75,7 +75,7 @@ export type NextStep = { to: BriefStatus; label: string; back?: boolean };
  * (brief_step_ok); esto es el orden en que se ofrece.
  */
 export function nextSteps(channel: Channel, status: BriefStatus): NextStep[] {
-  if (channel !== "ads") {
+  if (!hasProduction(channel)) {
     const corto: Partial<Record<BriefStatus, NextStep[]>> = {
       borrador: [{ to: "en_revision", label: "Mandar a revisión" }],
       en_revision: [
@@ -90,7 +90,7 @@ export function nextSteps(channel: Channel, status: BriefStatus): NextStep[] {
     };
     return corto[status] ?? [];
   }
-  const ads: Record<BriefStatus, NextStep[]> = {
+  const largo: Record<BriefStatus, NextStep[]> = {
     borrador: [{ to: "en_revision", label: "Mandar a revisión" }],
     en_revision: [
       { to: "en_produccion", label: "Aprobar y mandar a producción" },
@@ -107,7 +107,7 @@ export function nextSteps(channel: Channel, status: BriefStatus): NextStep[] {
     ],
     lanzado: [{ to: "en_lanzamiento", label: "Reabrir", back: true }],
   };
-  return ads[status];
+  return largo[status];
 }
 
 /** Quien escribio el copy tambien lo revisa: la revision se salta sola. */
@@ -130,14 +130,30 @@ export function approvalState(brief: {
   return { copyOk, mediaOk, pending: [...pending] };
 }
 
-export const CHANNELS = ["ads", "email", "sms"] as const;
+export const CHANNELS = ["ads", "email", "sms", "vsl", "funnel"] as const;
 export type Channel = (typeof CHANNELS)[number];
 
 export const CHANNEL_LABEL: Record<Channel, string> = {
   ads: "Ads",
   email: "Email",
   sms: "Mensaje",
+  vsl: "VSL",
+  funnel: "Funnel",
 };
+
+/**
+ * Los canales que producen una pieza (diseños, video, paginas) y por eso pasan
+ * por producción y aprobación. Email y mensaje son solo copy. Tiene que
+ * coincidir con brief_con_produccion en la base (0032).
+ */
+export function hasProduction(channel: Channel): boolean {
+  return channel === "ads" || channel === "vsl" || channel === "funnel";
+}
+
+/** Solo ads sube diseños a la biblioteca: es la que se mide contra Meta. */
+export function uploadsToLibrary(channel: Channel): boolean {
+  return channel === "ads";
+}
 
 /**
  * El brief vive en Google Docs; la app guarda el link. Se acepta pegado sin

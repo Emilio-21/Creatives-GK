@@ -19,6 +19,7 @@ import {
 import {
   CHANNELS,
   CHANNEL_LABEL,
+  hasProduction,
   STATUS_LABEL,
   stagesFor,
   type Channel,
@@ -148,8 +149,8 @@ export function BriefDialog({
           channel: draft.channel,
           owners: {
             reviewer_id: owners.reviewer_id || null,
-            // Email y mensaje no pasan por producción.
-            producer_id: (draft.channel === "ads" && owners.producer_id) || null,
+            // Email y mensaje son solo copy: no pasan por producción.
+            producer_id: (hasProduction(draft.channel) && owners.producer_id) || null,
             launcher_id: owners.launcher_id || null,
           },
         });
@@ -317,10 +318,11 @@ export function BriefDialog({
             </div>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
+          {/* Cinco canales: el selector toma el ancho y la fecha se queda angosta. */}
+          <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_11rem]">
             <div className="space-y-1.5">
               <Label>Canal</Label>
-              <div role="radiogroup" className="flex gap-1.5">
+              <div role="radiogroup" aria-label="Canal" className="flex flex-wrap gap-1.5">
                 {CHANNELS.map((channel) => (
                   <button
                     key={channel}
@@ -328,7 +330,7 @@ export function BriefDialog({
                     role="radio"
                     aria-checked={draft.channel === channel}
                     onClick={() => setDraft({ ...draft, channel })}
-                    className={`h-9 flex-1 rounded-md border text-sm transition-colors ${
+                    className={`h-9 min-w-16 flex-1 rounded-md border px-2 text-sm transition-colors ${
                       draft.channel === channel
                         ? "border-primary bg-primary/10 text-primary"
                         : "text-muted-foreground hover:bg-muted"
@@ -392,7 +394,7 @@ export function BriefDialog({
             <p className="text-xs text-muted-foreground">
               {owners.reviewer_id && owners.reviewer_id === yo?.id
                 ? "Revisas tu propio copy: la revisión se salta y pasa directo a la siguiente etapa."
-                : draft.channel === "ads"
+                : hasProduction(draft.channel)
                   ? "Los avisos van en orden: quien revisa, quien produce, copy y media aprueban los diseños, y al final quien lanza."
                   : "Los avisos van en orden: primero a quien revisa; al aprobar, a quien lanza."}
             </p>

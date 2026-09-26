@@ -9,7 +9,13 @@ import { BriefComments } from "@/components/brief-comments";
 import { BriefWorkflow } from "@/components/brief-workflow";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { CHANNELS, CHANNEL_LABEL, docEmbedUrl, docLabel } from "@/lib/brief-flow";
+import {
+  CHANNELS,
+  CHANNEL_LABEL,
+  docEmbedUrl,
+  docLabel,
+  uploadsToLibrary,
+} from "@/lib/brief-flow";
 import { UploadDropzone } from "@/app/(app)/upload/upload-dropzone";
 import { createBatch as createBatchAction } from "@/app/(app)/client/batch-actions";
 import {
@@ -235,7 +241,7 @@ function BriefModal({
             />
           </div>
           {enCopy ? (
-            <div role="radiogroup" aria-label="Canal" className="flex gap-1.5">
+            <div role="radiogroup" aria-label="Canal" className="flex flex-wrap gap-1.5">
               {CHANNELS.map((channel) => (
                 <button
                   key={channel}
@@ -363,9 +369,10 @@ function BriefModal({
             </Button>
           ) : null}
 
-          {/* Solo Ads sube a la biblioteca: es la que se mide contra Meta. Un
-              email o un mensaje se arma y se lanza fuera; aqui solo se sigue. */}
-          {brief.channel === "ads" ? (
+          {/* Solo ads sube a la biblioteca: es la que se mide contra Meta. Un VSL
+              o un funnel se producen fuera (el link va en la tarea) y email y
+              mensaje se arman en su herramienta; aqui solo se sigue. */}
+          {uploadsToLibrary(brief.channel) ? (
             <div className="mt-5 border-t pt-4">
               <h3 className="text-sm font-semibold">Diseños de esta tarea</h3>
 

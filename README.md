@@ -21,7 +21,8 @@ Producción: <https://relevo.growth-kingdom.workers.dev>. Plan original: `docs/p
   - **Pedir copy:** cualquiera pide ("necesito copy para…") con cliente, una nota y a quién.
     Copy recibe el pedido y en su etapa define canal, Doc, ángulo y quién sigue. Copy
     también puede crear la tarea completa directo. El ángulo es el nombre del batch.
-  - **Ads:** copy → revisión → producción → aprobación → lanzamiento. En aprobación dan el visto
+  - **Ads, VSL y Funnel:** copy → revisión → producción → aprobación → lanzamiento. Solo
+    ads sube diseños a la biblioteca (se mide contra Meta); VSL y funnel llevan su link. En aprobación dan el visto
     bueno copy (quien revisó) y media (quien lanza); con los dos pasa sola a lanzamiento.
     Si alguien pide cambios, regresa a producción y las aprobaciones se borran.
   - **Email y mensaje:** copy → revisión → lanzamiento. Son solo copy; se arman en la
@@ -44,7 +45,7 @@ Producción: <https://relevo.growth-kingdom.workers.dev>. Plan original: `docs/p
 
 ### 1. Supabase
 1. Crear el proyecto y, en el SQL Editor, correr **en orden** todo `supabase/migrations/`
-   (`0001_schema.sql` … `0030_requerimiento.sql`).
+   (`0001_schema.sql` … `0032_vsl_funnel.sql`).
 2. Settings → API: copiar `Project URL`, `anon key` y `service_role key`.
 3. Authentication → URL Configuration: *Site URL* con la URL de la app y, en *Redirect URLs*,
    `https://<dominio>/**`. El enlace del correo de confirmación regresa a `/auth/confirm`.

@@ -22,6 +22,7 @@ import {
   BRIEF_STATUSES,
   CHANNEL_LABEL,
   elapsed,
+  hasProduction,
   nextSteps,
   skipsReview,
   STATUS_LABEL,
@@ -128,10 +129,10 @@ export function BriefWorkflow({
   // etapa de despues (y se pide quien la hace si falta).
   const pasos = nextSteps(brief.channel, status).map((step) => {
     if (status !== "borrador" || step.to !== "en_revision" || !skipsReview(brief)) return step;
-    const siguiente = brief.channel === "ads" ? "en_produccion" : "en_lanzamiento";
+    const siguiente = hasProduction(brief.channel) ? "en_produccion" : "en_lanzamiento";
     return {
       to: siguiente as BriefStatus,
-      label: `Mandar a ${brief.channel === "ads" ? "producción" : "lanzamiento"} (sin revisión)`,
+      label: `Mandar a ${hasProduction(brief.channel) ? "producción" : "lanzamiento"} (sin revisión)`,
     };
   });
 
