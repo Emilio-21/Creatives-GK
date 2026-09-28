@@ -4,7 +4,9 @@ import { TaskList } from "@/components/task-list";
 import { listMyTasks, listTeam } from "@/app/(app)/client/assignment-actions";
 import { unwrap } from "@/lib/action-result";
 import { CHANNEL_LABEL, elapsed, STATUS_LABEL, type BriefStatus } from "@/lib/brief-flow";
-import { DIAS_ATORADO, getHomeData, type HomeBrief } from "@/lib/home";
+import { DIAS_ATORADO, getHomeData, type HomeBrief, type WaitingRequest } from "@/lib/home";
+import { today } from "@/lib/dates";
+import { formatDate } from "@/lib/metrics";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata = { title: "Mi trabajo · Relevo" };
@@ -54,6 +56,16 @@ export default async function HomePage() {
 
       {/* Lo de abajo se consulta, no se hace: va junto y con menos peso. */}
       <div className="space-y-8">
+        {home.waiting.length > 0 ? (
+          <Block title="Esperando al cliente" count={home.waiting.length}>
+            <ul className="divide-y rounded-xl border">
+              {home.waiting.map((request) => (
+                <WaitingLine key={request.id} request={request} />
+              ))}
+            </ul>
+          </Block>
+        ) : null}
+
         <Block title="Lo que mandaste" count={home.sent.length}>
           {home.sent.length === 0 ? (
             <Empty>No tienes tareas en manos de alguien más.</Empty>
@@ -179,6 +191,35 @@ function BriefLine({ brief, reason }: { brief: HomeBrief; reason?: string }) {
           <span className={`text-xs ${brief.startedAt ? "text-foreground" : "text-muted-foreground"}`}>
             {brief.startedAt ? "● en progreso" : "○ sin empezar"}
           </span>
+        )}
+      </Link>
+    </li>
+  );
+}
+
+/** Un pedido al cliente: que se pidio, a quien y si ya llego. */
+function WaitingLine({ request }: { request: WaitingRequest }) {
+  const vencido = request.files === 0 && request.dueDate !== null && request.dueDate < today();
+  const hace = elapsed(request.createdAt);
+  return (
+    <li>
+      <Link
+        href={`/client/${request.clientId}#pedidos`}
+        className="flex flex-wrap items-baseline gap-x-3 gap-y-1 px-3 py-2.5 text-sm transition-colors hover:bg-muted/50"
+      >
+        <span className="min-w-0 flex-1 truncate font-medium">{request.title}</span>
+        <span className="text-xs text-muted-foreground">
+          {request.clientName} · {hace === "recién" ? "pedido recién" : `pedido hace ${hace}`}
+          {request.dueDate && !vencido ? ` · para el ${formatDate(request.dueDate)}` : ""}
+        </span>
+        {request.files > 0 ? (
+          <span className="text-xs text-primary">
+            ● llegaron {request.files} {request.files === 1 ? "archivo" : "archivos"} · revisa y cierra
+          </span>
+        ) : vencido ? (
+          <span className="text-xs text-destructive">venció el {formatDate(request.dueDate!)}</span>
+        ) : (
+          <span className="text-xs text-muted-foreground">○ esperando</span>
         )}
       </Link>
     </li>

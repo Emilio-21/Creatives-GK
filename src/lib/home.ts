@@ -35,19 +35,33 @@ export type HomeBrief = {
 
 export type Stuck = HomeBrief & { reason: string };
 
+/** Un pedido al cliente que yo hice y sigue abierto. */
+export type WaitingRequest = {
+  id: string;
+  title: string;
+  clientId: string;
+  clientName: string;
+  createdAt: string;
+  dueDate: string | null;
+  /** Cuantos archivos subio ya el cliente: con alguno, toca revisar y cerrar. */
+  files: number;
+};
+
 export type HomeData = {
   /** Lo que yo mande o pase y sigue en manos de alguien mas. */
   sent: HomeBrief[];
   /** Cuantos briefs hay en cada estado; "lanzado" cuenta solo los de esta semana. */
   pipeline: Record<BriefStatus, number>;
   stuck: Stuck[];
+  /** Mis pedidos al cliente abiertos: lo que falta que mande y lo que ya llego. */
+  waiting: WaitingRequest[];
 };
 
 export async function getHomeData(userId: string): Promise<HomeData> {
   const supabase = await createClient();
   const semana = new Date(Date.now() - 7 * 86_400_000).toISOString();
 
-  const [{ data: rows }, { data: pasados }] = await Promise.all([
+  const [{ data: rows }, { data: pasados }, { data: pedidos }] = await Promise.all([
     supabase
       .from("briefs")
       .select(
@@ -58,6 +72,12 @@ export async function getHomeData(userId: string): Promise<HomeData> {
       .or(`status.neq.lanzado,stage_entered_at.gte.${semana}`),
     // Los que yo movi de etapa: "los que pase" aunque no los haya creado.
     supabase.from("brief_events").select("brief_id").eq("actor", userId).eq("kind", "paso"),
+    supabase
+      .from("client_requests")
+      .select("id, title, client_id, created_at, due_date, clients(name), client_request_files(count)")
+      .eq("created_by", userId)
+      .is("closed_at", null)
+      .order("created_at"),
   ]);
 
   const briefs = rows ?? [];
@@ -131,5 +151,18 @@ export async function getHomeData(userId: string): Promise<HomeData> {
   }
   stuck.sort((a, b) => (a.enteredAt ?? "").localeCompare(b.enteredAt ?? ""));
 
-  return { sent, pipeline, stuck };
+  // Lo que ya llego va primero: ahi hay algo que hacer. Lo demas, por antiguedad.
+  const waiting: WaitingRequest[] = (pedidos ?? [])
+    .map((r) => ({
+      id: r.id as string,
+      title: r.title as string,
+      clientId: r.client_id as string,
+      clientName: (r.clients as unknown as { name: string } | null)?.name ?? "—",
+      createdAt: r.created_at as string,
+      dueDate: (r.due_date as string | null) ?? null,
+      files: (r.client_request_files as unknown as { count: number }[] | null)?.[0]?.count ?? 0,
+    }))
+    .sort((a, b) => Number(b.files > 0) - Number(a.files > 0));
+
+  return { sent, pipeline, stuck, waiting };
 }

@@ -23,6 +23,7 @@ import {
 } from "@/app/(app)/creative/actions";
 import {
   quickLaunch as quickLaunchAction,
+  unlaunchCreative as unlaunchCreativeAction,
 } from "@/app/(app)/creative/detail-actions";
 import {
   deleteCreative as deleteCreativeAction,
@@ -40,6 +41,7 @@ import { today } from "@/lib/dates";
 // Las acciones regresan el error como dato; esto lo vuelve a lanzar con su mensaje real.
 const requestDownloads = unwrapped(requestDownloadsAction);
 const quickLaunch = unwrapped(quickLaunchAction);
+const unlaunchCreative = unwrapped(unlaunchCreativeAction);
 const deleteCreative = unwrapped(deleteCreativeAction);
 const setCreativePaused = unwrapped(setCreativePausedAction);
 
@@ -137,7 +139,24 @@ export function LibraryResults({
     setBusy(true);
     try {
       await quickLaunch(id);
-      toast.success("Marcado como lanzado. Captura las métricas cuando las tengas.");
+      toast.success("Marcado como lanzado. Captura las métricas cuando las tengas.", {
+        action: { label: "Deshacer", onClick: () => void markUnlaunched(id, false) },
+      });
+      router.refresh();
+    } catch (error) {
+      toast.error((error as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  /** El clic accidental en "Marcar como lanzado": regresa a sin lanzar. */
+  async function markUnlaunched(id: string, confirmar = true) {
+    if (confirmar && !confirm("¿Regresarlo a sin lanzar? Se borran sus lanzamientos registrados.")) return;
+    setBusy(true);
+    try {
+      await unlaunchCreative(id);
+      toast.success("Regresó a sin lanzar.");
       router.refresh();
     } catch (error) {
       toast.error((error as Error).message);
@@ -230,6 +249,7 @@ export function LibraryResults({
     onOpen: setOpenId,
     onDownload: downloadOneById,
     onLaunch: markLaunched,
+    onUnlaunch: markUnlaunched,
     onDelete: removeCreative,
     onNaming: setNamingBatchId,
     onTogglePaused: togglePaused,
@@ -438,6 +458,7 @@ function BoardColumn({
   onOpen,
   onDownload,
   onLaunch,
+  onUnlaunch,
   onDelete,
   onNaming,
   onTogglePaused,
@@ -452,6 +473,7 @@ function BoardColumn({
   onOpen: (id: string) => void;
   onDownload: (id: string) => void;
   onLaunch: (id: string) => void;
+  onUnlaunch: (id: string) => void;
   onDelete: (card: Card) => void;
   onNaming: (batchId: string) => void;
   onTogglePaused: (card: Card, paused: boolean) => void;
@@ -515,6 +537,7 @@ function BoardColumn({
                     onOpen={() => onOpen(card.id)}
                     onDownload={() => onDownload(card.id)}
                     onLaunch={() => onLaunch(card.id)}
+                    onUnlaunch={() => onUnlaunch(card.id)}
                     onDelete={() => onDelete(card)}
                     onTogglePaused={(paused) => onTogglePaused(card, paused)}
                     busy={busy}

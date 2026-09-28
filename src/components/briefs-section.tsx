@@ -6,11 +6,11 @@ import { Pencil, PencilLine } from "lucide-react";
 import { toast } from "sonner";
 import { BriefCard } from "@/components/brief-card";
 import { BriefComments } from "@/components/brief-comments";
+import { BriefEditForm } from "@/components/brief-edit-form";
 import { BriefWorkflow } from "@/components/brief-workflow";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-  CHANNELS,
   CHANNEL_LABEL,
   docEmbedUrl,
   docLabel,
@@ -180,19 +180,12 @@ function BriefModal({
   onChanged: () => Promise<void>;
 }) {
   const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState({
-    title: brief.title,
-    angle: brief.angle ?? "",
-    docUrl: brief.doc_url ?? "",
-    briefDate: brief.brief_date,
-    channel: brief.channel,
-  });
   const [batchId, setBatchId] = useState(brief.batch_id);
   // El batch se llama como el angulo: es la tanda con la que se prueba ese
   // angulo. Mientras nadie lo escriba a mano, sigue al angulo aunque cambie.
   const [nombreEscrito, setBatchName] = useState<string | null>(null);
   const batchName = nombreEscrito ?? brief.batchName ?? brief.angle ?? brief.title;
-  // El canal solo se cambia en copy: despues ya hay etapas que dependen de el.
+  // En copy, definir la tarea es el trabajo: se pide arriba y como accion principal.
   const enCopy = brief.status === "borrador";
   const faltan = [!brief.angle && "el ángulo", !brief.doc_url && "el link del Doc"].filter(
     (item): item is string => Boolean(item),
@@ -216,94 +209,16 @@ function BriefModal({
       </button>
 
       {editing ? (
-        <div className="space-y-3 pr-8">
-          <Input
-            aria-label="Título"
-            value={draft.title}
-            onChange={(event) => setDraft({ ...draft, title: event.target.value })}
-            maxLength={140}
-          />
-          <div className="flex flex-wrap gap-2">
-            <Input
-              aria-label="Ángulo"
-              value={draft.angle}
-              onChange={(event) => setDraft({ ...draft, angle: event.target.value })}
-              placeholder="Ángulo"
-              maxLength={80}
-              className="min-w-0 flex-1"
-            />
-            <Input
-              aria-label="Fecha"
-              type="date"
-              value={draft.briefDate}
-              onChange={(event) => setDraft({ ...draft, briefDate: event.target.value })}
-              className="w-44"
-            />
-          </div>
-          {enCopy ? (
-            <div role="radiogroup" aria-label="Canal" className="flex flex-wrap gap-1.5">
-              {CHANNELS.map((channel) => (
-                <button
-                  key={channel}
-                  type="button"
-                  role="radio"
-                  aria-checked={draft.channel === channel}
-                  onClick={() => setDraft({ ...draft, channel })}
-                  className={`h-8 flex-1 rounded-md border text-sm transition-colors ${
-                    draft.channel === channel
-                      ? "border-primary bg-primary/10 text-primary"
-                      : "text-muted-foreground hover:bg-muted"
-                  }`}
-                >
-                  {CHANNEL_LABEL[channel]}
-                </button>
-              ))}
-            </div>
-          ) : null}
-          <Input
-            aria-label="Link al Google Doc"
-            type="url"
-            inputMode="url"
-            value={draft.docUrl}
-            onChange={(event) => setDraft({ ...draft, docUrl: event.target.value })}
-            placeholder="Link al Google Doc"
-          />
-          <div className="flex gap-2">
-            <Button
-              size="sm"
-              disabled={pending}
-              onClick={() =>
-                startTransition(async () => {
-                  try {
-                    await saveBrief({
-                      id: brief.id,
-                      clientId,
-                      title: draft.title,
-                      angle: draft.angle,
-                      docUrl: draft.docUrl,
-                      briefDate: draft.briefDate,
-                      ...(enCopy ? { channel: draft.channel } : {}),
-                    });
-                    toast.success("Tarea guardada");
-                    setEditing(false);
-                    await onChanged();
-                  } catch (error) {
-                    toast.error((error as Error).message);
-                  }
-                })
-              }
-            >
-              Guardar
-            </Button>
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => setEditing(false)}
-            >
-              Cancelar
-            </Button>
-          </div>
-        </div>
+        <BriefEditForm
+          brief={brief}
+          onCancel={() => setEditing(false)}
+          onSaved={async (movida) => {
+            await onChanged();
+            // Movida a otro cliente ya no es de esta lista.
+            if (movida) onClose();
+            else setEditing(false);
+          }}
+        />
       ) : (
         <>
           <div className="mb-3 pr-8">

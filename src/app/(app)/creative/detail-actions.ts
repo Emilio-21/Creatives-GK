@@ -107,6 +107,22 @@ async function quickLaunchImpl(creativeId: string): Promise<void> {
   revalidatePath("/", "layout");
 }
 
+/**
+ * Deshace "Marcar como lanzado": el creativo regresa a sin lanzar. La base
+ * decide si se puede (unlaunch_creative, 0034): con metricas, solo admin.
+ */
+async function unlaunchCreativeImpl(creativeId: string): Promise<number> {
+  await requireUser();
+  const supabase = await createClient();
+
+  const { data, error } = await supabase.rpc("unlaunch_creative", { p_creative: creativeId });
+  if (error) throw new Error(error.message);
+
+  revalidatePath(`/creative/${creativeId}`);
+  revalidatePath("/", "layout");
+  return data as number;
+}
+
 // ---- Acciones expuestas al navegador ----
 // Regresan el error en vez de lanzarlo: en produccion Next oculta el mensaje de
 // lo que se lanza. Ver src/lib/action-result.ts.
@@ -121,4 +137,10 @@ export async function quickLaunch(
   ...args: Parameters<typeof quickLaunchImpl>
 ): Promise<ActionResult<Awaited<ReturnType<typeof quickLaunchImpl>>>> {
   return attempt(() => quickLaunchImpl(...args));
+}
+
+export async function unlaunchCreative(
+  ...args: Parameters<typeof unlaunchCreativeImpl>
+): Promise<ActionResult<Awaited<ReturnType<typeof unlaunchCreativeImpl>>>> {
+  return attempt(() => unlaunchCreativeImpl(...args));
 }

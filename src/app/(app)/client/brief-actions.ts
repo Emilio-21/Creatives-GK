@@ -3,7 +3,13 @@
 import { revalidatePath } from "next/cache";
 import { deliverSlackSoon } from "@/lib/slack-after";
 import { requireUser } from "@/lib/auth";
-import { normalizeDocUrl, type BriefStatus, type Channel } from "@/lib/brief-flow";
+import {
+  normalizeDocUrl,
+  OWNER_STAGE,
+  type BriefStatus,
+  type Channel,
+  type OwnerField,
+} from "@/lib/brief-flow";
 import { getPreviewUrl } from "@/lib/storage";
 import { createClient } from "@/lib/supabase/server";
 import { attempt, type ActionResult } from "@/lib/action-result";
@@ -213,6 +219,98 @@ async function saveBriefImpl(input: {
 }
 
 /**
+ * Editar una tarea ya creada, cualquier dato. Los datos van en un update (el
+ * trigger de la base cuida canal y cliente); los responsables, uno por uno por
+ * set_brief_owner, que avisa a quien entra y deja historial.
+ */
+async function editBriefImpl(input: {
+  id: string;
+  clientId: string;
+  title: string;
+  angle: string;
+  docUrl: string;
+  briefDate: string;
+  dueDate: string;
+  requestNote: string;
+  channel: Channel;
+  owners: Record<OwnerField, string | null>;
+}): Promise<void> {
+  const user = await requireUser();
+
+  const title = input.title.trim();
+  if (!title) throw new Error("Ponle título a la tarea.");
+  if (title.length > 140) throw new Error("El título es muy largo (máximo 140).");
+  const angle = input.angle.trim() || null;
+  if (angle && angle.length > 80) throw new Error("El ángulo va en pocas palabras (máximo 80).");
+  const requestNote = input.requestNote.trim() || null;
+  if (requestNote && requestNote.length > 2000) throw new Error("El pedido es muy largo (máximo 2000).");
+  if (!input.briefDate) throw new Error("Ponle fecha a la tarea.");
+  const docUrl = input.docUrl.trim() ? normalizeDocUrl(input.docUrl) : null;
+
+  const supabase = await createClient();
+  const { data: antes } = await supabase
+    .from("briefs")
+    .select("writer_id, reviewer_id, producer_id, launcher_id")
+    .eq("id", input.id)
+    .maybeSingle();
+  if (!antes) throw new Error("La tarea ya no existe.");
+
+  const { error, count } = await supabase
+    .from("briefs")
+    .update(
+      {
+        client_id: input.clientId,
+        title,
+        angle,
+        doc_url: docUrl,
+        brief_date: input.briefDate,
+        due_date: input.dueDate || null,
+        request_note: requestNote,
+        channel: input.channel,
+        updated_by: user.id,
+        updated_at: new Date().toISOString(),
+      },
+      { count: "exact" },
+    )
+    .eq("id", input.id);
+  if (error) throw new Error(error.message);
+  if (!count) throw new Error("No se pudo guardar la tarea.");
+
+  let avisos = false;
+  for (const [field, stage] of Object.entries(OWNER_STAGE) as [OwnerField, string][]) {
+    const nuevo = input.owners[field] || null;
+    if (nuevo === ((antes[field] as string | null) ?? null)) continue;
+    const { error: ownerError } = await supabase.rpc("set_brief_owner", {
+      p_brief: input.id,
+      p_stage: stage,
+      p_profile: nuevo,
+    });
+    if (ownerError) {
+      revalidatePath("/", "layout");
+      if (avisos) deliverSlackSoon();
+      throw new Error(`Se guardó lo demás, pero no el responsable: ${ownerError.message}`);
+    }
+    avisos = true;
+  }
+
+  revalidatePath("/", "layout");
+  if (avisos) deliverSlackSoon();
+}
+
+/** Los clientes a los que se puede mover una tarea. */
+async function listClientOptionsImpl(): Promise<{ id: string; name: string }[]> {
+  await requireUser();
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("clients")
+    .select("id, name")
+    .is("archived_at", null)
+    .order("name");
+  if (error) throw new Error(error.message);
+  return (data ?? []).map((c) => ({ id: c.id as string, name: c.name as string }));
+}
+
+/**
  * Pedir copy: cliente, que se necesita, una nota y a quien. La base crea la
  * tarea en la etapa de copy a cargo de esa persona y le avisa; canal, Doc,
  * angulo y responsables los define copy.
@@ -321,4 +419,16 @@ export async function saveBrief(
   ...args: Parameters<typeof saveBriefImpl>
 ): Promise<ActionResult<Awaited<ReturnType<typeof saveBriefImpl>>>> {
   return attempt(() => saveBriefImpl(...args));
+}
+
+export async function editBrief(
+  ...args: Parameters<typeof editBriefImpl>
+): Promise<ActionResult<Awaited<ReturnType<typeof editBriefImpl>>>> {
+  return attempt(() => editBriefImpl(...args));
+}
+
+export async function listClientOptions(
+  ...args: Parameters<typeof listClientOptionsImpl>
+): Promise<ActionResult<Awaited<ReturnType<typeof listClientOptionsImpl>>>> {
+  return attempt(() => listClientOptionsImpl(...args));
 }

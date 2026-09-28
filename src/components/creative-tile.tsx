@@ -15,6 +15,7 @@ export function CreativeTile({
   onOpen,
   onDownload,
   onLaunch,
+  onUnlaunch,
   onDelete,
   onTogglePaused,
   busy,
@@ -25,6 +26,8 @@ export function CreativeTile({
   onOpen: () => void;
   onDownload: () => void;
   onLaunch: () => void;
+  /** Deshace el lanzamiento: para el clic accidental. */
+  onUnlaunch: () => void;
   onDelete: () => void;
   onTogglePaused: (paused: boolean) => void;
   busy: boolean;
@@ -116,6 +119,23 @@ export function CreativeTile({
                   ) : (
                     <path d="M9 5v14M15 5v14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
                   )
+                }
+              />
+            ) : null}
+            {launched ? (
+              <TileAction
+                label="Regresar a sin lanzar"
+                disabled={busy}
+                onClick={onUnlaunch}
+                icon={
+                  <path
+                    d="M9 14 4 9l5-5M4 9h10.5a5.5 5.5 0 0 1 0 11H11"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    fill="none"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
                 }
               />
             ) : null}

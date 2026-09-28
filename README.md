@@ -31,16 +31,20 @@ Producción: <https://relevo.growth-kingdom.workers.dev>. Plan original: `docs/p
   - Un admin puede mover una tarea a cualquier etapa o aprobar por todos; queda como
     salto en el historial.
   - Cada tarea tiene un hilo de comentarios que avisa a quienes están en ella.
+  - "Editar tarea" cambia cualquier dato: título, canal, cliente, ángulo, Doc, fechas, el
+    pedido y responsables. El canal se cambia si tiene la etapa en la que va la tarea; el
+    cliente, si todavía no tiene batch (lo cuida la base, 0034).
 - **Creativos** — biblioteca por cliente: subida múltiple directa a R2, pares de formatos
   (1:1 + 9:16 = un anuncio), batches con la nomenclatura de Meta, descarga en zip,
-  lanzamientos y métricas.
+  lanzamientos y métricas. "Regresar a sin lanzar" deshace un "Marcar como lanzado"
+  accidental; si ya tiene métricas, solo un admin.
 - **Material** — por cliente, lo que no es un ad: presentaciones, plantillas, links.
 - **Pedidos al cliente** — lo que el cliente tiene que mandar (grabar ads, fotos, su logo).
   Cualquiera del equipo crea el pedido y le manda al cliente el mensaje con su link
   (`/entregas/{token}`), por WhatsApp o correo. El cliente, sin cuenta, ve sus pedidos
   abiertos y sube los archivos (hasta 1 GB cada uno); a quien lo pidió le llega el aviso.
   Hay un link por cliente; "Cambiar link" invalida el anterior. Cerrar un pedido lo quita
-  del link.
+  del link. Los pedidos abiertos de cada quien salen en Mi trabajo, "Esperando al cliente".
 - **Avisos** — en la campana de la app y por mensaje directo de Slack.
 - **Equipo** (`/equipo`) — foto y nombre de perfil, áreas, clientes de cada quien y avisos de Slack.
 - **Resumen** (`/dashboard`) — KPIs, tops por CPA y CTR, inventario sin lanzar, uso de R2.
@@ -51,7 +55,7 @@ Producción: <https://relevo.growth-kingdom.workers.dev>. Plan original: `docs/p
 
 ### 1. Supabase
 1. Crear el proyecto y, en el SQL Editor, correr **en orden** todo `supabase/migrations/`
-   (`0001_schema.sql` … `0033_pedidos_cliente.sql`).
+   (`0001_schema.sql` … `0034_editar_tarea.sql`).
 2. Settings → API: copiar `Project URL`, `anon key` y `service_role key`.
 3. Authentication → URL Configuration: *Site URL* con la URL de la app y, en *Redirect URLs*,
    `https://<dominio>/**`. El enlace del correo de confirmación regresa a `/auth/confirm`.

@@ -53,6 +53,23 @@ export const STAGES: Stage[] = [
   { status: "en_lanzamiento", field: "launcher_id", label: "Lanzamiento", hint: "Sube la campaña" },
 ];
 
+/** Cada responsable y la etapa que tiene a su cargo (set_brief_owner la recibe asi). */
+export const OWNER_STAGE: Record<OwnerField, OwnerStatus> = {
+  writer_id: "borrador",
+  reviewer_id: "en_revision",
+  producer_id: "en_produccion",
+  launcher_id: "en_lanzamiento",
+};
+
+/**
+ * Si la tarea puede pasar a ese canal desde donde va. Un canal sin producción
+ * no tiene ni producción ni aprobación: ahi la tarea quedaria en una etapa que
+ * no existe. La base aplica la misma regla (0034).
+ */
+export function channelFits(channel: Channel, status: BriefStatus): boolean {
+  return hasProduction(channel) || !["en_produccion", "en_aprobacion"].includes(status);
+}
+
 /** Las etapas en las que la tarea esta en manos de alguien: lo "abierto". */
 export const OPEN_STATUSES: StageStatus[] = STAGES.map((stage) => stage.status);
 
