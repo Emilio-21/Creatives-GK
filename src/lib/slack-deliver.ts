@@ -65,7 +65,7 @@ export async function deliverPendingSlack(limit = 25): Promise<SlackDeliveryRepo
     )
     .is("slack_sent_at", null)
     .or(`slack_claimed_at.is.null,slack_claimed_at.lt.${reclamoViejo}`)
-    .select("id, profile_id, kind, brief_id, title, body, slack_attempts");
+    .select("id, profile_id, kind, brief_id, client_id, title, body, slack_attempts");
   if (reclamoError) throw new Error(reclamoError.message);
   if (!reclamados?.length) return report;
 
@@ -116,6 +116,7 @@ export async function deliverPendingSlack(limit = 25): Promise<SlackDeliveryRepo
           body: (aviso.body as string | null) ?? null,
           kind: aviso.kind as string,
           recipientId: aviso.profile_id as string,
+          clientId: (aviso.client_id as string | null) ?? null,
           brief,
           nombres,
         }),
@@ -177,6 +178,7 @@ export function buildMessage({
   body,
   kind,
   recipientId,
+  clientId = null,
   brief,
   nombres,
 }: {
@@ -184,6 +186,7 @@ export function buildMessage({
   body: string | null;
   kind: string;
   recipientId: string;
+  clientId?: string | null;
   brief?: Record<string, unknown>;
   nombres: Map<string, string>;
 }): { text: string; blocks: unknown[] } {
@@ -218,6 +221,19 @@ export function buildMessage({
     const links = [`<${appUrl()}/client/${brief.client_id}?brief=${brief.id}|Abrir en Relevo>`];
     if (brief.doc_url) links.push(`<${brief.doc_url as string}|Abrir el Doc>`);
     blocks.push({ type: "context", elements: [{ type: "mrkdwn", text: links.join("  ·  ") }] });
+  }
+
+  // Lo que subio un cliente desde su link: de que pedido y donde verlo.
+  if (kind === "entrega" && clientId) {
+    if (body) {
+      blocks.push({ type: "section", text: { type: "mrkdwn", text: `Pedido: ${esc(body)}` } });
+    }
+    blocks.push({
+      type: "context",
+      elements: [
+        { type: "mrkdwn", text: `<${appUrl()}/client/${clientId}#pedidos|Ver los archivos en Relevo>` },
+      ],
+    });
   }
 
   return { text: title, blocks };

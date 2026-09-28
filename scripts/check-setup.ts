@@ -138,6 +138,9 @@ async function main() {
       ["brief_comments", "body", "0028_aprobacion.sql"],
       ["briefs", "writer_id", "0030_requerimiento.sql"],
       ["briefs", "angle", "0030_requerimiento.sql"],
+      ["profiles", "background", "0031_fondo.sql"],
+      ["clients", "portal_token", "0033_pedidos_cliente.sql"],
+      ["client_request_files", "storage_path", "0033_pedidos_cliente.sql"],
       ["creative_stats", "paused_launch_count", "0014_pausados.sql"],
     ];
     for (const [table, column, migration] of columns) {

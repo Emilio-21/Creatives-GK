@@ -148,7 +148,9 @@ export function NotificationBell({
             ) : (
               <ul className="max-h-96 space-y-0.5 overflow-y-auto">
                 {items.map((item) => {
-                  const destino = item.client_id ? `/client/${item.client_id}` : "/";
+                  // Lo que subio un cliente vive en la seccion de pedidos, no en tareas.
+                  const seccion = item.kind === "entrega" ? "#pedidos" : "";
+                  const destino = item.client_id ? `/client/${item.client_id}${seccion}` : "/";
                   return (
                     <li key={item.id}>
                       <Link

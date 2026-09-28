@@ -8,8 +8,11 @@ import { publicEnv } from "@/lib/env";
  * /api/cron no lleva sesion a proposito: lo llama un Worker programado y se
  * autentica con CRON_SECRET dentro de la propia ruta. Sin esta excepcion el
  * middleware lo redirige al login y el cron nunca corre.
+ *
+ * /entregas es el link del cliente: no tiene cuenta, lo autoriza el token de
+ * la ruta (src/app/entregas).
  */
-const PUBLIC_PATHS = ["/login", "/signup", "/auth", "/api/cron"];
+const PUBLIC_PATHS = ["/login", "/signup", "/auth", "/api/cron", "/entregas"];
 
 function isPublic(pathname: string) {
   return PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`));

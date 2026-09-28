@@ -6,6 +6,7 @@ import { MetaButtons } from "@/components/meta-buttons";
 import { ClientKpis } from "@/components/client-kpis";
 import { BriefsSection } from "@/components/briefs-section";
 import { MaterialsSection } from "@/components/materials-section";
+import { ClientRequestsSection } from "@/components/client-requests-section";
 import { getClientOverview } from "@/lib/dashboard";
 import { getClient } from "@/lib/clients";
 import { createClient } from "@/lib/supabase/server";
@@ -56,6 +57,8 @@ export default async function ClientPage({
         <ClientKpis stats={overview.kpis} monthSpend={overview.kpis.monthSpend} />
 
         <BriefsSection clientId={client.id} clientName={client.name} />
+
+        <ClientRequestsSection clientId={client.id} />
 
         <ClientInsights
           topByCpa={overview.topByCpa}

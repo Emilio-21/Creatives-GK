@@ -1,6 +1,7 @@
 /**
  * Borra objetos de R2 que ninguna fila de la base referencia: creativos y sus
- * posters, material de clientes y fotos de perfil.
+ * posters, material de clientes, lo que suben los clientes desde su link y
+ * fotos de perfil.
  *
  * Un PUT exitoso seguido de un insert fallido deja el archivo ocupando espacio
  * sin que nada lo referencie (§3.1). El free tier son 10 GB acumulados, asi que
@@ -30,7 +31,7 @@ const bucketArg = args.indexOf("--bucket");
 const BUCKET = bucketArg >= 0 ? args[bucketArg + 1] : process.env.R2_BUCKET_NAME!;
 
 /** Las carpetas que arma lib/storage.ts. Lo que este fuera de ellas no se toca. */
-const PREFIXES = ["creatives/", "posters/", "material/", "avatars/"];
+const PREFIXES = ["creatives/", "posters/", "material/", "avatars/", "clientes/"];
 
 /** Margen para no borrar un upload que esta a la mitad ahorita mismo. */
 const minAgeArg = args.indexOf("--min-age-hours");
@@ -63,15 +64,17 @@ async function main() {
   // Todo lo que la base apunta a R2. Los archivados tambien cuentan: siguen
   // teniendo su archivo. Una tabla nueva con archivos en R2 tiene que entrar
   // aqui Y en PREFIXES, o sus archivos se verian huerfanos.
-  const [creatives, materials, profiles] = await Promise.all([
+  const [creatives, materials, profiles, entregas] = await Promise.all([
     supabase.from("creatives").select("storage_path, poster_path"),
     supabase.from("client_materials").select("storage_path").not("storage_path", "is", null),
     supabase.from("profiles").select("avatar_path").not("avatar_path", "is", null),
+    supabase.from("client_request_files").select("storage_path"),
   ]);
   for (const [tabla, result] of [
     ["creatives", creatives],
     ["client_materials", materials],
     ["profiles", profiles],
+    ["client_request_files", entregas],
   ] as const) {
     if (result.error) {
       console.error(`No se pudo leer ${tabla}: ${result.error.message}`);
@@ -86,6 +89,7 @@ async function main() {
   }
   for (const row of materials.data ?? []) referenced.add(row.storage_path as string);
   for (const row of profiles.data ?? []) referenced.add(row.avatar_path as string);
+  for (const row of entregas.data ?? []) referenced.add(row.storage_path as string);
 
   const r2 = new S3Client({
     region: "auto",

@@ -166,3 +166,17 @@ export function buildMaterialPath(clientId: string, filename: string, uuid: stri
 export function buildAvatarPath(userId: string, uuid: string = randomUUID()): string {
   return `avatars/${userId}/${uuid}.jpg`;
 }
+
+/**
+ * `clientes/{clientId}/{requestId}/{uuid}/{filename}` — lo que sube el cliente
+ * desde su link. Cliente y pedido en la ruta dejan que el servidor verifique,
+ * al confirmar, que el archivo es de ese pedido y no de otro.
+ */
+export function buildRequestFilePath(
+  clientId: string,
+  requestId: string,
+  filename: string,
+  uuid: string = randomUUID(),
+): string {
+  return `clientes/${clientId}/${requestId}/${uuid}/${sanitizeFilename(filename)}`;
+}
