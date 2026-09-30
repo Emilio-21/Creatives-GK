@@ -6,7 +6,7 @@
  * mueve rapido — pero decide a quien se le ofrece cada etapa. 'admin' no se
  * auto-asigna: se otorga desde la pantalla de equipo.
  */
-export const ROLES = ["admin", "media", "copy", "design", "member"] as const;
+export const ROLES = ["admin", "media", "copy", "design", "tech", "member"] as const;
 export type Role = (typeof ROLES)[number];
 
 export const ROLE_LABEL: Record<Role, string> = {
@@ -14,6 +14,7 @@ export const ROLE_LABEL: Record<Role, string> = {
   media: "Media buying",
   copy: "Copy",
   design: "Diseño",
+  tech: "Tech",
   member: "Sin área",
 };
 
@@ -22,11 +23,12 @@ export const ROLE_HINT: Record<Role, string> = {
   media: "Lanza las campañas",
   copy: "Escribe las tareas y elige quién sigue",
   design: "Sube los diseños",
+  tech: "Arma funnels, páginas e integraciones",
   member: "Sin área asignada",
 };
 
 /** Los que alguien puede elegir al registrarse. */
-export const SIGNUP_ROLES: Role[] = ["media", "copy", "design"];
+export const SIGNUP_ROLES: Role[] = ["media", "copy", "design", "tech"];
 
 export const ALLOWED_EMAIL_DOMAIN = "growthkingdom.com";
 
