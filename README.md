@@ -95,7 +95,7 @@ npm run slack:test -- tu@correo.com   # manda un mensaje de ejemplo
 | Worker | Qué es |
 |---|---|
 | `relevo` | la app (`wrangler.jsonc`) |
-| `creativos-gk-cron` | cron: reintento de Slack cada 10 min; sync de Meta **pausado** (`workers/cron-sync`) |
+| `creativos-gk-cron` | cron: reintento de Slack cada 10 min y sync de Meta diario a las 13:00 UTC (`workers/cron-sync`) |
 | `creativos-gk` | la URL vieja, redirige a `relevo` (`workers/redirect`) |
 
 ```bash
@@ -116,7 +116,7 @@ La app necesita `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`,
 
 Vive en un worker aparte: el que genera OpenNext exporta su propio `fetch`, y colgarle un
 `scheduled` ata el despliegue a los detalles internos del adaptador. Llama a
-`/api/cron/slack` (y a `/api/cron/sync-meta` cuando se reactive) con
+`/api/cron/slack` y `/api/cron/sync-meta` con
 `Authorization: Bearer $CRON_SECRET`.
 
 ```bash
