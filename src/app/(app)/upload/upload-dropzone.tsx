@@ -58,6 +58,9 @@ type Item = {
 
 type ClientOption = { id: string; name: string };
 
+/** Valor del select para "+ Nuevo batch…". No es un id: resolveBatch lo cambia por uno. */
+const NUEVO = "__nuevo__";
+
 export function UploadDropzone({
   clients,
   defaultClientId,
@@ -162,7 +165,24 @@ export function UploadDropzone({
     [update],
   );
 
-  async function uploadOne(item: Item): Promise<string> {
+  /**
+   * El batch al que va la subida. Si eligieron "Nuevo batch" y escribieron el
+   * nombre pero no le dieron a Crear, se crea aqui: "__nuevo__" es solo el
+   * valor del select, nunca un id.
+   */
+  async function resolveBatch(): Promise<string | null> {
+    if (lockedBatchId) return lockedBatchId;
+    if (batchId !== NUEVO) return batchId || null;
+    const nombre = newBatchName.trim();
+    if (!nombre) throw new Error("Escribe el nombre del batch nuevo o elige \"Sin batch\".");
+    const id = await createBatch(clientId, nombre);
+    setBatches((prev) => [{ id, name: nombre }, ...prev]);
+    setBatchId(id);
+    setNewBatchName("");
+    return id;
+  }
+
+  async function uploadOne(item: Item, batch: string | null): Promise<string> {
     const metadata = item.metadata;
     if (!metadata) throw new Error("Sin metadata.");
 
@@ -195,7 +215,7 @@ export function UploadDropzone({
       height: metadata.height,
       durationSeconds: metadata.durationSeconds,
       clientId,
-      batchId: lockedBatchId ?? (batchId || null),
+      batchId: batch,
       format: format || null,
       tags: parseTags(tagsText),
     });
@@ -212,7 +232,7 @@ export function UploadDropzone({
     }
     setRunning(true);
     try {
-      await uploadOne(item);
+      await uploadOne(item, await resolveBatch());
       router.refresh();
     } catch (error) {
       update(item.key, { status: "error", error: (error as Error).message });
@@ -231,10 +251,18 @@ export function UploadDropzone({
     if (pending.length === 0) return;
 
     setRunning(true);
+    let batch: string | null;
+    try {
+      batch = await resolveBatch();
+    } catch (error) {
+      toast.error((error as Error).message);
+      setRunning(false);
+      return;
+    }
     const subidos: string[] = [];
     for (const item of pending) {
       try {
-        subidos.push(await uploadOne(item));
+        subidos.push(await uploadOne(item, batch));
       } catch (error) {
         update(item.key, { status: "error", error: (error as Error).message });
       }
@@ -301,7 +329,7 @@ export function UploadDropzone({
 
         <div className="space-y-2">
           <Label htmlFor="batch">Batch</Label>
-          {batchId === "__nuevo__" ? (
+          {batchId === NUEVO ? (
             <div className="flex gap-2">
               <Input
                 value={newBatchName}
@@ -315,18 +343,21 @@ export function UploadDropzone({
                 type="button"
                 size="sm"
                 disabled={running || !newBatchName.trim()}
-                onClick={async () => {
-                  try {
-                    const id = await createBatch(clientId, newBatchName);
-                    setBatches((prev) => [{ id, name: newBatchName.trim() }, ...prev]);
-                    setBatchId(id);
-                    setNewBatchName("");
-                  } catch (error) {
-                    toast.error((error as Error).message);
-                  }
-                }}
+                onClick={() => resolveBatch().catch((error: Error) => toast.error(error.message))}
               >
                 Crear
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                disabled={running}
+                onClick={() => {
+                  setBatchId("");
+                  setNewBatchName("");
+                }}
+              >
+                Cancelar
               </Button>
             </div>
           ) : (
@@ -343,7 +374,7 @@ export function UploadDropzone({
                   {batch.name}
                 </option>
               ))}
-              <option value="__nuevo__">+ Nuevo batch…</option>
+              <option value={NUEVO}>+ Nuevo batch…</option>
             </select>
           )}
         </div>
