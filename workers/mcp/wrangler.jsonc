@@ -1,0 +1,19 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "relevo-mcp",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-09-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": { "enabled": true },
+  "workers_dev": true,
+  // Sin URLs de vista previa: el conector tiene una sola direccion.
+  "preview_urls": false,
+  // Donde la libreria de OAuth guarda clientes, grants y tokens (solo hashes;
+  // lo de Supabase va cifrado dentro de props).
+  "kv_namespaces": [{ "binding": "OAUTH_KV", "id": "c258890d320544c29172352cea88d400" }],
+  "vars": {
+    "APP_URL": "https://relevo.growth-kingdom.workers.dev"
+  }
+  // Secretos (npx wrangler secret put NOMBRE): SUPABASE_URL, SUPABASE_ANON_KEY y
+  // CRON_SECRET (el mismo de la app, para mandar a Slack al momento).
+}

@@ -97,6 +97,7 @@ npm run slack:test -- tu@correo.com   # manda un mensaje de ejemplo
 | `relevo` | la app (`wrangler.jsonc`) |
 | `creativos-gk-cron` | cron: reintento de Slack cada 10 min y sync de Meta diario a las 13:00 UTC (`workers/cron-sync`) |
 | `creativos-gk` | la URL vieja, redirige a `relevo` (`workers/redirect`) |
+| `relevo-mcp` | conector de Claude: OAuth + servidor MCP en `/mcp` (`workers/mcp`) |
 
 ```bash
 npm run cf:preview   # build + servidor local sobre workerd
@@ -104,6 +105,23 @@ npm run cf:deploy    # build + deploy de la app
 ```
 
 No correr `npm run build` con `npm run dev` abierto: comparten `.next` y el dev se corrompe.
+
+### Conector de Claude
+
+`workers/mcp` es Relevo como conector personalizado de Claude:
+`https://relevo-mcp.growth-kingdom.workers.dev/mcp`. Claude se registra solo (OAuth 2.1 con
+registro dinámico); cada persona entra con su correo y contraseña de Relevo y el conector
+guarda su propia sesión de Supabase, cifrada en el grant. Las herramientas corren con esa
+sesión: RLS, `transition_brief`, `approve_brief` y el historial son los mismos que en la app,
+y lo que hace Claude queda a nombre de esa persona. Reusa `src/lib/brief-flow.ts`,
+`ad-code.ts` y `client-requests.ts`, así que un cambio de etapas o canales ahí se despliega
+también aquí.
+
+```bash
+cd workers/mcp && npm install
+npx wrangler secret put SUPABASE_URL        # y SUPABASE_ANON_KEY, CRON_SECRET
+npx wrangler deploy
+```
 
 ### Secretos
 
