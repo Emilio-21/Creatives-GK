@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import {
   approvalState,
+  BRIEF_LINKS,
   CHANNEL_LABEL,
   CHANNELS,
   nextSteps,
@@ -44,7 +45,7 @@ const ETAPAS_CON_RESPONSABLE = ["copy", "revision", "produccion", "lanzamiento"]
 const OPEN: BriefStatus[] = ["borrador", "en_revision", "en_produccion", "en_aprobacion", "en_lanzamiento"];
 
 const TASK_COLUMNS =
-  "id, title, angle, channel, status, client_id, doc_url, request_note, brief_date, due_date, assigned_to, writer_id, reviewer_id, producer_id, launcher_id, copy_ok_at, media_ok_at, stage_entered_at, stage_started_at, created_at, updated_at, batch_id";
+  "id, title, angle, channel, status, client_id, doc_url, reference_url, raw_url, final_url, request_note, brief_date, due_date, assigned_to, writer_id, reviewer_id, producer_id, launcher_id, copy_ok_at, media_ok_at, stage_entered_at, stage_started_at, created_at, updated_at, batch_id";
 
 type Task = {
   id: string;
@@ -54,6 +55,9 @@ type Task = {
   status: BriefStatus;
   client_id: string;
   doc_url: string | null;
+  reference_url: string | null;
+  raw_url: string | null;
+  final_url: string | null;
   request_note: string | null;
   brief_date: string;
   due_date: string | null;
@@ -387,7 +391,7 @@ export function registerTools(server: McpServer, ctx: Ctx) {
       return {
         ...(await summary(t)),
         el_pedido: t.request_note,
-        doc: t.doc_url,
+        links: Object.fromEntries(BRIEF_LINKS.map((l) => [l.label, t[l.field]])),
         fecha: t.brief_date,
         responsables: Object.fromEntries(
           await Promise.all(
@@ -711,19 +715,33 @@ export function registerTools(server: McpServer, ctx: Ctx) {
     {
       title: "Editar tarea",
       description:
-        "Cambia datos de una tarea: título, ángulo, link del Doc, fecha de entrega, el pedido o el canal. Solo cambia lo que mandes. El canal solo se puede cambiar a uno que tenga la etapa en la que va.",
+        "Cambia datos de una tarea: título, ángulo, sus links (referencias, copy, raw clips, video final), fecha de entrega, el pedido o el canal. Solo cambia lo que mandes. El canal solo se puede cambiar a uno que tenga la etapa en la que va.",
       inputSchema: {
         tarea: z.string(),
         titulo: z.string().max(140).optional(),
         angulo: z.string().max(80).optional().describe("Vacío para quitarlo"),
-        link_doc: z.string().optional().describe("Vacío para quitarlo"),
+        link_doc: z.string().optional().describe("Link del copy (Google Doc). Vacío para quitarlo"),
+        link_referencias: z.string().optional().describe("Vacío para quitarlo"),
+        link_raw_clips: z.string().optional().describe("Carpeta de clips en bruto. Vacío para quitarlo"),
+        link_video_final: z.string().optional().describe("Video editado o pieza final. Vacío para quitarlo"),
         entrega: z.string().optional().describe("AAAA-MM-DD, o vacío para quitarla"),
         el_pedido: z.string().max(2000).optional(),
         canal: z.enum(CHANNELS as unknown as [Channel, ...Channel[]]).optional(),
       },
       annotations: write,
     },
-    run(async (args: { tarea: string; titulo?: string; angulo?: string; link_doc?: string; entrega?: string; el_pedido?: string; canal?: Channel }) => {
+    run(async (args: {
+      tarea: string;
+      titulo?: string;
+      angulo?: string;
+      link_doc?: string;
+      link_referencias?: string;
+      link_raw_clips?: string;
+      link_video_final?: string;
+      entrega?: string;
+      el_pedido?: string;
+      canal?: Channel;
+    }) => {
       const t = await resolveTask(args.tarea);
       const patch: Record<string, unknown> = { updated_by: ctx.props.userId, updated_at: new Date().toISOString() };
       if (args.titulo !== undefined) {
@@ -731,9 +749,16 @@ export function registerTools(server: McpServer, ctx: Ctx) {
         patch.title = args.titulo.trim();
       }
       if (args.angulo !== undefined) patch.angle = args.angulo.trim() || null;
-      if (args.link_doc !== undefined) {
+      const links: [string | undefined, string][] = [
+        [args.link_doc, "doc_url"],
+        [args.link_referencias, "reference_url"],
+        [args.link_raw_clips, "raw_url"],
+        [args.link_video_final, "final_url"],
+      ];
+      for (const [value, column] of links) {
+        if (value === undefined) continue;
         try {
-          patch.doc_url = args.link_doc.trim() ? normalizeDocUrl(args.link_doc) : null;
+          patch[column] = value.trim() ? normalizeDocUrl(value) : null;
         } catch (error) {
           throw new UserError((error as Error).message);
         }

@@ -4,8 +4,10 @@ import { revalidatePath } from "next/cache";
 import { deliverSlackSoon } from "@/lib/slack-after";
 import { requireUser } from "@/lib/auth";
 import {
+  BRIEF_LINKS,
   normalizeDocUrl,
   OWNER_STAGE,
+  type BriefLinkField,
   type BriefStatus,
   type Channel,
   type OwnerField,
@@ -22,6 +24,10 @@ export type BriefRow = {
   /** Texto de briefs viejos. Los nuevos viven en `doc_url`. */
   body: string;
   doc_url: string | null;
+  /** Los otros links del recorrido (ver BRIEF_LINKS). */
+  reference_url: string | null;
+  raw_url: string | null;
+  final_url: string | null;
   /** El angulo de la pieza. Tambien es el nombre de su batch. */
   angle: string | null;
   /** Lo que escribio quien pidio el copy. */
@@ -229,6 +235,7 @@ async function editBriefImpl(input: {
   title: string;
   angle: string;
   docUrl: string;
+  links: Record<Exclude<BriefLinkField, "doc_url">, string>;
   briefDate: string;
   dueDate: string;
   requestNote: string;
@@ -263,6 +270,9 @@ async function editBriefImpl(input: {
         title,
         angle,
         doc_url: docUrl,
+        reference_url: input.links.reference_url.trim() ? normalizeDocUrl(input.links.reference_url) : null,
+        raw_url: input.links.raw_url.trim() ? normalizeDocUrl(input.links.raw_url) : null,
+        final_url: input.links.final_url.trim() ? normalizeDocUrl(input.links.final_url) : null,
         brief_date: input.briefDate,
         due_date: input.dueDate || null,
         request_note: requestNote,
@@ -295,6 +305,25 @@ async function editBriefImpl(input: {
 
   revalidatePath("/", "layout");
   if (avisos) deliverSlackSoon();
+}
+
+/** Un solo link del recorrido, sin abrir el formulario completo. Vacio lo quita. */
+async function setBriefLinkImpl(briefId: string, field: BriefLinkField, url: string): Promise<void> {
+  const user = await requireUser();
+  if (!BRIEF_LINKS.some((link) => link.field === field)) throw new Error("Ese link no existe.");
+  const value = url.trim() ? normalizeDocUrl(url) : null;
+
+  const supabase = await createClient();
+  const { error, count } = await supabase
+    .from("briefs")
+    .update(
+      { [field]: value, updated_by: user.id, updated_at: new Date().toISOString() },
+      { count: "exact" },
+    )
+    .eq("id", briefId);
+  if (error) throw new Error(error.message);
+  if (!count) throw new Error("No se pudo guardar el link.");
+  revalidatePath("/", "layout");
 }
 
 /** Los clientes a los que se puede mover una tarea. */
@@ -431,4 +460,10 @@ export async function listClientOptions(
   ...args: Parameters<typeof listClientOptionsImpl>
 ): Promise<ActionResult<Awaited<ReturnType<typeof listClientOptionsImpl>>>> {
   return attempt(() => listClientOptionsImpl(...args));
+}
+
+export async function setBriefLink(
+  ...args: Parameters<typeof setBriefLinkImpl>
+): Promise<ActionResult<Awaited<ReturnType<typeof setBriefLinkImpl>>>> {
+  return attempt(() => setBriefLinkImpl(...args));
 }

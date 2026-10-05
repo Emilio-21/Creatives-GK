@@ -14,6 +14,7 @@ import {
 import { listTeam as listTeamAction, type TeamMember } from "@/app/(app)/client/assignment-actions";
 import { unwrapped } from "@/lib/action-result";
 import {
+  BRIEF_LINKS,
   CHANNEL_LABEL,
   CHANNELS,
   channelFits,
@@ -50,6 +51,11 @@ export function BriefEditForm({
     title: brief.title,
     angle: brief.angle ?? "",
     docUrl: brief.doc_url ?? "",
+    links: {
+      reference_url: brief.reference_url ?? "",
+      raw_url: brief.raw_url ?? "",
+      final_url: brief.final_url ?? "",
+    },
     briefDate: brief.brief_date,
     dueDate: brief.due_date ?? "",
     requestNote: brief.request_note ?? "",
@@ -184,16 +190,6 @@ export function BriefEditForm({
           />
         </Field>
 
-        <Field label="Link al Google Doc" id="edit-doc" className="sm:col-span-2">
-          <Input
-            id="edit-doc"
-            type="url"
-            inputMode="url"
-            value={draft.docUrl}
-            onChange={(e) => set("docUrl", e.target.value)}
-            placeholder="https://docs.google.com/document/…"
-          />
-        </Field>
 
         <Field label="Fecha" id="edit-date">
           <Input
@@ -223,6 +219,28 @@ export function BriefEditForm({
             maxLength={2000}
           />
         </Field>
+      </div>
+
+      <div className="space-y-2">
+        <p className="text-sm font-medium">Links</p>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {BRIEF_LINKS.map((link) => (
+            <Field key={link.field} label={link.label} id={`edit-${link.field}`}>
+              <Input
+                id={`edit-${link.field}`}
+                type="url"
+                inputMode="url"
+                value={link.field === "doc_url" ? draft.docUrl : draft.links[link.field]}
+                onChange={(e) =>
+                  link.field === "doc_url"
+                    ? set("docUrl", e.target.value)
+                    : set("links", { ...draft.links, [link.field]: e.target.value })
+                }
+                placeholder={link.hint}
+              />
+            </Field>
+          ))}
+        </div>
       </div>
 
       <div className="space-y-2">

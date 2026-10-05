@@ -1,6 +1,7 @@
 import "server-only";
 import { appUrl } from "@/lib/app-url";
 import {
+  BRIEF_LINKS,
   BRIEF_STATUSES,
   CHANNEL_LABEL,
   stagesFor,
@@ -78,7 +79,7 @@ export async function deliverPendingSlack(limit = 25): Promise<SlackDeliveryRepo
       ? db
           .from("briefs")
           .select(
-            "id, title, angle, status, channel, client_id, doc_url, due_date, writer_id, reviewer_id, producer_id, launcher_id, copy_ok_at, media_ok_at, clients(name)",
+            "id, title, angle, status, channel, client_id, doc_url, reference_url, raw_url, final_url, due_date, writer_id, reviewer_id, producer_id, launcher_id, copy_ok_at, media_ok_at, clients(name)",
           )
           .in("id", briefIds as string[])
       : Promise.resolve({ data: [] as Record<string, unknown>[] }),
@@ -219,7 +220,11 @@ export function buildMessage({
     });
 
     const links = [`<${appUrl()}/client/${brief.client_id}?brief=${brief.id}|Abrir en Relevo>`];
-    if (brief.doc_url) links.push(`<${brief.doc_url as string}|Abrir el Doc>`);
+    // El recorrido completo: referencias, copy, raw clips, pieza final.
+    for (const link of BRIEF_LINKS) {
+      const url = brief[link.field] as string | null;
+      if (url) links.push(`<${url}|${link.field === "doc_url" ? "Abrir el Doc" : link.label}>`);
+    }
     blocks.push({ type: "context", elements: [{ type: "mrkdwn", text: links.join("  ·  ") }] });
   }
 

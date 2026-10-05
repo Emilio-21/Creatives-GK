@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { BriefCard } from "@/components/brief-card";
 import { BriefComments } from "@/components/brief-comments";
 import { BriefEditForm } from "@/components/brief-edit-form";
+import { BriefLinks } from "@/components/brief-links";
 import { BriefWorkflow } from "@/components/brief-workflow";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -262,6 +263,10 @@ function BriefModal({
 
           <div className="mb-3">
             <BriefWorkflow brief={brief} onChanged={onChanged} />
+          </div>
+
+          <div className="mb-3">
+            <BriefLinks brief={brief} onChanged={onChanged} />
           </div>
 
           {brief.doc_url ? (

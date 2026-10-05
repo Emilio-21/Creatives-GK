@@ -191,6 +191,19 @@ export function normalizeDocUrl(raw: string): string | null {
   return url.toString();
 }
 
+/**
+ * Los links de una tarea, en el orden en que se llenan: el recorrido del
+ * creativo, de la idea a la pieza. Uno por casilla; si son muchos archivos, la
+ * carpeta.
+ */
+export const BRIEF_LINKS = [
+  { field: "reference_url", label: "Referencias", hint: "Ejemplos, moodboard o anuncios que inspiran" },
+  { field: "doc_url", label: "Copy", hint: "El Google Doc del copy" },
+  { field: "raw_url", label: "Raw clips", hint: "La carpeta con el material en bruto" },
+  { field: "final_url", label: "Video final", hint: "El video editado o la pieza lista para revisar" },
+] as const;
+export type BriefLinkField = (typeof BRIEF_LINKS)[number]["field"];
+
 /** Lo que dice el boton. Si no es de Google, el dominio: que se vea a donde lleva. */
 export function docLabel(docUrl: string): string {
   const { hostname, pathname } = new URL(docUrl);

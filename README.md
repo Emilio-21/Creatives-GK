@@ -30,6 +30,8 @@ Producción: <https://relevo.growth-kingdom.workers.dev>. Plan original: `docs/p
   - Si quien escribe el copy es quien lo revisa, la revisión se salta sola.
   - Un admin puede mover una tarea a cualquier etapa o aprobar por todos; queda como
     salto en el historial.
+  - Cada tarea guarda el recorrido del creativo en links: referencias, copy (el Doc), raw
+    clips y video final. Cada quien llena el suyo desde la tarea.
   - Cada tarea tiene un hilo de comentarios que avisa a quienes están en ella.
   - "Editar tarea" cambia cualquier dato: título, canal, cliente, ángulo, Doc, fechas, el
     pedido y responsables. El canal se cambia si tiene la etapa en la que va la tarea; el
@@ -55,7 +57,7 @@ Producción: <https://relevo.growth-kingdom.workers.dev>. Plan original: `docs/p
 
 ### 1. Supabase
 1. Crear el proyecto y, en el SQL Editor, correr **en orden** todo `supabase/migrations/`
-   (`0001_schema.sql` … `0036_aprobar_por_todos.sql`).
+   (`0001_schema.sql` … `0037_links_tarea.sql`).
 2. Settings → API: copiar `Project URL`, `anon key` y `service_role key`.
 3. Authentication → URL Configuration: *Site URL* con la URL de la app y, en *Redirect URLs*,
    `https://<dominio>/**`. El enlace del correo de confirmación regresa a `/auth/confirm`.
