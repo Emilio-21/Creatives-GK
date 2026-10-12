@@ -117,8 +117,10 @@ export function CreativeModal({
             {detail.creative.display_name}
           </h2>
 
-          <div className="grid gap-5 md:grid-cols-[minmax(0,320px)_1fr]">
-            <div className="space-y-3">
+          {/* min-w-0: sin el, un nombre de anuncio largo ensancha la columna y saca
+              de la ventana el boton de copiar. */}
+          <div className="grid grid-cols-1 gap-5 md:grid-cols-[minmax(0,320px)_minmax(0,1fr)]">
+            <div className="min-w-0 space-y-3">
               <div className="overflow-hidden rounded-lg border bg-muted">
                 {detail.creative.media_type === "video" ? (
                   <video
