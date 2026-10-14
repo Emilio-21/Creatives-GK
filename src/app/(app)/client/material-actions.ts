@@ -14,7 +14,7 @@ import {
 import { createClient } from "@/lib/supabase/server";
 import { attempt, type ActionResult } from "@/lib/action-result";
 
-/** Presentaciones con video pesan mas que un ad: mas margen que los 100 MB de creativos. */
+/** Presentaciones con video pesan mas que un ad: mas margen que el de creativos (MAX_FILE_BYTES). */
 const MAX_MATERIAL_BYTES = 250 * 1024 * 1024;
 
 /** Lo que el navegador puede mostrar solo; lo demas se descarga con su nombre. */

@@ -44,7 +44,8 @@ export const serverEnv = {
 };
 
 /** Limites validados en el servidor antes de firmar cualquier URL (§4.4). */
-export const MAX_FILE_BYTES = 100 * 1024 * 1024; // 100 MB
+export const MAX_FILE_MB = 200;
+export const MAX_FILE_BYTES = MAX_FILE_MB * 1024 * 1024;
 export const ALLOWED_MIME_TYPES = [
   "image/jpeg",
   "image/png",

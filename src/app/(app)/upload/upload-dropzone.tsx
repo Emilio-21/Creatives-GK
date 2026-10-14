@@ -14,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ALLOWED_MIME_TYPES, MAX_FILE_BYTES } from "@/lib/env";
+import { ALLOWED_MIME_TYPES, MAX_FILE_BYTES, MAX_FILE_MB } from "@/lib/env";
 import { extractMetadata, type MediaMetadata } from "@/lib/media";
 import { uploadToR2 } from "@/lib/upload-xhr";
 import {
@@ -119,7 +119,7 @@ export function UploadDropzone({
           continue;
         }
         if (file.size > MAX_FILE_BYTES) {
-          toast.error(`${file.name}: ${(file.size / 1024 / 1024).toFixed(1)} MB, máximo 100 MB.`);
+          toast.error(`${file.name}: ${(file.size / 1024 / 1024).toFixed(1)} MB, máximo ${MAX_FILE_MB} MB.`);
           continue;
         }
         accepted.push({
@@ -425,7 +425,7 @@ export function UploadDropzone({
       >
         <p className="text-sm font-medium">Arrastra archivos o haz clic</p>
         <p className="text-xs text-muted-foreground">
-          JPEG, PNG, WebP, MP4 o MOV. Máximo 100 MB por archivo.
+          JPEG, PNG, WebP, MP4 o MOV. Máximo {MAX_FILE_MB} MB por archivo.
         </p>
         <input
           ref={inputRef}

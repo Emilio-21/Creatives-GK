@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { ALLOWED_MIME_TYPES, MAX_FILE_BYTES, type AllowedMimeType } from "@/lib/env";
+import { ALLOWED_MIME_TYPES, MAX_FILE_BYTES, MAX_FILE_MB, type AllowedMimeType } from "@/lib/env";
 import {
   buildCreativePath,
   buildPosterPath,
@@ -39,7 +39,7 @@ async function requestUploadUrlsImpl(
     throw new Error("Tamaño de archivo invalido.");
   }
   if (size > MAX_FILE_BYTES) {
-    throw new Error(`${(size / 1024 / 1024).toFixed(1)} MB excede el maximo de 100 MB.`);
+    throw new Error(`${(size / 1024 / 1024).toFixed(1)} MB excede el máximo de ${MAX_FILE_MB} MB.`);
   }
 
   const { uuid, path } = buildCreativePath(filename);
@@ -85,7 +85,7 @@ async function confirmUploadImpl(input: ConfirmUploadInput): Promise<{ id: strin
   if (stat.size > MAX_FILE_BYTES) {
     await deleteFile(input.storagePath);
     if (input.posterPath) await deleteFile(input.posterPath);
-    throw new Error("El archivo excede 100 MB.");
+    throw new Error(`El archivo excede ${MAX_FILE_MB} MB.`);
   }
   if (!ALLOWED_MIME_TYPES.includes(input.mimeType as AllowedMimeType)) {
     await deleteFile(input.storagePath);
